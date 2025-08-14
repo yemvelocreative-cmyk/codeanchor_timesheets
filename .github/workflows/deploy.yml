@@ -1,23 +1,45 @@
 name: Deploy site folder to hosting
 on:
   push:
-    branches: [ "main" ]
-workflow_dispatch: {}
+    branches:
+      - main
+  workflow_dispatch:
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Upload /site via SFTP (password)
+      - name: Sanity check
+        run: |
+          [ -n "${{ secrets.SSH_HOST }}" ] && echo "SSH_HOST ✅" || (echo "SSH_HOST ❌"; exit 1)
+          [ -n "${{ secrets.SSH_USER }}" ] && echo "SSH_USER ✅" || (echo "SSH_USER ❌"; exit 1)
+          [ -n "${{ secrets.SSH_PASSWORD }}" ] && echo "SSH_PASSWORD ✅" || (echo "SSH_PASSWORD ❌"; exit 1)
+          [ -n "${{ secrets.TARGET_DIR }}" ] && echo "TARGET_DIR ✅" || (echo "TARGET_DIR ❌"; exit 1)
+          test -d site && echo "Found site/ ✅" || (echo "Missing site/ ❌"; exit 1)
+          ls -la site | sed -n '1,60p'
+
+      - name: Ensure target directory exists
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 22
+          script: |
+            mkdir -p "${{ secrets.TARGET_DIR }}"
+            ls -la "${{ secrets.TARGET_DIR }}" || true
+
+      - name: Upload /site via SFTP
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
-          port: 2222
-          source: site/**
+          port: 22
+          source: "site/*"
           target: ${{ secrets.TARGET_DIR }}
           overwrite: true
-          strip_components: 1
