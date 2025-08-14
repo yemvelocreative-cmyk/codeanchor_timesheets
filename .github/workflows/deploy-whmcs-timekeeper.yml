@@ -15,16 +15,11 @@ jobs:
       group: deploy-whmcs-timekeeper-dev
       cancel-in-progress: true
 
-    env:
-      REPO_DIR: modules/addons/timekeeper
-      REMOTE_DIR: ${{ secrets.TARGET_DIR }}/modules/addons/timekeeper
-      PORT: "2222"
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Sanity: secrets and local folder present
+      # Sanity: secrets set + local folder exists
       - name: Sanity check
         run: |
           set -e
@@ -32,52 +27,36 @@ jobs:
           [ -n "${{ secrets.SSH_USER }}" ] && echo "SSH_USER ✅" || (echo "SSH_USER ❌"; exit 1)
           [ -n "${{ secrets.SSH_PASSWORD }}" ] && echo "SSH_PASSWORD ✅" || (echo "SSH_PASSWORD ❌"; exit 1)
           [ -n "${{ secrets.TARGET_DIR }}" ] && echo "TARGET_DIR ✅" || (echo "TARGET_DIR ❌"; exit 1)
-          test -d "$REPO_DIR" && echo "Found $REPO_DIR/ ✅" || (echo "Missing $REPO_DIR/ ❌"; exit 1)
-          ls -la "$REPO_DIR" | sed -n '1,60p'
+          test -d modules/addons/timekeeper && echo "Found modules/addons/timekeeper/ ✅" || (echo "Missing modules/addons/timekeeper/ ❌"; exit 1)
+          ls -la modules/addons/timekeeper | sed -n '1,60p'
 
-      # Local fingerprint (looks for timekeeper.php; warns if extension typo)
-      - name: Local file fingerprint
-        run: |
-          set -e
-          if [ -f "$REPO_DIR/timekeeper.php" ]; then
-            echo "Local: $REPO_DIR/timekeeper.php"
-            ls -la "$REPO_DIR/timekeeper.php"
-            (command -v md5sum >/dev/null && md5sum "$REPO_DIR/timekeeper.php") || shasum "$REPO_DIR/timekeeper.php"
-          elif [ -f "$REPO_DIR/timekeeper.ph" ]; then
-            echo "⚠ Found $REPO_DIR/timekeeper.ph (did you mean .php?)"
-            ls -la "$REPO_DIR/timekeeper.ph"
-          else
-            echo "Note: timekeeper.php not found; continuing (maybe other files changed)."
-          fi
-
-      # Remote BEFORE
+      # Remote BEFORE (timestamp + hash)
       - name: Remote state BEFORE
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
-          port: ${{ env.PORT }}
+          port: 2222
           script: |
             set -e
+            REMOTE_DIR="${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
             echo "REMOTE_DIR: $REMOTE_DIR"
             ls -la "$REMOTE_DIR" || echo "(remote dir missing)"
-            if [ -f "$REMOTE_DIR/timekeeper.php" ]; then
-              ls -la "$REMOTE_DIR/timekeeper.php"
-              (command -v md5sum >/dev/null && md5sum "$REMOTE_DIR/timekeeper.php") || shasum "$REMOTE_DIR/timekeeper.php" || true
-            else
-              echo "(remote timekeeper.php missing)"
-            fi
+            ls -la "$REMOTE_DIR/timekeeper.php" || echo "(remote file missing)"
+            if command -v md5sum >/dev/null; then md5sum "$REMOTE_DIR/timekeeper.php" || true; else shasum "$REMOTE_DIR/timekeeper.php" || true; fi
 
-      # Ensure target directory exists
+      # Ensure remote directory exists
       - name: Ensure remote directory exists
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
-          port: ${{ env.PORT }}
+          port: 2222
           script: |
+            set -e
+            REMOTE_DIR="${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
             mkdir -p "$REMOTE_DIR"
 
       # Remove the file to guarantee overwrite
@@ -87,8 +66,10 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
-          port: ${{ env.PORT }}
+          port: 2222
           script: |
+            set -e
+            REMOTE_DIR="${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
             rm -f "$REMOTE_DIR/timekeeper.php" || true
 
       # Upload recursively from repo to server
@@ -98,24 +79,23 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
-          port: ${{ env.PORT }}
-          source: "${{ env.REPO_DIR }}/**"
-          target: "${{ env.REMOTE_DIR }}"
+          port: 2222
+          source: "modules/addons/timekeeper/**"
+          target: "${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
           overwrite: true
           debug: true
 
-      # Remote AFTER
+      # Remote AFTER (timestamp + hash)
       - name: Remote state AFTER
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
-          port: ${{ env.PORT }}
+          port: 2222
           script: |
             set -e
+            REMOTE_DIR="${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
             echo "REMOTE_DIR: $REMOTE_DIR"
             ls -la "$REMOTE_DIR/timekeeper.php" || echo "(remote file missing)"
-            if [ -f "$REMOTE_DIR/timekeeper.php" ]; then
-              (command -v md5sum >/dev/null && md5sum "$REMOTE_DIR/timekeeper.php") || shasum "$REMOTE_DIR/timekeeper.php" || true
-            fi
+            if command -v md5sum >/dev/null; then md5sum "$REMOTE_DIR/timekeeper.php" || true; else shasum "$REMOTE_DIR/timekeeper.php" || true; fi
