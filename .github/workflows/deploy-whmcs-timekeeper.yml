@@ -1,12 +1,3 @@
-name: Deploy WHMCS Timekeeper (DEV)
-on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'modules/addons/timekeeper/**'
-      - '.github/workflows/deploy-whmcs-timekeeper.yml'
-  workflow_dispatch:
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -35,17 +26,20 @@ jobs:
           echo "Using LOCAL_FILE=$LOCAL_FILE"
           ls -la "$LOCAL_FILE"
 
-      # BEFORE upload: show remote file timestamp
-    - name: Remote state before
-      uses: appleboy/ssh-action@v1
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        password: ${{ secrets.SSH_PASSWORD }}
-        port: 2222
-        script: |
-          ls -la "${{ secrets.TARGET_DIR }}/modules/addons/timekeeper/timekeeper.php" || echo "(remote missing)"
-          
+      # Show the remote file BEFORE upload (so we can compare)
+      - name: Remote state before
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 2222
+          script: |
+            set -e
+            REMOTE="${{ secrets.TARGET_DIR }}/modules/addons/timekeeper/timekeeper.php"
+            echo "Remote path: $REMOTE"
+            ls -la "$REMOTE" || echo "(remote file missing)"
+
       # Upload the WHOLE add-on recursively
       - name: Upload add-on via SFTP (recursive)
         uses: appleboy/scp-action@v0.1.7
@@ -54,18 +48,34 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
           port: 2222
-          source: "timekeeper/**"    # ← this matches your repo layout
+          source: "modules/addons/timekeeper/**"
           target: "${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
           overwrite: true
           debug: true
 
-     # AFTER upload: show remote file timestamp
-    - name: Remote state after
-      uses: appleboy/ssh-action@v1
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        password: ${{ secrets.SSH_PASSWORD }}
-        port: 2222
-        script: |
-          ls -la "${{ secrets.TARGET_DIR }}/modules/addons/timekeeper/timekeeper.php" || echo "(remote missing)"
+      # If your repo path is actually ./timekeeper/** (not under modules/addons/), use this upload step instead:
+      # - name: Upload add-on via SFTP (alternate layout)
+      #   uses: appleboy/scp-action@v0.1.7
+      #   with:
+      #     host: ${{ secrets.SSH_HOST }}
+      #     username: ${{ secrets.SSH_USER }}
+      #     password: ${{ secrets.SSH_PASSWORD }}
+      #     port: 2222
+      #     source: "timekeeper/**"
+      #     target: "${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
+      #     overwrite: true
+      #     debug: true
+
+      # Show the remote file AFTER upload
+      - name: Remote state after
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 2222
+          script: |
+            set -e
+            REMOTE="${{ secrets.TARGET_DIR }}/modules/addons/timekeeper/timekeeper.php"
+            echo "Remote path: $REMOTE"
+            ls -la "$REMOTE" || echo "(remote file missing)"
