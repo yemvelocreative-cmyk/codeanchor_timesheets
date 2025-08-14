@@ -1,0 +1,1 @@
+<div class="container mt-4">    <h2>Timekeeper Settings</h2>    <?php if (!empty($success)): ?>        <div class="alert alert-success">Settings saved successfully.</div>    <?php endif; ?>    <?php include __DIR__ . '/components/settings_form.tpl'; ?></div>

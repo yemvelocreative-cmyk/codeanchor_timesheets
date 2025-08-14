@@ -1,0 +1,2 @@
+function moveSelected(fromId, toId) {    const fromSelect = document.getElementById(fromId);    const toSelect = document.getElementById(toId);    const selectedOptions = Array.from(fromSelect.selectedOptions);
+    selectedOptions.forEach(option => {        fromSelect.removeChild(option);        toSelect.appendChild(option);    });}
