@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS `mod_timekeeper_timesheet_entries` (
   KEY `idx_timesheet` (`timesheet_id`),
   KEY `idx_client` (`client_id`),
   KEY `idx_department` (`department_id`),
-  KEY `idx_subtask` (`task_category_id`),
+  KEY `idx_task_category` (`task_category_id`),
   CONSTRAINT `fk_entry_timesheet`
     FOREIGN KEY (`timesheet_id`) REFERENCES `mod_timekeeper_timesheets` (`id`)
     ON UPDATE CASCADE ON DELETE CASCADE
