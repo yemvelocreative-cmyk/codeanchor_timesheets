@@ -1,1 +1,135 @@
-<?phpuse WHMCS\Database\Capsule;if (!defined('WHMCS')) {    die('Access Denied');}// Get current admin$adminId = $_SESSION['adminid'] ?? null;if (!$adminId) {    echo "Admin session not found.";    exit;}// Get today’s date$today = date('Y-m-d');$timesheetDate = $today;// Load or create timesheet$timesheet = Capsule::table('mod_timekeeper_timesheets')    ->where('admin_id', $adminId)    ->where('timesheet_date', $today)    ->first();// Set default timesheet status$timesheetStatus = 'not_assigned';    if ($timesheet) {        $timesheetId = $timesheet->id;        $timesheetStatus = $timesheet->status;        $timesheetDate = $timesheet->timesheet_date; // optional override    }        // Existing tasks — only if timesheet exists    $existingTasks = $timesheet ? Capsule::table('mod_timekeeper_timesheet_entries')->where('timesheet_id', $timesheetId)->get() : [];    $totalTime = 0;    $totalBillableTime = 0;    $totalSlaTime = 0;    foreach ($existingTasks as $entry) {        $totalTime += $entry->time_spent;        if ($entry->billable) {            $totalBillableTime += $entry->billable_time;        }        if ($entry->sla) {        $totalSlaTime += $entry->sla_time;        }    }        // Load clients, departments, tasks, admin    $clients = Capsule::table('tblclients')->orderBy('companyname')->get();    $departments = Capsule::table('mod_timekeeper_departments')->where('status', 'active')->orderBy('name')->get();    $taskCategories = Capsule::table('mod_timekeeper_task_categories')->where('status', 'active')->orderBy('name')->get();    $adminUser = Capsule::table('tbladmins')->find($adminId);    $adminName = $adminUser ? $adminUser->firstname . ' ' . $adminUser->lastname : 'Unknown';        $totalTime = number_format($totalTime, 2);    $totalBillableTime = number_format($totalBillableTime, 2);    $totalSlaTime = number_format($totalSlaTime, 2);        // Include template    ob_start();    include __DIR__ . '/../templates/admin/timesheet.tpl';    $content = ob_get_clean();    echo $content;if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {    $deleteId = (int) $_POST['delete_id'];    Capsule::table('mod_timekeeper_timesheet_entries')        ->where('id', $deleteId)        ->delete();    header("Location: addonmodules.php?module=timekeeper&timekeeperpage=timesheet");    exit;}// ✅ Handle form submission to insert new entryif ($_SERVER['REQUEST_METHOD'] === 'POST') {    $editId = isset($_POST['edit_id']) ? (int) $_POST['edit_id'] : 0;    $clientId = (int) $_POST['client_id'];    $departmentId = (int) $_POST['department_id'];    $subtaskId = (int) $_POST['subtask_id'];    $ticketId = trim($_POST['ticket_id']);    $description = trim($_POST['description']);    $startTime = $_POST['start_time'];    $endTime = $_POST['end_time'];    $timeSpent = floatval($_POST['time_spent']);    $billable = isset($_POST['billable']) ? 1 : 0;    $billableTime = isset($_POST['billable_time']) ? floatval($_POST['billable_time']) : 0;    $sla = isset($_POST['sla']) ? 1 : 0;    $slaTime = isset($_POST['sla_time']) ? floatval($_POST['sla_time']) : 0;        // Force time fields to zero if not checked    if (!$billable) {        $billableTime = 0;    }    if (!$sla) {        $slaTime = 0;    }    $data = [        'client_id'      => $clientId,        'department_id'  => $departmentId,        'subtask_id'     => $subtaskId,        'ticket_id'      => $ticketId,        'description'    => $description,        'start_time'     => $startTime,        'end_time'       => $endTime,        'time_spent'     => $timeSpent,        'billable'       => $billable,        'billable_time'  => $billableTime,        'sla'            => $sla,        'sla_time'       => $slaTime,        'updated_at'     => date('Y-m-d H:i:s')    ];    if ($editId > 0) {        // 🔁 Update existing entry        Capsule::table('mod_timekeeper_timesheet_entries')            ->where('id', $editId)            ->update($data);    } else {        // ➕ Add new entry        $data['timesheet_id'] = $timesheetId;        $data['created_at'] = date('Y-m-d H:i:s');        Capsule::table('mod_timekeeper_timesheet_entries')->insert($data);    }    // 🔁 Prevent resubmission    header("Location: addonmodules.php?module=timekeeper&timekeeperpage=timesheet");    exit;}
+<?php
+
+use WHMCS\Database\Capsule;
+
+if (!defined('WHMCS')) {
+    die('Access Denied');
+}
+
+// Get current admin
+$adminId = $_SESSION['adminid'] ?? null;
+if (!$adminId) {
+    echo "Admin session not found.";
+    exit;
+}
+
+// Get today’s date
+$today = date('Y-m-d');
+$timesheetDate = $today;
+
+// Load or create timesheet
+$timesheet = Capsule::table('mod_timekeeper_timesheets')
+    ->where('admin_id', $adminId)
+    ->where('timesheet_date', $today)
+    ->first();
+
+// Set default timesheet status
+$timesheetStatus = 'not_assigned';
+
+    if ($timesheet) {
+        $timesheetId = $timesheet->id;
+        $timesheetStatus = $timesheet->status;
+        $timesheetDate = $timesheet->timesheet_date; // optional override
+    }
+    
+    // Existing tasks — only if timesheet exists
+    $existingTasks = $timesheet ? Capsule::table('mod_timekeeper_timesheet_entries')->where('timesheet_id', $timesheetId)->get() : [];
+    $totalTime = 0;
+    $totalBillableTime = 0;
+    $totalSlaTime = 0;
+    foreach ($existingTasks as $entry) {
+        $totalTime += $entry->time_spent;
+        if ($entry->billable) {
+            $totalBillableTime += $entry->billable_time;
+        }
+        if ($entry->sla) {
+        $totalSlaTime += $entry->sla_time;
+        }
+    }
+    
+    // Load clients, departments, tasks, admin
+    $clients = Capsule::table('tblclients')->orderBy('companyname')->get();
+    $departments = Capsule::table('mod_timekeeper_departments')->where('status', 'active')->orderBy('name')->get();
+    $taskCategories = Capsule::table('mod_timekeeper_task_categories')->where('status', 'active')->orderBy('name')->get();
+    $adminUser = Capsule::table('tbladmins')->find($adminId);
+    $adminName = $adminUser ? $adminUser->firstname . ' ' . $adminUser->lastname : 'Unknown';
+    
+    $totalTime = number_format($totalTime, 2);
+    $totalBillableTime = number_format($totalBillableTime, 2);
+    $totalSlaTime = number_format($totalSlaTime, 2);
+    
+    // Include template
+    ob_start();
+    include __DIR__ . '/../templates/admin/timesheet.tpl';
+    $content = ob_get_clean();
+    echo $content;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
+    $deleteId = (int) $_POST['delete_id'];
+
+    Capsule::table('mod_timekeeper_timesheet_entries')
+        ->where('id', $deleteId)
+        ->delete();
+
+    header("Location: addonmodules.php?module=timekeeper&timekeeperpage=timesheet");
+    exit;
+}
+
+
+// ✅ Handle form submission to insert new entry
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $editId = isset($_POST['edit_id']) ? (int) $_POST['edit_id'] : 0;
+
+    $clientId = (int) $_POST['client_id'];
+    $departmentId = (int) $_POST['department_id'];
+    $subtaskId = (int) $_POST['task_category_id'];
+    $ticketId = trim($_POST['ticket_id']);
+    $description = trim($_POST['description']);
+    $startTime = $_POST['start_time'];
+    $endTime = $_POST['end_time'];
+    $timeSpent = floatval($_POST['time_spent']);
+    $billable = isset($_POST['billable']) ? 1 : 0;
+    $billableTime = isset($_POST['billable_time']) ? floatval($_POST['billable_time']) : 0;
+    $sla = isset($_POST['sla']) ? 1 : 0;
+    $slaTime = isset($_POST['sla_time']) ? floatval($_POST['sla_time']) : 0;
+    
+    // Force time fields to zero if not checked
+    if (!$billable) {
+        $billableTime = 0;
+    }
+    if (!$sla) {
+        $slaTime = 0;
+    }
+
+    $data = [
+        'client_id'      => $clientId,
+        'department_id'  => $departmentId,
+        'task_category_id'     => $subtaskId,
+        'ticket_id'      => $ticketId,
+        'description'    => $description,
+        'start_time'     => $startTime,
+        'end_time'       => $endTime,
+        'time_spent'     => $timeSpent,
+        'billable'       => $billable,
+        'billable_time'  => $billableTime,
+        'sla'            => $sla,
+        'sla_time'       => $slaTime,
+        'updated_at'     => date('Y-m-d H:i:s')
+    ];
+
+    if ($editId > 0) {
+        // 🔁 Update existing entry
+        Capsule::table('mod_timekeeper_timesheet_entries')
+            ->where('id', $editId)
+            ->update($data);
+    } else {
+        // ➕ Add new entry
+        $data['timesheet_id'] = $timesheetId;
+        $data['created_at'] = date('Y-m-d H:i:s');
+        Capsule::table('mod_timekeeper_timesheet_entries')->insert($data);
+    }
+
+    // 🔁 Prevent resubmission
+    header("Location: addonmodules.php?module=timekeeper&timekeeperpage=timesheet");
+    exit;
+}

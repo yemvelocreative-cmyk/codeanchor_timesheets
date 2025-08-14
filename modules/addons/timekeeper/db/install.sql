@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS `mod_timekeeper_timesheet_entries` (
   `timesheet_id` INT UNSIGNED NOT NULL,
   `client_id` INT UNSIGNED NOT NULL,
   `department_id` INT UNSIGNED NOT NULL,
-  `subtask_id` INT UNSIGNED NOT NULL,
+  `task_category_id` INT UNSIGNED NOT NULL,
   `ticket_id` VARCHAR(255) DEFAULT NULL,
   `description` TEXT DEFAULT NULL,
   `start_time` TIME NOT NULL,
@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS `mod_timekeeper_timesheet_entries` (
   KEY `idx_timesheet` (`timesheet_id`),
   KEY `idx_client` (`client_id`),
   KEY `idx_department` (`department_id`),
-  KEY `idx_subtask` (`subtask_id`),
+  KEY `idx_subtask` (`task_category_id`),
   CONSTRAINT `fk_entry_timesheet`
     FOREIGN KEY (`timesheet_id`) REFERENCES `mod_timekeeper_timesheets` (`id`)
     ON UPDATE CASCADE ON DELETE CASCADE
