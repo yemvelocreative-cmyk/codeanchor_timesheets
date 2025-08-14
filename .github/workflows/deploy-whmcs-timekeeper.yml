@@ -1,0 +1,55 @@
+name: Deploy WHMCS Timekeeper (DEV)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'modules/addons/timekeeper/**'
+      - '.github/workflows/deploy-whmcs-timekeeper.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-whmcs-timekeeper-dev
+      cancel-in-progress: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ---- sanity: secrets + local folder ----
+      - name: Sanity check
+        run: |
+          [ -n "${{ secrets.SSH_HOST }}" ] && echo "SSH_HOST ✅" || (echo "SSH_HOST ❌"; exit 1)
+          [ -n "${{ secrets.SSH_USER }}" ] && echo "SSH_USER ✅" || (echo "SSH_USER ❌"; exit 1)
+          [ -n "${{ secrets.SSH_PASSWORD }}" ] && echo "SSH_PASSWORD ✅" || (echo "SSH_PASSWORD ❌"; exit 1)
+          [ -n "${{ secrets.TARGET_DIR }}" ] && echo "TARGET_DIR ✅" || (echo "TARGET_DIR ❌"; exit 1)
+          test -d modules/addons/timekeeper && echo "Found add-on folder ✅" || (echo "Missing modules/addons/timekeeper ❌"; exit 1)
+          ls -la modules/addons/timekeeper | sed -n '1,60p'
+
+      # ---- make sure remote path exists ----
+      - name: Ensure target directory exists
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 2222
+          script: |
+            mkdir -p "${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
+            ls -la "${{ secrets.TARGET_DIR }}/modules/addons" || true
+
+      # ---- upload only your add-on ----
+      - name: Upload add-on via SFTP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 2222
+          source: "modules/addons/timekeeper/*"
+          target: "${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
+          overwrite: true
+          debug: true
