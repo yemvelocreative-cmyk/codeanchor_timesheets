@@ -19,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Sanity: secrets set + local folder exists
+      # Sanity: secrets + local folder
       - name: Sanity check
         run: |
           set -e
@@ -40,11 +40,15 @@ jobs:
           port: 2222
           script: |
             set -e
-            REMOTE_DIR="${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
-            echo "REMOTE_DIR: $REMOTE_DIR"
-            ls -la "$REMOTE_DIR" || echo "(remote dir missing)"
-            ls -la "$REMOTE_DIR/timekeeper.php" || echo "(remote file missing)"
-            if command -v md5sum >/dev/null; then md5sum "$REMOTE_DIR/timekeeper.php" || true; else shasum "$REMOTE_DIR/timekeeper.php" || true; fi
+            DIR="${{ secrets.TARGET_DIR }}"
+            echo "REMOTE DIR: $DIR"
+            ls -la "$DIR" || echo "(remote dir missing)"
+            if [ -f "$DIR/timekeeper.php" ]; then
+              ls -la "$DIR/timekeeper.php"
+              (command -v md5sum >/dev/null && md5sum "$DIR/timekeeper.php") || shasum "$DIR/timekeeper.php" || true
+            else
+              echo "(remote timekeeper.php missing)"
+            fi
 
       # Ensure remote directory exists
       - name: Ensure remote directory exists
@@ -56,10 +60,10 @@ jobs:
           port: 2222
           script: |
             set -e
-            REMOTE_DIR="${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
-            mkdir -p "$REMOTE_DIR"
+            DIR="${{ secrets.TARGET_DIR }}"
+            mkdir -p "$DIR"
 
-      # Remove the file to guarantee overwrite
+      # Remove target file to guarantee overwrite
       - name: Remove remote file (force fresh copy)
         uses: appleboy/ssh-action@v1
         with:
@@ -69,10 +73,10 @@ jobs:
           port: 2222
           script: |
             set -e
-            REMOTE_DIR="${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
-            rm -f "$REMOTE_DIR/timekeeper.php" || true
+            DIR="${{ secrets.TARGET_DIR }}"
+            rm -f "$DIR/timekeeper.php" || true
 
-      # Upload recursively from repo to server
+      # Upload recursively from repo to server (now target = addon dir)
       - name: Upload add-on via SFTP (recursive)
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -81,7 +85,7 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           port: 2222
           source: "modules/addons/timekeeper/**"
-          target: "${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
+          target: "${{ secrets.TARGET_DIR }}"
           overwrite: true
           debug: true
 
@@ -95,7 +99,8 @@ jobs:
           port: 2222
           script: |
             set -e
-            REMOTE_DIR="${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
-            echo "REMOTE_DIR: $REMOTE_DIR"
-            ls -la "$REMOTE_DIR/timekeeper.php" || echo "(remote file missing)"
-            if command -v md5sum >/dev/null; then md5sum "$REMOTE_DIR/timekeeper.php" || true; else shasum "$REMOTE_DIR/timekeeper.php" || true; fi
+            DIR="${{ secrets.TARGET_DIR }}"
+            ls -la "$DIR/timekeeper.php" || echo "(remote file missing)"
+            if [ -f "$DIR/timekeeper.php" ]; then
+              (command -v md5sum >/dev/null && md5sum "$DIR/timekeeper.php") || shasum "$DIR/timekeeper.php" || true
+            fi
