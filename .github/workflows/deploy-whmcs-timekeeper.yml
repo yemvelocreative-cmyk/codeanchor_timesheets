@@ -30,7 +30,7 @@ jobs:
           test -d modules/addons/timekeeper && echo "Found modules/addons/timekeeper/ ✅" || (echo "Missing modules/addons/timekeeper/ ❌"; exit 1)
           ls -la modules/addons/timekeeper | sed -n '1,60p'
 
-      # Remote BEFORE (timestamp + hash)
+      # Remote BEFORE
       - name: Remote state BEFORE
         uses: appleboy/ssh-action@v1
         with:
@@ -49,35 +49,13 @@ jobs:
             else
               echo "(remote timekeeper.php missing)"
             fi
+            # Warn if a nested copy exists from previous bad uploads
+            if [ -f "$DIR/modules/addons/timekeeper/timekeeper.php" ]; then
+              echo "⚠ Found nested copy at $DIR/modules/addons/timekeeper/timekeeper.php"
+            fi
 
-      # Ensure remote directory exists
-      - name: Ensure remote directory exists
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          port: 2222
-          script: |
-            set -e
-            DIR="${{ secrets.TARGET_DIR }}"
-            mkdir -p "$DIR"
-
-      # Remove target file to guarantee overwrite
-      - name: Remove remote file (force fresh copy)
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          port: 2222
-          script: |
-            set -e
-            DIR="${{ secrets.TARGET_DIR }}"
-            rm -f "$DIR/timekeeper.php" || true
-
-      # Upload recursively from repo to server (now target = addon dir)
-      - name: Upload add-on via SFTP (recursive)
+      # Upload recursively and strip leading path components (modules/addons/timekeeper → .)
+      - name: Upload add-on via SFTP (recursive, strip path)
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -87,9 +65,10 @@ jobs:
           source: "modules/addons/timekeeper/**"
           target: "${{ secrets.TARGET_DIR }}"
           overwrite: true
+          strip_components: 3
           debug: true
 
-      # Remote AFTER (timestamp + hash)
+      # Remote AFTER
       - name: Remote state AFTER
         uses: appleboy/ssh-action@v1
         with:
@@ -103,4 +82,9 @@ jobs:
             ls -la "$DIR/timekeeper.php" || echo "(remote file missing)"
             if [ -f "$DIR/timekeeper.php" ]; then
               (command -v md5sum >/dev/null && md5sum "$DIR/timekeeper.php") || shasum "$DIR/timekeeper.php" || true
+            fi
+            # Optional tidy-up: remove any accidental nested tree if it exists
+            if [ -d "$DIR/modules/addons/timekeeper" ]; then
+              echo "Cleaning nested $DIR/modules ..."
+              rm -rf "$DIR/modules"
             fi
