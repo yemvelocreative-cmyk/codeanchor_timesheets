@@ -5,7 +5,6 @@ on:
     branches: [ main ]
     paths:
       - 'modules/addons/timekeeper/**'
-      - 'timekeeper/**'
       - '.github/workflows/deploy-whmcs-timekeeper.yml'
   workflow_dispatch:
 
@@ -20,38 +19,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Detect where the add-on lives in the repo
-      - name: Detect local add-on path
-        id: detect
-        run: |
-          set -e
-          if [ -d modules/addons/timekeeper ]; then
-            echo "repo_src=modules/addons/timekeeper/**" >> "$GITHUB_OUTPUT"
-            echo "repo_dir=modules/addons/timekeeper" >> "$GITHUB_OUTPUT"
-            echo "Detected layout: modules/addons/timekeeper"
-          elif [ -d timekeeper ]; then
-            echo "repo_src=timekeeper/**" >> "$GITHUB_OUTPUT"
-            echo "repo_dir=timekeeper" >> "$GITHUB_OUTPUT"
-            echo "Detected layout: timekeeper"
-          else
-            echo "❌ Could not find a 'timekeeper' folder in expected locations." >&2
-            echo "Repo tree (first 4 levels):"
-            find . -maxdepth 4 -type d -name 'timekeeper' || true
-            exit 1
-          fi
-
-      # Sanity: secrets exist and local folder is present
+      # Sanity: secrets + local folder
       - name: Sanity check
         run: |
+          set -e
           [ -n "${{ secrets.SSH_HOST }}" ] && echo "SSH_HOST ✅" || (echo "SSH_HOST ❌"; exit 1)
           [ -n "${{ secrets.SSH_USER }}" ] && echo "SSH_USER ✅" || (echo "SSH_USER ❌"; exit 1)
           [ -n "${{ secrets.SSH_PASSWORD }}" ] && echo "SSH_PASSWORD ✅" || (echo "SSH_PASSWORD ❌"; exit 1)
           [ -n "${{ secrets.TARGET_DIR }}" ] && echo "TARGET_DIR ✅" || (echo "TARGET_DIR ❌"; exit 1)
-          echo "Using local dir: ${{ steps.detect.outputs.repo_dir }}"
-          ls -la "${{ steps.detect.outputs.repo_dir }}" | sed -n '1,60p'
+          test -d modules/addons/timekeeper && echo "Found modules/addons/timekeeper/ ✅" || (echo "Missing modules/addons/timekeeper/ ❌"; exit 1)
+          ls -la modules/addons/timekeeper | sed -n '1,60p'
 
-      # Show the remote file BEFORE upload
-      - name: Remote state before
+      # Remote BEFORE
+      - name: Remote state BEFORE
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -60,46 +40,51 @@ jobs:
           port: 2222
           script: |
             set -e
-            REMOTE_DIR="${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
-            echo "Remote dir: $REMOTE_DIR"
-            ls -la "$REMOTE_DIR" || echo "(remote dir missing)"
-            ls -la "$REMOTE_DIR/timekeeper.php" || echo "(remote file missing)"
+            DIR="${{ secrets.TARGET_DIR }}"
+            echo "REMOTE DIR: $DIR"
+            ls -la "$DIR" || echo "(remote dir missing)"
+            if [ -f "$DIR/timekeeper.php" ]; then
+              ls -la "$DIR/timekeeper.php"
+              (command -v md5sum >/dev/null && md5sum "$DIR/timekeeper.php") || shasum "$DIR/timekeeper.php" || true
+            else
+              echo "(remote timekeeper.php missing)"
+            fi
+            # Warn if a nested copy exists from previous bad uploads
+            if [ -f "$DIR/modules/addons/timekeeper/timekeeper.php" ]; then
+              echo "⚠ Found nested copy at $DIR/modules/addons/timekeeper/timekeeper.php"
+            fi
 
-      # Ensure remote directory exists
-      - name: Ensure remote directory exists
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          port: 2222
-          script: |
-            mkdir -p "${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
-
-      # Upload the add-on recursively (maps repo -> server)
-      - name: Upload add-on via SFTP
+      # Upload recursively and strip leading path components (modules/addons/timekeeper → .)
+      - name: Upload add-on via SFTP (recursive, strip path)
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
           port: 2222
-          source: ${{ steps.detect.outputs.repo_src }}
-          target: "${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
+          source: "modules/addons/timekeeper/**"
+          target: "${{ secrets.TARGET_DIR }}"
           overwrite: true
+          strip_components: 3
           debug: true
 
-      # Show the remote file AFTER upload
-      - name: Remote state after
+      # Remote AFTER
+      - name: Remote state AFTER
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
           port: 2222
-        # separate step so its logs are clean
           script: |
             set -e
-            REMOTE_DIR="${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
-            echo "Remote dir: $REMOTE_DIR"
-            ls -la "$REMOTE_DIR/timekeeper.php" || echo "(remote file missing)"
+            DIR="${{ secrets.TARGET_DIR }}"
+            ls -la "$DIR/timekeeper.php" || echo "(remote file missing)"
+            if [ -f "$DIR/timekeeper.php" ]; then
+              (command -v md5sum >/dev/null && md5sum "$DIR/timekeeper.php") || shasum "$DIR/timekeeper.php" || true
+            fi
+            # Optional tidy-up: remove any accidental nested tree if it exists
+            if [ -d "$DIR/modules/addons/timekeeper" ]; then
+              echo "Cleaning nested $DIR/modules ..."
+              rm -rf "$DIR/modules"
+            fi
