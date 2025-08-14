@@ -22,13 +22,21 @@ jobs:
           test -d site && echo "Found site/ ✅" || (echo "Missing site/ ❌"; exit 1)
           ls -la site | sed -n '1,60p'
 
+      - name: Network preflight (port 2222)
+        run: |
+          echo "Resolving host..."
+          getent hosts "${{ secrets.SSH_HOST }}" || nslookup "${{ secrets.SSH_HOST }}" || true
+          echo "Testing TCP 2222..."
+          timeout 5 bash -lc 'cat < /dev/null > /dev/tcp/${{ secrets.SSH_HOST }}/2222' \
+            && echo "Port 2222 open ✅" || (echo "Port 2222 blocked/refused ❌"; exit 1)
+            
       - name: Ensure target directory exists
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
-          port: 22
+          port: 2222
           script: |
             mkdir -p "${{ secrets.TARGET_DIR }}"
             ls -la "${{ secrets.TARGET_DIR }}" || true
@@ -39,7 +47,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
-          port: 22
+          port: 2222
           source: "site/*"
           target: ${{ secrets.TARGET_DIR }}
           overwrite: true
