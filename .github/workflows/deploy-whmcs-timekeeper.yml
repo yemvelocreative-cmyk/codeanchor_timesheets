@@ -1,32 +1,56 @@
+name: Deploy WHMCS Timekeeper (DEV)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'modules/addons/timekeeper/**'
+      - 'timekeeper/**'
+      - '.github/workflows/deploy-whmcs-timekeeper.yml'
+  workflow_dispatch:
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-whmcs-timekeeper-dev
+      cancel-in-progress: true
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Confirm the file exists in the repo (both possible layouts)
-      - name: Check local paths
+      # Detect where the add-on lives in the repo
+      - name: Detect local add-on path
+        id: detect
         run: |
           set -e
-          echo "Looking for modules/addons/timekeeper/timekeeper.php ..."
-          if [ -f modules/addons/timekeeper/timekeeper.php ]; then
-            echo "FOUND: modules/addons/timekeeper/timekeeper.php"
-            LOCAL_FILE="modules/addons/timekeeper/timekeeper.php"
-          elif [ -f timekeeper/timekeeper.php ]; then
-            echo "FOUND: timekeeper/timekeeper.php"
-            LOCAL_FILE="timekeeper/timekeeper.php"
+          if [ -d modules/addons/timekeeper ]; then
+            echo "repo_src=modules/addons/timekeeper/**" >> "$GITHUB_OUTPUT"
+            echo "repo_dir=modules/addons/timekeeper" >> "$GITHUB_OUTPUT"
+            echo "Detected layout: modules/addons/timekeeper"
+          elif [ -d timekeeper ]; then
+            echo "repo_src=timekeeper/**" >> "$GITHUB_OUTPUT"
+            echo "repo_dir=timekeeper" >> "$GITHUB_OUTPUT"
+            echo "Detected layout: timekeeper"
           else
-            echo "❌ timekeeper.php not found in expected locations"
-            echo "Repo tree:"
-            find . -maxdepth 4 -type f -name 'timekeeper.php' || true
+            echo "❌ Could not find a 'timekeeper' folder in expected locations." >&2
+            echo "Repo tree (first 4 levels):"
+            find . -maxdepth 4 -type d -name 'timekeeper' || true
             exit 1
           fi
-          echo "Using LOCAL_FILE=$LOCAL_FILE"
-          ls -la "$LOCAL_FILE"
 
-      # Show the remote file BEFORE upload (so we can compare)
+      # Sanity: secrets exist and local folder is present
+      - name: Sanity check
+        run: |
+          [ -n "${{ secrets.SSH_HOST }}" ] && echo "SSH_HOST ✅" || (echo "SSH_HOST ❌"; exit 1)
+          [ -n "${{ secrets.SSH_USER }}" ] && echo "SSH_USER ✅" || (echo "SSH_USER ❌"; exit 1)
+          [ -n "${{ secrets.SSH_PASSWORD }}" ] && echo "SSH_PASSWORD ✅" || (echo "SSH_PASSWORD ❌"; exit 1)
+          [ -n "${{ secrets.TARGET_DIR }}" ] && echo "TARGET_DIR ✅" || (echo "TARGET_DIR ❌"; exit 1)
+          echo "Using local dir: ${{ steps.detect.outputs.repo_dir }}"
+          ls -la "${{ steps.detect.outputs.repo_dir }}" | sed -n '1,60p'
+
+      # Show the remote file BEFORE upload
       - name: Remote state before
         uses: appleboy/ssh-action@v1
         with:
@@ -36,35 +60,34 @@ jobs:
           port: 2222
           script: |
             set -e
-            REMOTE="${{ secrets.TARGET_DIR }}/modules/addons/timekeeper/timekeeper.php"
-            echo "Remote path: $REMOTE"
-            ls -la "$REMOTE" || echo "(remote file missing)"
+            REMOTE_DIR="${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
+            echo "Remote dir: $REMOTE_DIR"
+            ls -la "$REMOTE_DIR" || echo "(remote dir missing)"
+            ls -la "$REMOTE_DIR/timekeeper.php" || echo "(remote file missing)"
 
-      # Upload the WHOLE add-on recursively
-      - name: Upload add-on via SFTP (recursive)
+      # Ensure remote directory exists
+      - name: Ensure remote directory exists
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 2222
+          script: |
+            mkdir -p "${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
+
+      # Upload the add-on recursively (maps repo -> server)
+      - name: Upload add-on via SFTP
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
           port: 2222
-          source: "modules/addons/timekeeper/**"
+          source: ${{ steps.detect.outputs.repo_src }}
           target: "${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
           overwrite: true
           debug: true
-
-      # If your repo path is actually ./timekeeper/** (not under modules/addons/), use this upload step instead:
-      # - name: Upload add-on via SFTP (alternate layout)
-      #   uses: appleboy/scp-action@v0.1.7
-      #   with:
-      #     host: ${{ secrets.SSH_HOST }}
-      #     username: ${{ secrets.SSH_USER }}
-      #     password: ${{ secrets.SSH_PASSWORD }}
-      #     port: 2222
-      #     source: "timekeeper/**"
-      #     target: "${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
-      #     overwrite: true
-      #     debug: true
 
       # Show the remote file AFTER upload
       - name: Remote state after
@@ -74,8 +97,9 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
           port: 2222
+        # separate step so its logs are clean
           script: |
             set -e
-            REMOTE="${{ secrets.TARGET_DIR }}/modules/addons/timekeeper/timekeeper.php"
-            echo "Remote path: $REMOTE"
-            ls -la "$REMOTE" || echo "(remote file missing)"
+            REMOTE_DIR="${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
+            echo "Remote dir: $REMOTE_DIR"
+            ls -la "$REMOTE_DIR/timekeeper.php" || echo "(remote file missing)"
