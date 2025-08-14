@@ -35,20 +35,17 @@ jobs:
           echo "Using LOCAL_FILE=$LOCAL_FILE"
           ls -la "$LOCAL_FILE"
 
-      # Show the remote file BEFORE upload (so we can compare)
-      - name: Remote state before
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          port: 2222
-          script: |
-            set -e
-            REMOTE="${{ secrets.TARGET_DIR }}/modules/addons/timekeeper/timekeeper.php"
-            echo "Remote path: $REMOTE"
-            ls -la "$REMOTE" || echo "(remote file missing)"
-
+      # BEFORE upload: show remote file timestamp
+    - name: Remote state before
+      uses: appleboy/ssh-action@v1
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        password: ${{ secrets.SSH_PASSWORD }}
+        port: 2222
+        script: |
+          ls -la "${{ secrets.TARGET_DIR }}/modules/addons/timekeeper/timekeeper.php" || echo "(remote missing)"
+          
       # Upload the WHOLE add-on recursively
       - name: Upload add-on via SFTP (recursive)
         uses: appleboy/scp-action@v0.1.7
@@ -57,26 +54,18 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
           port: 2222
-          source: "modules/addons/timekeeper/**"
+          source: "timekeeper/**"    # ← this matches your repo layout
           target: "${{ secrets.TARGET_DIR }}/modules/addons/timekeeper"
           overwrite: true
           debug: true
 
-      # Show the remote file AFTER upload
-      - name: Remote state after
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          port: 2222
-          script: |
-            set -e
-            REMOTE="${{ secrets.TARGET_DIR }}/modules/addons/timekeeper/timekeeper.php"
-            echo "Remote path: $REMOTE"
-            ls -la "$REMOTE" || echo "(remote file missing)"
-
-            set -e
-            REMOTE="${{ secrets.TARGET_DIR }}/modules/addons/timekeeper/timekeeper.php"
-            echo "Remote path: $REMOTE"
-            ls -la "$REMOTE" || echo "(remote file missing)"
+     # AFTER upload: show remote file timestamp
+    - name: Remote state after
+      uses: appleboy/ssh-action@v1
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        password: ${{ secrets.SSH_PASSWORD }}
+        port: 2222
+        script: |
+          ls -la "${{ secrets.TARGET_DIR }}/modules/addons/timekeeper/timekeeper.php" || echo "(remote missing)"
