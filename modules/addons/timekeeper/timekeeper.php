@@ -2,6 +2,8 @@
 if (!defined("WHMCS")) {
     die("This file cannot be accessed directly.");
 }
+use WHMCS\Database\Capsule;
+
 function timekeeper_config() {
     return [
         'name'        => 'Timekeeper',
@@ -36,7 +38,8 @@ function timekeeper_output($vars) {
 
     // Include navigation (but not during CSV export)
     if (!isset($_GET['export']) || $_GET['export'] !== '1') {
-        include __DIR__ . '/includes/navigation.php';}
+        include __DIR__ . '/includes/navigation.php';
+    }
     switch ($page) {
         case 'dashboard':
             include __DIR__ . '/pages/dashboard.php';
@@ -90,8 +93,6 @@ function timekeeper_output($vars) {
             break;
     }
 }
-<?php
-use WHMCS\Database\Capsule;
 
 function timekeeper_activate()
 {
