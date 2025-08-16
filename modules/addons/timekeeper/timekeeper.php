@@ -1,4 +1,54 @@
 <?php
+
+use WHMCS\Config\Setting;
+
+/**
+ * Build a public URL for an asset under modules/addons/timekeeper/.
+ * Uses SystemURL to ensure correct base, works from admin.
+ */
+function tk_asset_url(string $relativePath): string
+{
+    $base = rtrim(Setting::get('SystemURL'), '/'); // e.g., https://example.com
+    return $base . '/modules/addons/timekeeper/' . ltrim($relativePath, '/');
+}
+
+/**
+ * Get a version string based on file mtime for cache-busting.
+ * Falls back to a static version if file missing (e.g., before first deploy).
+ */
+function tk_asset_ver(string $relativePath, string $fallback = '1.0.0'): string
+{
+    $abs = __DIR__ . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $relativePath);
+    return is_file($abs) ? (string) filemtime($abs) : $fallback;
+}
+
+/**
+ * Echo <link>/<script> tags for page-specific and/or global assets.
+ * $assets = [
+ *   'css' => ['timekeeper.css', 'departments.css'],
+ *   'js'  => ['timekeeper.js', 'departments.js']
+ * ];
+ */
+function tk_load_assets(array $assets): void
+{
+    // CSS
+    if (!empty($assets['css'])) {
+        foreach ($assets['css'] as $css) {
+            $rel = 'css/' . ltrim($css, '/');
+            $href = tk_asset_url($rel) . '?v=' . tk_asset_ver($rel);
+            echo '<link rel="stylesheet" href="' . htmlspecialchars($href, ENT_QUOTES, 'UTF-8') . '">' . PHP_EOL;
+        }
+    }
+    // JS (defer to avoid blocking)
+    if (!empty($assets['js'])) {
+        foreach ($assets['js'] as $js) {
+            $rel = 'js/' . ltrim($js, '/');
+            $src = tk_asset_url($rel) . '?v=' . tk_asset_ver($rel);
+            echo '<script defer src="' . htmlspecialchars($src, ENT_QUOTES, 'UTF-8') . '"></script>' . PHP_EOL;
+        }
+    }
+}
+
 if (!defined("WHMCS")) {
     die("This file cannot be accessed directly.");
 }
