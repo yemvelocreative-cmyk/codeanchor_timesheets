@@ -1,0 +1,57 @@
+/* ===== Settings Page Only ===== */
+
+.timekeeper-root .timekeeper-settings-cron code {
+    background-color: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 90%;
+    display: inline-block;
+}
+.timekeeper-root .timekeeper-settings-cron h4 {
+    margin-bottom: 0.5rem;
+    font-size: 18px;
+}
+.timekeeper-root .timekeeper-settings-cron p.text-muted {
+    margin-bottom: 1rem;
+    font-size: 14px;
+    color: #6c757d;
+}
+
+/* Dual Select (assign users) */
+.timekeeper-root .timekeeper-user-select-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+}
+.timekeeper-root .dual-select-container {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: nowrap;
+}
+.timekeeper-root .user-select-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 0 0 auto;
+    width: 220px;
+}
+.timekeeper-root .user-select-block:last-of-type { margin-left: 16px; }
+.timekeeper-root .dual-select-controls-wrapper {
+    display: flex;
+    align-items: center;
+    padding-right: 16px;
+}
+.timekeeper-root .dual-select-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 100%;
+    margin-top: 0;
+}
+.timekeeper-root .user-select-label { font-size: 14px; font-weight: 500; }
+.timekeeper-root #saveSettingsButton { margin-top: 16px; }
