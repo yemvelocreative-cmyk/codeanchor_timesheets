@@ -4,27 +4,26 @@ use WHMCS\Config\Setting;
 
 /**
  * Build a public URL for an asset under modules/addons/timekeeper/.
- * Uses SystemURL to ensure correct base, works from admin.
+ * Uses SystemURL/SystemSSLURL to ensure correct base, works from admin.
  */
-function tk_asset_url(string $relativePath): stringfunction tk_asset_url(string $relativePath): string
+function tk_asset_url(string $relativePath): string
 {
     // Prefer SSL URL if we're on HTTPS and it's configured, else fallback to SystemURL
-    $ssl = \WHMCS\Config\Setting::getValue('SystemSSLURL');
-    $base = $ssl && (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    $ssl  = Setting::getValue('SystemSSLURL');
+    $base = ($ssl && (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'))
         ? $ssl
-        : \WHMCS\Config\Setting::getValue('SystemURL');
+        : Setting::getValue('SystemURL');
 
     // Final fallback to current host if config is missing (very rare)
     if (!$base) {
         $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $base = $scheme . '://' . $host;
+        $host   = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $base   = $scheme . '://' . $host;
     }
 
     $base = rtrim($base, '/'); // normalize
     return $base . '/modules/addons/timekeeper/' . ltrim($relativePath, '/');
 }
-
 
 /**
  * Get a version string based on file mtime for cache-busting.
