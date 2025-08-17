@@ -31,9 +31,9 @@
 }
 
 .timekeeper-root .tc-actions {
-  display: flex;
+/*   display: flex;
   gap: 8px;
-  flex-wrap: nowrap;    /* <-- the key: keep Save + Delete on one line */
+  flex-wrap: nowrap;    <-- the key: keep Save + Delete on one line */
   padding-top: 3px;
 }
 
