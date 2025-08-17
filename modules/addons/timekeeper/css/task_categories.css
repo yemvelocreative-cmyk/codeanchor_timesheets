@@ -34,8 +34,17 @@
   display: flex;
   gap: 8px;
   flex-wrap: nowrap;    /* <-- the key: keep Save + Delete on one line */
+  padding-top: 6px;
 }
 
 .timekeeper-root .tc-actions .btn {
   white-space: nowrap;  /* avoids breaking long button labels */
+}
+
+/* Add a little space between consecutive rows */
+.timekeeper-root .tc-rows form {
+  margin-bottom: 10px;
+}
+.timekeeper-root .tc-rows form:last-of-type {
+  margin-bottom: 0;
 }
