@@ -10,7 +10,6 @@ $reportTitle = 'Timesheet Audit Report';
 /** ---------------------------
  * Helpers
  * -------------------------- */
-
 $fmtDate = function ($str) {
     $ts = strtotime($str ?? '');
     return $ts ? date('Y-m-d', $ts) : date('Y-m-d');
@@ -21,22 +20,22 @@ $parseToMinutes = function ($val) {
     if ($val === null || $val === '') return 0;
     $s = trim((string)$val);
 
+    // 1) HH:MM (or H:MM)
     if (strpos($s, ':') !== false) {
-        // HH:MM (or H:MM)
         [$h, $m] = array_pad(explode(':', $s, 2), 2, '0');
         $h = (int)preg_replace('/\D/', '', $h);
         $m = (int)preg_replace('/\D/', '', $m);
         return max(0, $h) * 60 + max(0, $m);
     }
+
+    // 2) Numeric => HOURS (decimal or integer)
     if (is_numeric($s)) {
-        // If it has a dot, treat as hours.decimal; else assume minutes
-        if (strpos($s, '.') !== false) {
-            return (int)round(((float)$s) * 60);
-        }
-        return (int)$s;
+        return (int) round(((float)$s) * 60);
     }
+
     return 0;
 };
+
 $fmtMinutes = function ($mins) {
     $mins = max(0, (int)$mins);
     $h = (int) floor($mins / 60);
@@ -58,8 +57,9 @@ if (strtotime($from) > strtotime($to)) {
 // Filters
 $filterAdminId  = isset($_GET['admin_id'])  ? (int)$_GET['admin_id']  : 0;   // 0 = all
 $filterClientId = isset($_GET['client_id']) ? (int)$_GET['client_id'] : 0;   // 0 = all
+
 $allowedStatuses = ['pending','approved','rejected'];
-$filterStatus   = (isset($_GET['status']) && in_array($_GET['status'], $allowedStatuses, true))
+$filterStatus = (isset($_GET['status']) && in_array($_GET['status'], $allowedStatuses, true))
     ? $_GET['status'] : 'all';
 
 $allowedGroups = ['none','client','admin'];
@@ -69,13 +69,14 @@ $groupBy = (isset($_GET['group_by']) && in_array($_GET['group_by'], $allowedGrou
 /** ---------------------------
  * Schema detection (task category)
  * -------------------------- */
-
 $schema = Capsule::schema();
+
 $taskCategoryColumn = null;
 if ($schema->hasColumn('mod_timekeeper_timesheet_entries', 'task_category_id')) {
     $taskCategoryColumn = 'task_category_id';
-} elseif ($schema->hasColumn('mod_timekeeper_timesheet_entries', 'task_category_id')) {
-    $taskCategoryColumn = 'task_category_id';
+} elseif ($schema->hasColumn('mod_timekeeper_timesheet_entries', 'task_category')) {
+    // fallback for alt naming
+    $taskCategoryColumn = 'task_category';
 } elseif ($schema->hasColumn('mod_timekeeper_timesheet_entries', 'task_id')) {
     $taskCategoryColumn = 'task_id';
 }
@@ -86,6 +87,8 @@ $taskLookupId    = 'id';
 
 if ($schema->hasTable('mod_timekeeper_task_categories')) {
     $taskLookupTable = 'mod_timekeeper_task_categories';
+} elseif ($schema->hasTable('mod_timekeeper_tasks')) {
+    $taskLookupTable = 'mod_timekeeper_tasks';
 } elseif ($schema->hasTable('mod_timekeeper_subtasks')) {
     $taskLookupTable = 'mod_timekeeper_subtasks';
 }
@@ -94,34 +97,38 @@ if ($schema->hasTable('mod_timekeeper_task_categories')) {
  * Maps for dropdowns/labels
  * -------------------------- */
 // Admins: only active
-$adminQuery = Capsule::table('tbladmins')->select('id','firstname','lastname')->orderBy('firstname');
-$adminSchema = Capsule::schema();
-if ($adminSchema->hasColumn('tbladmins', 'disabled')) {
+$adminQuery = Capsule::table('tbladmins')
+    ->select('id','firstname','lastname')
+    ->orderBy('firstname');
+
+if ($schema->hasColumn('tbladmins', 'disabled')) {
     // Common in recent WHMCS: disabled = 0 means active
     $adminQuery->where('disabled', 0);
-} elseif ($adminSchema->hasColumn('tbladmins', 'status')) {
-
+} elseif ($schema->hasColumn('tbladmins', 'status')) {
     // Older installs may use a status column
     $adminQuery->where('status', 'Active');
 }
 
 $adminRows = $adminQuery->get();
 $adminMap = [];
-
 foreach ($adminRows as $a) {
     $adminMap[$a->id] = trim(($a->firstname ?? '') . ' ' . ($a->lastname ?? '')) ?: ('Admin #' . (int)$a->id);
 }
 
-$clientRows = Capsule::table('tblclients')->select('id','companyname','firstname','lastname')->orderBy('companyname')->orderBy('firstname')->get();
-$clientMap  = [];
+$clientRows = Capsule::table('tblclients')
+    ->select('id','companyname','firstname','lastname')
+    ->orderBy('companyname')->orderBy('firstname')
+    ->get();
+
+$clientMap = [];
 foreach ($clientRows as $c) {
     $label = $c->companyname ?: trim(($c->firstname ?? '') . ' ' . ($c->lastname ?? ''));
     $clientMap[$c->id] = $label !== '' ? $label : ('Client #' . (int)$c->id);
 }
 
 $deptMap = Capsule::table('mod_timekeeper_departments')->pluck('name', 'id')->toArray();
-$taskCatMap = [];
 
+$taskCatMap = [];
 if ($taskLookupTable) {
     $taskCatMap = Capsule::table($taskLookupTable)->pluck($taskLookupName, $taskLookupId)->toArray();
 }
@@ -178,11 +185,10 @@ $entries = $q->orderBy('t.timesheet_date', 'desc')
 /** ---------------------------
  * Build rows + totals
  * -------------------------- */
-
 $rows = [];
-$totalMinutesSpent   = 0;
-$totalMinutesBillable= 0;
-$totalMinutesSla     = 0;
+$totalMinutesSpent    = 0;
+$totalMinutesBillable = 0;
+$totalMinutesSla      = 0;
 
 foreach ($entries as $r) {
     $adminName    = $adminMap[$r->admin_id] ?? ('Admin #' . (int)$r->admin_id);
@@ -211,9 +217,9 @@ foreach ($entries as $r) {
         'start_time'        => $r->start_time,
         'end_time'          => $r->end_time,
         'time_spent'        => $r->time_spent,
-        'billable'          => (int)$r->billable,
+        'billable'          => (int)!!$r->billable,
         'billable_time'     => $r->billable_time,
-        'sla'               => (int)$r->sla,
+        'sla'               => (int)!!$r->sla,
         'sla_time'          => $r->sla_time,
     ];
 }
@@ -224,10 +230,9 @@ $totals = [
     'sla_hhmm'      => $fmtMinutes($totalMinutesSla),
 ];
 
-// ---------------------------
-// Grouping (client/admin)
-// ---------------------------
-
+/** ---------------------------
+ * Grouping (client/admin)
+ * -------------------------- */
 $groups = [];
 if ($groupBy !== 'none') {
     $keyField = ($groupBy === 'client') ? 'client_name' : 'admin_name';
@@ -263,24 +268,25 @@ if ($groupBy !== 'none') {
 /** ---------------------------
  * Expose to template
  * -------------------------- */
-
 $__vars = [
-    'reportTitle'   => $reportTitle,
-    'from'          => $from,
-    'to'            => $to,
-    'rows'          => $rows,
-    'adminMap'      => $adminMap,
-    'clientMap'     => $clientMap,
-    'filterAdminId' => $filterAdminId,
-    'filterClientId'=> $filterClientId,
-    'filterStatus'  => $filterStatus,
-    'totals'        => $totals,
-    'groupBy' => $groupBy,
-    'groups'  => ($groupBy === 'none') ? [] : array_values($groups),
+    'reportTitle'    => $reportTitle,
+    'from'           => $from,
+    'to'             => $to,
+    'rows'           => $rows,
+    'adminMap'       => $adminMap,
+    'clientMap'      => $clientMap,
+    'filterAdminId'  => $filterAdminId,
+    'filterClientId' => $filterClientId,
+    'filterStatus'   => $filterStatus,
+    'totals'         => $totals,
+    'groupBy'        => $groupBy,
+    'groups'         => ($groupBy === 'none') ? [] : array_values($groups),
 ];
 extract($__vars);
 
-// CSV Export (client-side Blob): build CSV string and trigger download if requested
+/** ---------------------------
+ * CSV Export (client-side Blob)
+ * -------------------------- */
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     // Build CSV headers and rows (same order as the on-screen table)
     $flatHeader = [
@@ -297,6 +303,18 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
         $s = str_replace('"', '""', $s);
         return $needs ? '"' . $s . '"' : $s;
     };
+    // Guard against CSV/Excel formula injection
+    $csvSanitize = function ($v) {
+        $s = (string)$v;
+        if ($s !== '' && in_array($s[0], ['=', '+', '-', '@'], true)) {
+            $s = "'" . $s;
+        }
+        return $s;
+    };
+    $esc = function ($v) use ($csvSanitize, $csvEscape) {
+        return $csvEscape($csvSanitize($v));
+    };
+
     if ($groupBy === 'none') {
         // Flat export (exactly the filtered rows)
         $csvLines[] = implode(',', array_map($csvEscape, $flatHeader));
@@ -318,14 +336,14 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                 $r['sla'] ? 'Yes' : 'No',
                 $r['sla_time'],
             ];
-            $csvLines[] = implode(',', array_map($csvEscape, $row));
+            $csvLines[] = implode(',', array_map($esc, $row));
         }
     } else {
         // Grouped export: match on-screen layout with sections (no extra "Group" column)
         $groupLabelPrefix = ($groupBy === 'client') ? 'Client: ' : 'Admin: ';
         foreach ($groups as $g) {
             // Group header line
-            $csvLines[] = $csvEscape($groupLabelPrefix . $g['label']);
+            $csvLines[] = $esc($groupLabelPrefix . $g['label']);
             // Table header (same as UI)
             $csvLines[] = implode(',', array_map($csvEscape, $flatHeader));
             // Group rows
@@ -347,20 +365,20 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                     $r['sla'] ? 'Yes' : 'No',
                     $r['sla_time'],
                 ];
-                $csvLines[] = implode(',', array_map($csvEscape, $row));
+                $csvLines[] = implode(',', array_map($esc, $row));
             }
 
             // Per-group subtotal line (align with the Time columns)
-            $csvLines[] = implode(',', array_map($csvEscape, [
-                $groupLabelPrefix . $g['label'] . ' — Subtotal',
+            $csvLines[] = implode(',', [
+                $esc($groupLabelPrefix . $g['label'] . ' — Subtotal'),
                 '', '', '', '', '', '', '',
                 '', '',
-                $g['totals_fmt']['spent'],
+                $esc($g['totals_fmt']['spent']),
                 '',
-                $g['totals_fmt']['billable'],
+                $esc($g['totals_fmt']['billable']),
                 '',
-                $g['totals_fmt']['sla'],
-            ]));
+                $esc($g['totals_fmt']['sla']),
+            ]);
 
             // Blank spacer between groups
             $csvLines[] = '';
@@ -371,10 +389,10 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
 
     // Grand totals footer (same for flat & grouped)
     $csvLines[] = '';
-    $csvLines[] = implode(',', array_map($csvEscape, [
-        'Grand Totals', '', '', '', '', '', '', '', '', '',
-        $totals['spent_hhmm'], '', $totals['billable_hhmm'], '', $totals['sla_hhmm']
-    ]));
+    $csvLines[] = implode(',', [
+        $esc('Grand Totals'), '', '', '', '', '', '', '', '', '',
+        $esc($totals['spent_hhmm']), '', $esc($totals['billable_hhmm']), '', $esc($totals['sla_hhmm'])
+    ]);
     $csvString = implode("\r\n", $csvLines);
 
     // Filename reflects filters and grouping
@@ -382,7 +400,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     if ($groupBy !== 'none') {
         $fname .= '_by-' . $groupBy;
     }
-    if (!empty($filterAdminId)) $fname .= '_admin-' . (int)$filterAdminId;
+    if (!empty($filterAdminId))  $fname .= '_admin-'  . (int)$filterAdminId;
     if (!empty($filterClientId)) $fname .= '_client-' . (int)$filterClientId;
     if ($filterStatus !== 'all') $fname .= '_status-' . $filterStatus;
     $fname .= '.csv';
@@ -406,7 +424,9 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     // NOTE: Do NOT return here. Let the template render normally.
 }
 
-// Use your known template path under /templates/admin/components/
+/** ---------------------------
+ * Template include
+ * -------------------------- */
 $tplPath = __DIR__ . '/../templates/admin/components/report_timesheet_audit.tpl';
 
 if (!file_exists($tplPath)) {

@@ -1,1 +1,249 @@
-<?php// expects: $reportTitle, $from, $to, $rows, $adminMap, $clientMap, $filterAdminId, $filterClientId, $filterStatus, $totals?><link rel="stylesheet" href="../modules/addons/timekeeper/css/report_output.css" /><div id="ts-audit"><h3 style="margin-top:0;"><?= e($reportTitle) ?></h3><form method="get">  <input type="hidden" name="module" value="timekeeper">  <input type="hidden" name="timekeeperpage" value="reports">  <input type="hidden" name="r" value="timesheet_audit">  <div class="timekeeper-report-filters">    <div class="timekeeper-filter">      <label for="from">From</label>      <input type="date" id="from" name="from" value="<?= e($from) ?>" />    </div>    <div class="timekeeper-filter">      <label for="to">To</label>      <input type="date" id="to" name="to" value="<?= e($to) ?>" />    </div>    <div class="timekeeper-filter">      <label for="admin_id">Admin</label>      <select id="admin_id" name="admin_id">            <option value="0">All Admins</option>            <?php foreach ($adminMap as $id => $name): ?>                <option value="<?= (int)$id ?>" <?= ($filterAdminId == $id ? 'selected' : '') ?>>                    <?= e($name) ?>                </option>            <?php endforeach; ?>        </select>    </div>    <div class="timekeeper-filter">      <label for="client_id">Client</label>      <select id="client_id" name="client_id" class="js-client-select">        <option value="0">All Clients</option>        <?php foreach ($clientMap as $id => $name): ?>            <option value="<?= (int)$id ?>" <?= ($filterClientId == $id ? 'selected' : '') ?>>                <?= e($name) ?>            </option>        <?php endforeach; ?>    </select>    </div>    <div class="timekeeper-filter">      <label for="status">Status</label>        <select id="status" name="status">            <option value="all"      <?= ($filterStatus === 'all' ? 'selected' : '') ?>>All</option>            <option value="pending"  <?= ($filterStatus === 'pending' ? 'selected' : '') ?>>Pending</option>            <option value="approved" <?= ($filterStatus === 'approved' ? 'selected' : '') ?>>Approved</option>            <option value="rejected" <?= ($filterStatus === 'rejected' ? 'selected' : '') ?>>Rejected</option>        </select>    </div>    <div class="timekeeper-filter">      <label for="group_by">Group by</label>      <select id="group_by" name="group_by">        <option value="none"   <?= ($groupBy === 'none'   ? 'selected' : '') ?>>None</option>        <option value="client" <?= ($groupBy === 'client' ? 'selected' : '') ?>>Client</option>        <option value="admin"  <?= ($groupBy === 'admin'  ? 'selected' : '') ?>>Admin</option>      </select>    </div>    <div class="timekeeper-filter action">      <button type="submit" class="btn btn-primary">Apply</button>    </div>    <div class="timekeeper-filter action">      <button type="submit" name="export" value="csv" class="btn btn-success">Export CSV</button>    </div>  </div></form><?php if (empty($rows)): ?>    <div class="timekeeper-report-noresults">No entries found for the selected filters.</div><?php else: ?>    <?php if ($groupBy === 'none'): ?>        <!-- Flat table (no grouping) -->        <div style="overflow-x:auto;">            <table class="timekeeper-report-table">                <thead>                <tr style="white-space:nowrap;">                    <th>Date</th>                    <th>Status</th>                    <th>Admin</th>                    <th>Client</th>                    <th>Department</th>                    <th>Task Category</th>                    <th>Ticket ID</th>                    <th>Description</th>                    <th>Start</th>                    <th>End</th>                    <th>Time Spent</th>                    <th>Billable</th>                    <th>Billable Time</th>                    <th>SLA</th>                    <th>SLA Time</th>                </tr>                </thead>                <tbody>                <?php foreach ($rows as $r): ?>                    <tr>                        <td><?= e($r['timesheet_date']) ?></td>                        <td><?= e(ucfirst($r['timesheet_status'])) ?></td>                        <td><?= e($r['admin_name']) ?></td>                        <td><?= e($r['client_name']) ?></td>                        <td><?= e($r['department']) ?></td>                        <td><?= e($r['task_category']) ?></td>                        <td><?= e($r['ticket_id']) ?></td>                        <td class="description"><?= e($r['description']) ?></td>                        <td><?= e($r['start_time']) ?></td>                        <td><?= e($r['end_time']) ?></td>                        <td><?= e($r['time_spent']) ?></td>                        <td><?= $r['billable'] ? 'Yes' : 'No' ?></td>                        <td><?= e($r['billable_time']) ?></td>                        <td><?= $r['sla'] ? 'Yes' : 'No' ?></td>                        <td><?= e($r['sla_time']) ?></td>                    </tr>                <?php endforeach; ?>                </tbody>            </table>        </div>    <?php else: ?>        <!-- Grouped output: one section per group with per-group totals -->        <?php foreach ($groups as $g): ?>            <h4 style="margin:16px 0 8px 0;">                <?= e($g['label']) ?>                <small style="font-weight:normal; margin-left:10px;">                    (Spent: <?= e($g['totals_fmt']['spent']) ?> |                     Billable: <?= e($g['totals_fmt']['billable']) ?> |                     SLA: <?= e($g['totals_fmt']['sla']) ?>)                </small>            </h4>            <div style="overflow-x:auto;">                <table class="timekeeper-report-table">                    <thead>                    <tr style="white-space:nowrap;">                        <th>Date</th>                        <th>Status</th>                        <th>Admin</th>                        <th>Client</th>                        <th>Department</th>                        <th>Task Category</th>                        <th>Ticket ID</th>                        <th>Description</th>                        <th>Start</th>                        <th>End</th>                        <th>Time Spent</th>                        <th>Billable</th>                        <th>Billable Time</th>                        <th>SLA</th>                        <th>SLA Time</th>                    </tr>                    </thead>                    <tbody>                    <?php foreach ($g['rows'] as $r): ?>                        <tr>                            <td><?= e($r['timesheet_date']) ?></td>                            <td><?= e(ucfirst($r['timesheet_status'])) ?></td>                            <td><?= e($r['admin_name']) ?></td>                            <td><?= e($r['client_name']) ?></td>                            <td><?= e($r['department']) ?></td>                            <td><?= e($r['task_category']) ?></td>                            <td><?= e($r['ticket_id']) ?></td>                            <td class="description"><?= e($r['description']) ?></td>                            <td><?= e($r['start_time']) ?></td>                            <td><?= e($r['end_time']) ?></td>                            <td><?= e($r['time_spent']) ?></td>                            <td><?= $r['billable'] ? 'Yes' : 'No' ?></td>                            <td><?= e($r['billable_time']) ?></td>                            <td><?= $r['sla'] ? 'Yes' : 'No' ?></td>                            <td><?= e($r['sla_time']) ?></td>                        </tr>                    <?php endforeach; ?>                    </tbody>                </table>            </div>        <?php endforeach; ?>    <?php endif; ?>    <!-- Grand Totals -->    <div class="timekeeper-report-totals">        <strong>Totals:</strong>        <span>Time Spent: <?= e($totals['spent_hhmm']) ?></span>        <span>Billable Time: <?= e($totals['billable_hhmm']) ?></span>        <span>SLA Time: <?= e($totals['sla_hhmm']) ?></span>    </div><?php endif; ?></div><script>// Progressive enhancement for client search(function() {    // If Select2 exists, use it with a smart matcher    var hasSelect2 = (window.jQuery && jQuery.fn && typeof jQuery.fn.select2 === 'function');    if (hasSelect2) {        var $ = window.jQuery;        function customMatcher(params, data) {            if ($.trim(params.term) === '') return data;            if (typeof data.text === 'undefined') return null;            var term = params.term.toLowerCase();            var text = (data.text || '').toLowerCase();            return text.indexOf(term) > -1 ? data : null;        }        $('.js-client-select').select2({          width: 'style',       // respects the 260px CSS width          placeholder: 'All Clients',          allowClear: true,          matcher: customMatcher        });        // Ensure width fits our layout        $('.js-client-select').css('min-width', '260px');        return;    }    // Fallback: add a tiny filter input that narrows the options    var clientSelect = document.getElementById('client_id');    if (!clientSelect) return;    var wrapper = document.createElement('div');    wrapper.style.display = 'flex';    wrapper.style.flexDirection = 'column';    wrapper.style.gap = '6px';    // Insert wrapper before the select and move the select inside it    clientSelect.parentNode.insertBefore(wrapper, clientSelect);    wrapper.appendChild(clientSelect);    var filter = document.createElement('input');    filter.type = 'text';    filter.placeholder = 'Type to filter clients...';    filter.style.padding = '6px';    filter.style.minWidth = '260px';    wrapper.insertBefore(filter, clientSelect);    filter.addEventListener('input', function() {        var q = this.value.toLowerCase();        var opts = clientSelect.options;        var selectedStillVisible = false;        for (var i = 0; i < opts.length; i++) {            var text = (opts[i].text || '').toLowerCase();            var match = (q === '') || (text.indexOf(q) > -1) || (opts[i].value === '0'); // keep "All Clients"            opts[i].style.display = match ? '' : 'none';            if (match && opts[i].selected) selectedStillVisible = true;        }        // If the current selection is filtered out, reset to "All Clients"        if (!selectedStillVisible) {            clientSelect.value = '0';        }    });})();</script>
+<?php if (!defined('WHMCS')) { die('Access Denied'); } ?>
+<?php
+$h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
+$baseUrl = 'addonmodules.php?module=timekeeper&timekeeperpage=reports&r=timesheet_audit';
+?>
+<link rel="stylesheet" href="/modules/addons/timekeeper/css/report_output.css" />
+
+<div id="ts-audit" class="timekeeper-report">
+  <h3 style="margin-top:0;"><?= $h($reportTitle ?? 'Timesheet Audit Report') ?></h3>
+
+  <form method="get" action="<?= $h($baseUrl) ?>" class="timekeeper-report-filters">
+    <input type="hidden" name="module" value="timekeeper">
+    <input type="hidden" name="timekeeperpage" value="reports">
+    <input type="hidden" name="r" value="timesheet_audit">
+
+    <div class="filter-row" style="display:flex;flex-wrap:wrap;gap:12px 18px;align-items:flex-end;">
+      <div class="filter-item" style="min-width:180px;">
+        <label>From</label>
+        <input type="date" name="from" value="<?= $h($from) ?>">
+      </div>
+      <div class="filter-item" style="min-width:180px;">
+        <label>To</label>
+        <input type="date" name="to" value="<?= $h($to) ?>">
+      </div>
+
+      <div class="filter-item" style="min-width:220px;">
+        <label>Admin</label>
+        <select name="admin_id">
+          <option value="0">All</option>
+          <?php foreach (($adminMap ?? []) as $id => $name): ?>
+            <option value="<?= (int)$id ?>" <?= (!empty($filterAdminId) && (int)$filterAdminId === (int)$id) ? 'selected' : '' ?>>
+              <?= $h($name) ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+
+      <div class="filter-item" style="min-width:220px;">
+        <label>Client</label>
+        <select name="client_id" class="js-client-select">
+          <option value="0">All</option>
+          <?php foreach (($clientMap ?? []) as $id => $name): ?>
+            <option value="<?= (int)$id ?>" <?= (!empty($filterClientId) && (int)$filterClientId === (int)$id) ? 'selected' : '' ?>>
+              <?= $h($name) ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+
+      <div class="filter-item" style="min-width:160px;">
+        <label>Status</label>
+        <select name="status">
+          <?php
+            $statuses = ['all' => 'All', 'pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected'];
+            $selStatus = $filterStatus ?? 'all';
+          ?>
+          <?php foreach ($statuses as $val => $label): ?>
+            <option value="<?= $h($val) ?>" <?= ($selStatus === $val) ? 'selected' : '' ?>><?= $h($label) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+
+      <div class="filter-item" style="min-width:160px;">
+        <label>Group By</label>
+        <select name="group_by">
+          <?php
+            $groupsAllowed = ['none' => 'None', 'client' => 'Client', 'admin' => 'Admin'];
+            $selGroup = $groupBy ?? 'none';
+          ?>
+          <?php foreach ($groupsAllowed as $val => $label): ?>
+            <option value="<?= $h($val) ?>" <?= ($selGroup === $val) ? 'selected' : '' ?>><?= $h($label) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+
+      <div class="filter-actions" style="display:flex;gap:10px;margin-left:auto;">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a class="btn btn-secondary" href="<?= $h($baseUrl) ?>">Clear</a>
+        <!-- This triggers the client-side Blob download in report_timesheet_audit.php -->
+        <a class="btn btn-success"
+           href="<?= $h($baseUrl
+               . '&from=' . urlencode($from)
+               . '&to=' . urlencode($to)
+               . '&admin_id=' . (int)($filterAdminId ?? 0)
+               . '&client_id=' . (int)($filterClientId ?? 0)
+               . '&status=' . urlencode($selStatus)
+               . '&group_by=' . urlencode($selGroup)
+               . '&export=csv'
+            ) ?>">
+          Export CSV
+        </a>
+      </div>
+    </div>
+  </form>
+
+  <?php if (($groupBy ?? 'none') === 'none'): ?>
+    <!-- Flat table -->
+    <div class="table-responsive">
+      <table class="table table-bordered timekeeper-report-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Admin</th>
+            <th>Client</th>
+            <th>Department</th>
+            <th>Task Category</th>
+            <th>Ticket ID</th>
+            <th>Description</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Time Spent (hrs)</th>
+            <th>Billable</th>
+            <th>Billable Time (hrs)</th>
+            <th>SLA</th>
+            <th>SLA Time (hrs)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if (empty($rows)): ?>
+            <tr>
+              <td colspan="15">
+                <div style="background:#e2f0d9;border:1px solid #a2d28f;padding:8px;">
+                  No entries for the selected filters.
+                </div>
+              </td>
+            </tr>
+          <?php else: ?>
+            <?php foreach ($rows as $r): ?>
+              <tr>
+                <td><?= $h($r['timesheet_date']) ?></td>
+                <td><?= $h(ucfirst($r['timesheet_status'])) ?></td>
+                <td><?= $h($r['admin_name']) ?></td>
+                <td><?= $h($r['client_name']) ?></td>
+                <td><?= $h($r['department']) ?></td>
+                <td><?= $h($r['task_category']) ?></td>
+                <td><?= $h($r['ticket_id']) ?></td>
+                <td class="description"><?= $h($r['description']) ?></td>
+                <td><?= $h($r['start_time']) ?></td>
+                <td><?= $h($r['end_time']) ?></td>
+                <td class="num"><?= $h($r['time_spent']) ?></td>
+                <td><?= !empty($r['billable']) ? 'Yes' : 'No' ?></td>
+                <td class="num"><?= $h($r['billable_time']) ?></td>
+                <td><?= !empty($r['sla']) ? 'Yes' : 'No' ?></td>
+                <td class="num"><?= $h($r['sla_time']) ?></td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="10" style="text-align:right;">Grand Totals</th>
+            <th class="num"><?= $h($totals['spent_hhmm'] ?? '') ?> (<?= $h($totals['spent_hhmm'] ?? '') ?>)</th>
+            <th></th>
+            <th class="num"><?= $h($totals['billable_hhmm'] ?? '') ?> (<?= $h($totals['billable_hhmm'] ?? '') ?>)</th>
+            <th></th>
+            <th class="num"><?= $h($totals['sla_hhmm'] ?? '') ?> (<?= $h($totals['sla_hhmm'] ?? '') ?>)</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+  <?php else: ?>
+    <!-- Grouped view -->
+    <?php
+      $groupLabel = ($groupBy === 'client') ? 'Client' : 'Admin';
+      $prefix = ($groupBy === 'client') ? 'Client: ' : 'Admin: ';
+    ?>
+    <?php if (empty($groups)): ?>
+      <div style="background:#e2f0d9;border:1px solid #a2d28f;padding:8px;">
+        No entries for the selected filters.
+      </div>
+    <?php else: ?>
+      <?php foreach ($groups as $g): ?>
+        <h4 class="tk-group-header"><?= $h($prefix . ($g['label'] ?? '—')) ?></h4>
+        <div class="table-responsive">
+          <table class="table table-bordered timekeeper-report-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Admin</th>
+                <th>Client</th>
+                <th>Department</th>
+                <th>Task Category</th>
+                <th>Ticket ID</th>
+                <th>Description</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Time Spent (hrs)</th>
+                <th>Billable</th>
+                <th>Billable Time (hrs)</th>
+                <th>SLA</th>
+                <th>SLA Time (hrs)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach (($g['rows'] ?? []) as $r): ?>
+                <tr>
+                  <td><?= $h($r['timesheet_date']) ?></td>
+                  <td><?= $h(ucfirst($r['timesheet_status'])) ?></td>
+                  <td><?= $h($r['admin_name']) ?></td>
+                  <td><?= $h($r['client_name']) ?></td>
+                  <td><?= $h($r['department']) ?></td>
+                  <td><?= $h($r['task_category']) ?></td>
+                  <td><?= $h($r['ticket_id']) ?></td>
+                  <td class="description"><?= $h($r['description']) ?></td>
+                  <td><?= $h($r['start_time']) ?></td>
+                  <td><?= $h($r['end_time']) ?></td>
+                  <td class="num"><?= $h($r['time_spent']) ?></td>
+                  <td><?= !empty($r['billable']) ? 'Yes' : 'No' ?></td>
+                  <td class="num"><?= $h($r['billable_time']) ?></td>
+                  <td><?= !empty($r['sla']) ? 'Yes' : 'No' ?></td>
+                  <td class="num"><?= $h($r['sla_time']) ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+            <tfoot>
+              <tr>
+                <th colspan="10" style="text-align:right;"><?= $h($groupLabel) ?> Subtotal</th>
+                <th class="num"><?= $h($g['totals_fmt']['spent'] ?? '') ?></th>
+                <th></th>
+                <th class="num"><?= $h($g['totals_fmt']['billable'] ?? '') ?></th>
+                <th></th>
+                <th class="num"><?= $h($g['totals_fmt']['sla'] ?? '') ?></th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      <?php endforeach; ?>
+
+      <!-- Grand totals footer for grouped view -->
+      <div class="table-responsive">
+        <table class="table table-bordered timekeeper-report-table">
+          <tfoot>
+            <tr>
+              <th colspan="10" style="text-align:right;">Grand Totals</th>
+              <th class="num"><?= $h($totals['spent_hhmm'] ?? '') ?></th>
+              <th></th>
+              <th class="num"><?= $h($totals['billable_hhmm'] ?? '') ?></th>
+              <th></th>
+              <th class="num"><?= $h($totals['sla_hhmm'] ?? '') ?></th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    <?php endif; ?>
+  <?php endif; ?>
+</div>

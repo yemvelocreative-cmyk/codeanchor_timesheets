@@ -1,5 +1,6 @@
 <?php
 use WHMCS\Database\Capsule;
+
 if (!defined('WHMCS')) {
     die('Access Denied');
 }
@@ -16,27 +17,40 @@ if (!defined('WHMCS')) {
  *  - to (date)
  *  - group_by = department|task
  *
- * CSV export:
- *  - Mirrors the on-screen table exactly
+ * CSV export mirrors the on-screen table.
  */
-// ----------------------------
-// Filters (defaults to current month)
-// ----------------------------
-$from = isset($_GET['from']) ? preg_replace('/[^0-9\-]/', '', $_GET['from']) : date('Y-m-01');
-$to = isset($_GET['to']) ? preg_replace('/[^0-9\-]/', '', $_GET['to']) : date('Y-m-d');
-$groupBy = (isset($_GET['group_by']) && $_GET['group_by'] === 'task') ? 'task' : 'department';
-// Only include admins who have a "completed" timesheet in range
 
+/* ----------------------------
+ * Filters (defaults to current month)
+ * ---------------------------- */
+$sanitizeDate = function ($s) {
+    $s = preg_replace('/[^0-9\-]/', '', (string)$s);
+    // Basic YYYY-MM-DD sanity
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $s)) {
+        return null;
+    }
+    return $s;
+};
+$from = isset($_GET['from']) ? $sanitizeDate($_GET['from']) : date('Y-m-01');
+$to   = isset($_GET['to'])   ? $sanitizeDate($_GET['to'])   : date('Y-m-d');
+if (!$from) { $from = date('Y-m-01'); }
+if (!$to)   { $to   = date('Y-m-d');  }
+if (strtotime($from) > strtotime($to)) {
+    $tmp = $from; $from = $to; $to = $tmp;
+}
+
+$groupBy = (isset($_GET['group_by']) && $_GET['group_by'] === 'task') ? 'task' : 'department';
+
+// Only include admins who have a "completed" timesheet in range
 // Adjust as needed (e.g., ['approved'] only)
 $completedStatuses = ['pending', 'approved'];
 if (!is_array($completedStatuses) || empty($completedStatuses)) {
     $completedStatuses = ['approved'];
 }
 
-// ----------------------------
-// Helper: check if a column exists
-// ----------------------------
-
+/* ----------------------------
+ * Helper: check if a column exists
+ * ---------------------------- */
 $columnExists = function (string $table, string $column): bool {
     try {
         $db = Capsule::connection()->getDatabaseName();
@@ -50,112 +64,147 @@ $columnExists = function (string $table, string $column): bool {
     }
 };
 
-// Determine the task link column in entries table: task_category_id OR task_category_id
+/* ----------------------------
+ * Determine task linkage + lookup tables
+ * ---------------------------- */
 $entriesTable = 'mod_timekeeper_timesheet_entries';
 $taskLinkCol = null;
+
 if ($columnExists($entriesTable, 'task_category_id')) {
     $taskLinkCol = 'task_category_id';
-} elseif ($columnExists($entriesTable, 'task_category_id')) {
-    $taskLinkCol = 'task_category_id';
-} else {
+} elseif ($columnExists($entriesTable, 'task_category')) {
+    $taskLinkCol = 'task_category';
+} elseif ($columnExists($entriesTable, 'task_id')) {
+    $taskLinkCol = 'task_id';
+}
+
+if (!$taskLinkCol) {
     echo '<div style="background:#ffecec;border:1px solid #f5c2c2;padding:10px;">
-            Summary Report error: Neither <code>task_category_id</code> nor <code>task_category_id</code> exists on <code>' . htmlspecialchars($entriesTable, ENT_QUOTES, 'UTF-8') . '</code>.
+            Summary Report error: No suitable task link column found on <code>' . htmlspecialchars($entriesTable, ENT_QUOTES, 'UTF-8') . '</code>.
           </div>';
     return;
 }
 
-// ----------------------------
-// Build and run the query (get rows first)
-// ----------------------------
+// Prefer categories table, fall back to tasks/subtasks if needed
+$taskTable = null;
+$taskNameCol = 'name';
+$taskIdCol   = 'id';
+
+$schema = Capsule::schema();
+if ($schema->hasTable('mod_timekeeper_task_categories')) {
+    $taskTable = 'mod_timekeeper_task_categories';
+} elseif ($schema->hasTable('mod_timekeeper_tasks')) {
+    $taskTable = 'mod_timekeeper_tasks';
+} elseif ($schema->hasTable('mod_timekeeper_subtasks')) {
+    $taskTable = 'mod_timekeeper_subtasks';
+}
+
+if (!$taskTable) {
+    echo '<div style="background:#ffecec;border:1px solid #f5c2c2;padding:10px;">
+            Summary Report error: No task lookup table found (<code>mod_timekeeper_task_categories</code>, <code>mod_timekeeper_tasks</code> or <code>mod_timekeeper_subtasks</code>).
+          </div>';
+    return;
+}
+
+/* ----------------------------
+ * Build and run the query (get rows first)
+ * ---------------------------- */
 $query = Capsule::table('mod_timekeeper_timesheet_entries AS e')
     ->join('mod_timekeeper_timesheets AS t', 'e.timesheet_id', '=', 't.id')
     ->join('mod_timekeeper_departments AS d', 'e.department_id', '=', 'd.id')
-    ->join('mod_timekeeper_task_categories AS tc', 'e.' . $taskLinkCol, '=', 'tc.id')
+    ->join($taskTable . ' AS tc', 'e.' . $taskLinkCol, '=', 'tc.' . $taskIdCol)
     ->join('tbladmins AS a', 't.admin_id', '=', 'a.id')
     ->select(
         'd.id AS dept_id',
         'd.name AS department',
-        'tc.id AS task_id',
-        'tc.name AS task_category',
+        Capsule::raw('tc.' . $taskIdCol . ' AS task_id'),
+        Capsule::raw('tc.' . $taskNameCol . ' AS task_category'),
         'a.id AS admin_id',
-        Capsule::raw("CONCAT(a.firstname, ' ', a.lastname) AS admin_name"),
-        Capsule::raw('ROUND(SUM(e.time_spent), 2) AS total_time'),
-        Capsule::raw('ROUND(SUM(e.billable_time), 2) AS billable_time'),
-        Capsule::raw('ROUND(SUM(e.sla_time), 2) AS sla_time')
+        Capsule::raw("TRIM(CONCAT(COALESCE(a.firstname,''),' ',COALESCE(a.lastname,''))) AS admin_name"),
+        // Assumes time fields are numeric minutes/decimal; if stored as text HH:MM, aggregate in PHP instead.
+        Capsule::raw('ROUND(SUM(COALESCE(e.time_spent,0)), 2) AS total_time'),
+        Capsule::raw('ROUND(SUM(COALESCE(e.billable_time,0)), 2) AS billable_time'),
+        Capsule::raw('ROUND(SUM(COALESCE(e.sla_time,0)), 2) AS sla_time')
+
     )
     ->whereBetween('t.timesheet_date', [$from, $to]);
 
-// Only add whereIn if we truly have values
-if (is_array($completedStatuses) && count($completedStatuses) > 0) {
+if (!empty($completedStatuses)) {
     $query->whereIn('t.status', $completedStatuses);
 }
-$query->groupBy('d.id', 'tc.id', 'a.id');
+
+$query->groupBy('d.id', 'tc.' . $taskIdCol, 'a.id');
+
 if ($groupBy === 'task') {
-    $query->orderBy('tc.name')->orderBy('d.name');
+    $query->orderBy('tc.' . $taskNameCol)->orderBy('d.name');
 } else {
-    $query->orderBy('d.name')->orderBy('tc.name');
+    $query->orderBy('d.name')->orderBy('tc.' . $taskNameCol);
 }
+
 $rows = $query->get();
 
-// ----------------------------
-// Derive admin list from the result set (only admins with completed timesheets in range)
-// ----------------------------
+/* ----------------------------
+ * Derive admin list from the result set (only admins present)
+ * ---------------------------- */
 $adminIds = [];
 $adminNameMap = [];
 foreach ($rows as $r) {
-    $adminIds[$r->admin_id] = true;
-    $adminNameMap[$r->admin_id] = $r->admin_name;
+    $adminIds[(int)$r->admin_id] = true;
+    $adminNameMap[(int)$r->admin_id] = $r->admin_name ?: ('Admin #' . (int)$r->admin_id);
 }
 $admins = [];
 foreach (array_keys($adminIds) as $aid) {
     $admins[] = (object)[
-        'id' => $aid,
-        'name' => $adminNameMap[$aid] ?? ('Admin #' . $aid),
+        'id'   => (int)$aid,
+        'name' => $adminNameMap[$aid],
     ];
 }
 usort($admins, function ($a, $b) {
     return strcasecmp($a->name, $b->name);
 });
 
-// ----------------------------
-// Pivot results into 3D array: [$department][$task][$adminId] = [totals...]
-// ----------------------------
+/* ----------------------------
+ * Pivot results into 3D array: [$department][$task][$adminId] = [totals...]
+ * ---------------------------- */
 $data = [];
 foreach ($rows as $row) {
-    $deptKey = $row->department;
-    $taskKey = $row->task_category;
+    $deptKey = (string)$row->department;
+    $taskKey = (string)$row->task_category;
+
     if (!isset($data[$deptKey])) {
         $data[$deptKey] = [];
     }
     if (!isset($data[$deptKey][$taskKey])) {
         $data[$deptKey][$taskKey] = [];
     }
-    $data[$deptKey][$taskKey][$row->admin_id] = [
-        'total'    => (float) $row->total_time,
-        'billable' => (float) $row->billable_time,
-        'sla'      => (float) $row->sla_time,
+    $data[$deptKey][$taskKey][(int)$row->admin_id] = [
+        'total'    => (float)$row->total_time,
+        'billable' => (float)$row->billable_time,
+        'sla'      => (float)$row->sla_time,
     ];
 }
 
-// ----------------------------
-// Column totals per admin + overall grand totals
-// ----------------------------
-
-$adminIdsList = array_map(function($a){ return $a->id; }, $admins);
+/* ----------------------------
+ * Column totals per admin + overall grand totals
+ * ---------------------------- */
+$adminIdsList = array_map(function ($a) { return (int)$a->id; }, $admins);
 $adminColTotals = [];
 foreach ($adminIdsList as $aid) {
     $adminColTotals[$aid] = ['total' => 0.0, 'billable' => 0.0, 'sla' => 0.0];
 }
 $grandTotals = ['total' => 0.0, 'billable' => 0.0, 'sla' => 0.0];
+
 foreach ($data as $dept => $tasks) {
     foreach ($tasks as $task => $adminData) {
         foreach ($adminIdsList as $aid) {
             $t = isset($adminData[$aid]) ? (float)$adminData[$aid]['total']    : 0.0;
             $b = isset($adminData[$aid]) ? (float)$adminData[$aid]['billable'] : 0.0;
             $s = isset($adminData[$aid]) ? (float)$adminData[$aid]['sla']      : 0.0;
+
             $adminColTotals[$aid]['total']    += $t;
             $adminColTotals[$aid]['billable'] += $b;
             $adminColTotals[$aid]['sla']      += $s;
+
             $grandTotals['total']    += $t;
             $grandTotals['billable'] += $b;
             $grandTotals['sla']      += $s;
@@ -163,35 +212,48 @@ foreach ($data as $dept => $tasks) {
     }
 }
 
-// ----------------------------
-// CSV Export
-// ----------------------------
+/* ----------------------------
+ * CSV Export (headered download)
+ * ---------------------------- */
 $baseUrl = 'addonmodules.php?module=timekeeper&timekeeperpage=reports';
 
-if (isset($_GET['export']) && $_GET['export'] === '1') {
-    // Make sure nothing (even buffered) leaks into the CSV
-    if (function_exists('ob_get_level')) {
-        while (ob_get_level() > 0) { ob_end_clean(); }
+// CSV cell sanitizer to prevent Excel formula injection
+$csvSanitize = function ($v) {
+    $s = (string)$v;
+    if ($s !== '' && in_array($s[0], ['=', '+', '-', '@'], true)) {
+        $s = "'" . $s;
     }
-    header('Content-Type: text/csv');
-    header('Content-Disposition: attachment; filename=summary_report.csv');
-    $out = fopen('php://output', 'w');
-    $firstCol = ($groupBy === 'task') ? 'Task Category' : 'Department';
-    $secondCol = ($groupBy === 'task') ? 'Department' : 'Task Category';
+    return $s;
+};
 
-    // Row 1: Admin name spanning 3 columns (name + 2 blanks) + Row Totals group
-    $header1 = [$firstCol, $secondCol];
+if (isset($_GET['export']) && $_GET['export'] === '1') {
+    // Clear any buffered output
+    if (function_exists('ob_get_level')) {
+        while (ob_get_level() > 0) { @ob_end_clean(); }
+    }
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename=summary_report.csv');
+    // Add BOM for Excel UTF-8
+    echo "\xEF\xBB\xBF";
+    $out = fopen('php://output', 'w');
+
+    $firstCol  = ($groupBy === 'task') ? 'Task Category' : 'Department';
+    $secondCol = ($groupBy === 'task') ? 'Department'    : 'Task Category';
+
+    // Row 1: Admin name spanning groups (CSV has no real colspan; we still write labels)
+    $header1 = [$csvSanitize($firstCol), $csvSanitize($secondCol)];
     foreach ($admins as $admin) {
-        $header1[] = $admin->name; // "merged" over next 2 blank cells
+        $header1[] = $csvSanitize($admin->name);
         $header1[] = '';
         $header1[] = '';
     }
     $header1[] = 'Row Totals';
     $header1[] = '';
     $header1[] = '';
+    fputcsv($out, $header1);
 
     // Row 2: Metric labels under each admin (and under Row Totals)
-    $header2 = ['', '']; // keep first two columns empty on line 2
+    $header2 = ['', ''];
     foreach ($admins as $admin) {
         $header2[] = 'Total';
         $header2[] = 'Billable';
@@ -200,22 +262,23 @@ if (isset($_GET['export']) && $_GET['export'] === '1') {
     $header2[] = 'Total';
     $header2[] = 'Billable';
     $header2[] = 'SLA';
-
-    // Write both header rows
-    fputcsv($out, $header1);
     fputcsv($out, $header2);
+
+    // Body
     foreach ($data as $dept => $tasks) {
-    foreach ($tasks as $task => $adminData) {
-            $rowArr = ($groupBy === 'task') ? [$task, $dept] : [$dept, $task];
+        foreach ($tasks as $task => $adminData) {
+            $rowArr = ($groupBy === 'task') ? [$csvSanitize($task), $csvSanitize($dept)] : [$csvSanitize($dept), $csvSanitize($task)];
+
             $rowTotalSum = 0.0;
             $rowBillableSum = 0.0;
             $rowSlaSum = 0.0;
+
             foreach ($admins as $admin) {
                 if (isset($adminData[$admin->id])) {
                     $td = $adminData[$admin->id];
-                    $t  = (float) $td['total'];
-                    $b  = (float) $td['billable'];
-                    $s  = (float) $td['sla'];
+                    $t  = (float)$td['total'];
+                    $b  = (float)$td['billable'];
+                    $s  = (float)$td['sla'];
                     $rowTotalSum    += $t;
                     $rowBillableSum += $b;
                     $rowSlaSum      += $s;
@@ -223,7 +286,6 @@ if (isset($_GET['export']) && $_GET['export'] === '1') {
                     $rowArr[] = number_format($b, 2);
                     $rowArr[] = number_format($s, 2);
                 } else {
-                    // keep column count consistent
                     $rowArr[] = '0.00';
                     $rowArr[] = '0.00';
                     $rowArr[] = '0.00';
@@ -234,12 +296,13 @@ if (isset($_GET['export']) && $_GET['export'] === '1') {
             $rowArr[] = number_format($rowTotalSum, 2);
             $rowArr[] = number_format($rowBillableSum, 2);
             $rowArr[] = number_format($rowSlaSum, 2);
+
             fputcsv($out, $rowArr);
         }
     }
 
-    // Append a final "Column Totals" row
-    $footer = ['Column Totals', '']; // CSV has no colspan; leave 2nd cell blank
+    // Final Column Totals row
+    $footer = ['Column Totals', ''];
     foreach ($admins as $admin) {
         $footer[] = number_format($adminColTotals[$admin->id]['total'], 2);
         $footer[] = number_format($adminColTotals[$admin->id]['billable'], 2);
@@ -248,6 +311,7 @@ if (isset($_GET['export']) && $_GET['export'] === '1') {
     $footer[] = number_format($grandTotals['total'], 2);
     $footer[] = number_format($grandTotals['billable'], 2);
     $footer[] = number_format($grandTotals['sla'], 2);
+
     fputcsv($out, $footer);
     fclose($out);
     exit;
@@ -256,10 +320,12 @@ if (isset($_GET['export']) && $_GET['export'] === '1') {
 <div class="timekeeper-report-header">
     <h3>Summary Report</h3>
 </div>
-<form method="get" action="<?= $baseUrl ?>" class="timekeeper-report-filters">
+
+<form method="get" action="<?= htmlspecialchars($baseUrl, ENT_QUOTES, 'UTF-8') ?>" class="timekeeper-report-filters">
     <input type="hidden" name="module" value="timekeeper">
     <input type="hidden" name="timekeeperpage" value="reports">
     <input type="hidden" name="r" value="summary">
+
     <div class="filter-row" style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 18px;">
         <div class="filter-item" style="display:flex;flex-direction:column;min-width:180px;">
             <label>From</label>
@@ -276,21 +342,27 @@ if (isset($_GET['export']) && $_GET['export'] === '1') {
                 <option value="task" <?= $groupBy === 'task' ? 'selected' : '' ?>>Task</option>
             </select>
         </div>
+
         <div class="filter-actions" style="display:flex;gap:10px;margin-left:auto;padding-bottom:2px;">
             <button type="submit" class="btn btn-primary">Filter</button>
             <a class="btn btn-success"
-               href="<?= $baseUrl .
-                    '&r=summary' .
-                    '&from=' . urlencode($from) .
-                    '&to=' . urlencode($to) .
-                    '&group_by=' . urlencode($groupBy) .
-                    '&export=1' ?>">
+               href="<?= htmlspecialchars(
+                   $baseUrl
+                   . '&r=summary'
+                   . '&from=' . urlencode($from)
+                   . '&to=' . urlencode($to)
+                   . '&group_by=' . urlencode($groupBy)
+                   . '&export=1',
+                   ENT_QUOTES,
+                   'UTF-8'
+               ) ?>">
                 Export CSV
             </a>
         </div>
     </div>
 </form>
-<table class="table table-bordered timekeeper-report-table" style="margin-top: 16px;">
+
+<table class="table table-bordered timekeeper-report-table" style="margin-top:16px;">
     <thead>
         <tr>
             <th rowspan="2"><?= ($groupBy === 'task') ? 'Task Category' : 'Department' ?></th>
@@ -299,22 +371,23 @@ if (isset($_GET['export']) && $_GET['export'] === '1') {
                 <th colspan="3" class="admin-group">
                     <?= htmlspecialchars($admin->name, ENT_QUOTES, 'UTF-8') ?>
                 </th>
-                <?php endforeach; ?>
-                <th colspan="3" class="admin-group">Row Totals</th>  <!-- new -->
+            <?php endforeach; ?>
+            <th colspan="3" class="admin-group">Row Totals</th>
         </tr>
         <?php if (!empty($admins)): ?>
         <tr>
             <?php foreach ($admins as $admin): ?>
-                <th>Total</th>
-                <th>Billable</th>
-                <th>SLA</th>
+                <th class="num">Total</th>
+                <th class="num">Billable</th>
+                <th class="num">SLA</th>
             <?php endforeach; ?>
-            <th>Total</th>    <!-- new -->
-            <th>Billable</th> <!-- new -->
-            <th>SLA</th>      <!-- new -->
+            <th class="num">Total</th>
+            <th class="num">Billable</th>
+            <th class="num">SLA</th>
         </tr>
         <?php endif; ?>
     </thead>
+
     <tbody>
         <?php if (empty($data)): ?>
             <tr>
@@ -334,49 +407,51 @@ if (isset($_GET['export']) && $_GET['export'] === '1') {
                         <td><?= ($groupBy === 'task')
                                 ? htmlspecialchars($dept, ENT_QUOTES, 'UTF-8')
                                 : htmlspecialchars($task, ENT_QUOTES, 'UTF-8') ?></td>
-                        <?php 
-                            $rowTotalSum = 0;
-                            $rowBillableSum = 0;
-                            $rowSlaSum = 0;
+                        <?php
+                            $rowTotalSum = 0.0;
+                            $rowBillableSum = 0.0;
+                            $rowSlaSum = 0.0;
+
                             foreach ($admins as $admin):
                                 if (isset($adminData[$admin->id])) {
                                     $td = $adminData[$admin->id];
-                                    $totalVal    = (float) $td['total'];
-                                    $billableVal = (float) $td['billable'];
-                                    $slaVal      = (float) $td['sla'];
+                                    $totalVal    = (float)$td['total'];
+                                    $billableVal = (float)$td['billable'];
+                                    $slaVal      = (float)$td['sla'];
+
                                     $rowTotalSum    += $totalVal;
                                     $rowBillableSum += $billableVal;
                                     $rowSlaSum      += $slaVal;
-                                    echo '<td>' . number_format($totalVal, 2) . '</td>';
-                                    echo '<td>' . number_format($billableVal, 2) . '</td>';
-                                    echo '<td>' . number_format($slaVal, 2) . '</td>';
+
+                                    echo '<td class="num">' . number_format($totalVal, 2) . '</td>';
+                                    echo '<td class="num">' . number_format($billableVal, 2) . '</td>';
+                                    echo '<td class="num">' . number_format($slaVal, 2) . '</td>';
                                 } else {
-                                    echo '<td>0.00</td><td>0.00</td><td>0.00</td>';
+                                    echo '<td class="num">0.00</td><td class="num">0.00</td><td class="num">0.00</td>';
                                 }
                             endforeach;
 
-                            // Now print the row totals at the end
-                            echo '<td>' . number_format($rowTotalSum, 2) . '</td>';
-                            echo '<td>' . number_format($rowBillableSum, 2) . '</td>';
-                            echo '<td>' . number_format($rowSlaSum, 2) . '</td>';
+                            echo '<td class="num">' . number_format($rowTotalSum, 2) . '</td>';
+                            echo '<td class="num">' . number_format($rowBillableSum, 2) . '</td>';
+                            echo '<td class="num">' . number_format($rowSlaSum, 2) . '</td>';
                         ?>
                     </tr>
                 <?php endforeach; ?>
             <?php endforeach; ?>
         <?php endif; ?>
     </tbody>
-    <tfoot>
-    <tr>
-        <th colspan="2" style="text-align:right;">Column Totals</th>
-        <?php foreach ($admins as $admin): ?>
-            <th><?= number_format($adminColTotals[$admin->id]['total'], 2) ?></th>
-            <th><?= number_format($adminColTotals[$admin->id]['billable'], 2) ?></th>
-            <th><?= number_format($adminColTotals[$admin->id]['sla'], 2) ?></th>
-        <?php endforeach; ?>
-        <th><?= number_format($grandTotals['total'], 2) ?></th>
-        <th><?= number_format($grandTotals['billable'], 2) ?></th>
-        <th><?= number_format($grandTotals['sla'], 2) ?></th>
-    </tr>
-    </tfoot>
 
+    <tfoot>
+        <tr>
+            <th colspan="2" style="text-align:right;">Column Totals</th>
+            <?php foreach ($admins as $admin): ?>
+                <th class="num"><?= number_format($adminColTotals[$admin->id]['total'], 2) ?></th>
+                <th class="num"><?= number_format($adminColTotals[$admin->id]['billable'], 2) ?></th>
+                <th class="num"><?= number_format($adminColTotals[$admin->id]['sla'], 2) ?></th>
+            <?php endforeach; ?>
+            <th class="num"><?= number_format($grandTotals['total'], 2) ?></th>
+            <th class="num"><?= number_format($grandTotals['billable'], 2) ?></th>
+            <th class="num"><?= number_format($grandTotals['sla'], 2) ?></th>
+        </tr>
+    </tfoot>
 </table>
