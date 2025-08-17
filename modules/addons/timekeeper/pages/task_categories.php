@@ -161,7 +161,7 @@ foreach ($taskCategories as $cat) {
     }
     $rows .= '      </select>';
     $rows .= '    </div>';
-    $rows .= '    <div class="col-md-3 d-flex gap-2 flex-wrap">';
+    $rows .= '    <div class="col-md-3 d-flex gap-2 tc-actions">';
     $rows .= '      <input type="hidden" name="id" value="' . (int)$cat->id . '">';
     $rows .= '      <input type="hidden" name="action" value="edit">';
     $rows .= '      <button type="submit" class="btn btn-success">Save</button>';
@@ -182,6 +182,6 @@ elseif (($_GET['error'] ?? '') === 'invalid_department') $msg = '<div class="ale
 elseif (($_GET['error'] ?? '') === 'has_entries')        $msg = '<div class="alert alert-danger">This task category is used by timesheet entries and cannot be deleted.</div>';
 
 $content = str_replace('<!--MESSAGE-->', $msg, $content);
-$content = str_replace('<!--TASK_CATEGORY_ROWS-->', $rows, $content);
+$content = str_replace('<!--TASK_CATEGORY_ROWS-->', '<div class="tc-rows">'.$rows.'</div>', $content);
 
 echo $content;

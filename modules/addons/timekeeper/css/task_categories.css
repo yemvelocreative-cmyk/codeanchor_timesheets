@@ -19,3 +19,23 @@
 
 .timekeeper-root .btn { white-space: nowrap; }
 .timekeeper-root .btn + .btn { margin-left: 6px; }
+
+/* Task Categories layout fixes */
+.timekeeper-root .tc-rows {
+  max-width: 860px;     /* give the row some breathing room */
+}
+
+.timekeeper-root .tc-rows .row {
+  align-items: center;  /* vertically center inputs & buttons */
+  width: 100% !important; /* override inline 50% width */
+}
+
+.timekeeper-root .tc-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;    /* <-- the key: keep Save + Delete on one line */
+}
+
+.timekeeper-root .tc-actions .btn {
+  white-space: nowrap;  /* avoids breaking long button labels */
+}
