@@ -1,0 +1,21 @@
+/* Timekeeper — Task Categories (scoped) */
+.timekeeper-root h2 { margin-bottom: 4px; }
+.timekeeper-root .alert { margin: 10px 0 14px; }
+
+/* Add form container */
+.timekeeper-root form.mb-4 .row { width: 50%; max-width: 760px; }
+@media (max-width: 992px) {
+  .timekeeper-root form.mb-4 .row { width: 100%; max-width: none; }
+}
+
+/* Edit rows (your .border.p-3.mb-3 wrapper) */
+.timekeeper-root .border.p-3.mb-3 {
+  max-width: 760px;
+  background: #fff;
+  border-color: #e5e5e5 !important;
+}
+.timekeeper-root .border.p-3.mb-3 .row { width: 100%; }
+.timekeeper-root .border.p-3.mb-3 input[type="text"] { min-width: 220px; }
+
+.timekeeper-root .btn { white-space: nowrap; }
+.timekeeper-root .btn + .btn { margin-left: 6px; }
