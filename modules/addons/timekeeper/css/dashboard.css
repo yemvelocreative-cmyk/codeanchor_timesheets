@@ -1,0 +1,117 @@
+/* ===== Timekeeper Dashboard (scoped) ===== */
+.timekeeper-root .dashboard-root {}
+
+/* Filters */
+.timekeeper-root .dash-filters .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 18px;
+  margin: 8px 0 14px;
+}
+.timekeeper-root .dash-filters .item {
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+}
+.timekeeper-root .dash-filters .actions {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+  padding-bottom: 2px;
+}
+
+/* KPI grid */
+.timekeeper-root .dash-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+}
+.timekeeper-root .kpi {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+.timekeeper-root .kpi h4 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: #555;
+}
+.timekeeper-root .kpi .num {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+/* Cards & layout */
+.timekeeper-root .row-wrap {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.timekeeper-root .col {
+  flex: 1;
+  min-width: 320px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+}
+.timekeeper-root .col-wide { flex: 1.5; }
+.timekeeper-root .col header {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  font-weight: 600;
+}
+.timekeeper-root .col .body { padding: 12px; }
+
+/* Tables */
+.timekeeper-root .compact th,
+.timekeeper-root .compact td {
+  padding: 6px 8px;
+}
+
+/* Progress */
+.timekeeper-root .progress-wrap {
+  background: #f2f2f2;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.timekeeper-root .progress-bar {
+  height: 8px;
+  background: #0d6efd;
+}
+
+/* Small alerts (replacing inline) */
+.timekeeper-root .tk-alert {
+  padding: 8px;
+  border: 1px solid;
+  border-radius: 4px;
+}
+.timekeeper-root .tk-alert-warning {
+  background: #fff3cd;
+  border-color: #f5c2c2;
+}
+.timekeeper-root .tk-alert-success {
+  background: #e2f0d9;
+  border-color: #a2d28f;
+}
+
+/* Responsive tweaks */
+@media (max-width: 1200px) {
+  .timekeeper-root .dash-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 768px) {
+  .timekeeper-root .dash-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .timekeeper-root .dash-grid {
+    grid-template-columns: 1fr;
+  }
+}
