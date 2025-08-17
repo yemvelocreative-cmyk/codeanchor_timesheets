@@ -45,6 +45,6 @@
 .timekeeper-root .tc-rows form {
   margin-bottom: 2px;
 }
-/*.timekeeper-root .tc-rows form:last-of-type {
+.timekeeper-root .tc-rows form:last-of-type {
   margin-bottom: 0;
-}*/
+}
