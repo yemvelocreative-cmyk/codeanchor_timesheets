@@ -1,1 +1,31 @@
-<?phpuse WHMCS\Database\Capsule;// WHMCS bootstrap if needed (uncomment if running standalone outside WHMCS)require(dirname(__DIR__, 4) . '/init.php');date_default_timezone_set('Africa/Johannesburg'); // Set to your local timezone if needed$today = date('l'); // e.g. "Monday"$todayKey = 'cron_' . $today;// 1. Check if today is marked as inactive$dayStatus = Capsule::table('mod_timekeeper_permissions')    ->where('setting_key', $todayKey)    ->where('role_id', 0)    ->value('setting_value');//debugecho "🕓 Today is $today ($todayKey), status: " . ($dayStatus ?? 'null') . "\n";if ($dayStatus === 'inactive') {    echo "⛔ Skipping: $today is marked as inactive.\n";    exit;}// 2. Fetch assigned users$assignedUsers = Capsule::table('mod_timekeeper_assigned_users')->pluck('admin_id')->toArray();if (empty($assignedUsers)) {    echo "⚠️ No assigned users to create timesheets for.\n";    exit;}// 3. For each user, check if a timesheet already exists today$todayDate = date('Y-m-d');$createdCount = 0;foreach ($assignedUsers as $adminId) {    $exists = Capsule::table('mod_timekeeper_timesheets')        ->where('admin_id', $adminId)        ->where('timesheet_date', $todayDate)        ->exists();//debugecho "🔍 Checking admin $adminId: timesheet exists? " . ($exists ? 'yes' : 'no') . "\n";    if (!$exists) {        Capsule::table('mod_timekeeper_timesheets')->insert([            'admin_id' => $adminId,            'timesheet_date' => $todayDate,            'status' => 'pending',            'created_at' => date('Y-m-d H:i:s'),        ]);        $createdCount++;    }}echo "✅ Created $createdCount timesheet(s) for $today.\n";
+<?php
+// modules/addons/timekeeper/cron/cron.php
+
+// If you plan to run this directly: #!/usr/bin/php -q
+
+// --- Bootstrap WHMCS ---
+require_once dirname(__DIR__, 4) . '/init.php'; // .../modules/addons/timekeeper/cron -> up 4 => WHMCS root
+
+// Optional: align to your local timezone if desired
+@date_default_timezone_set('Africa/Johannesburg');
+
+// --- Load the cron worker ---
+require_once __DIR__ . '/../components/cron_daily_timesheet.php';
+
+// --- Run ---
+$res = timekeeperRunTimesheetCron(); // ['status','day','created','skipped']
+
+// --- Output (CLI or verbose) ---
+$isCli   = (PHP_SAPI === 'cli');
+$argvArr = $_SERVER['argv'] ?? [];
+$verbose = $isCli ? in_array('--verbose', $argvArr, true) : isset($_GET['verbose']);
+
+if ($isCli || $verbose) {
+    echo "[Timekeeper] {$res['status']} on {$res['day']} - created: {$res['created']}, skipped: {$res['skipped']}\n";
+}
+
+// --- Exit code for CI/monitoring (CLI only) ---
+if ($isCli) {
+    $okStatuses = ['ok', 'disabled_day', 'no_users', 'no_active_users', 'locked'];
+    exit(in_array($res['status'], $okStatuses, true) ? 0 : 2);
+}

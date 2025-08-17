@@ -1,0 +1,48 @@
+/* ===== Settings Tabs Only (scoped) ===== */
+.timekeeper-root .timekeeper-settings-tabs {
+    display: flex;
+    gap: 2px;
+    border-bottom: 2px solid #ccc;
+    margin: 20px 0;
+    padding-left: 0;
+    list-style: none;
+    overflow-x: auto;          /* mobile-friendly */
+    -webkit-overflow-scrolling: touch;
+}
+.timekeeper-root .timekeeper-settings-tabs li { flex: 0 0 auto; }
+
+.timekeeper-root .timekeeper-settings-tabs a {
+    display: inline-block;
+    padding: 6px 12px;
+    background: #fff;
+    color: #2a7ae2;
+    text-decoration: none;
+    font-size: 15px;
+    border: 1px solid #ccc;    /* tab chrome */
+    border-bottom: none;       /* connect to content area */
+    border-radius: 4px 4px 0 0;
+    line-height: 1.4;
+}
+
+.timekeeper-root .timekeeper-settings-tabs a:hover {
+    background: #f2f6ff;
+    color: #1a73e8;
+}
+
+.timekeeper-root .timekeeper-settings-tabs .active a,
+.timekeeper-root .timekeeper-settings-tabs a.active {
+    background: #fff;
+    font-weight: bold;
+    position: relative;
+    top: 2px;                  /* sit on top of the bottom border */
+}
+
+.timekeeper-root .timekeeper-settings-tabs a:focus-visible {
+    outline: 2px solid #1a73e8;
+    outline-offset: 2px;
+}
+
+/* Optional: reduce visual jump on high-zoom/Windows */
+@media (prefers-reduced-motion: reduce) {
+    .timekeeper-root .timekeeper-settings-tabs a { transition: none; }
+}

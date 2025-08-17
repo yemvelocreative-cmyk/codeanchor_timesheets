@@ -1,1 +1,113 @@
-<h4>Asign a Admin Role or Roles that can view all Pending & Approved Timesheets</h4><p class="text-muted" style="margin-bottom:16px;">    Use the boxes below to assign or unassign <strong>Admin Roles</strong> with permission to view all pending and approved timesheets.<br>    ➤ Only roles in the <strong>“Assigned Admin Role”</strong> box will be saved.<br>    ➤ To select multiple admin roles, hold down <kbd>Ctrl</kbd> (or <kbd>Cmd</kbd> on Mac) while clicking.<br></p><?php if (isset($_GET['success'])): ?>    <div style="background: #e1f3e1; padding: 8px; margin-bottom: 15px; border: 1px solid #8ad08a;">        Permissions updated.    </div><?php endif; ?><?phpif (!isset($allowedRoles) || !is_array($allowedRoles)) $allowedRoles = [];if (!isset($allowedApprovalRoles) || !is_array($allowedApprovalRoles)) $allowedApprovalRoles = [];?><!-- Form Start for premission to view all Timesheet --><form method="post" onsubmit="selectAllAssignedRoles()">    <div class="dual-select-controls-wrapper">        <!-- Active Admin Roles -->        <div class="user-select-block">            <label for="availableRoles" class="user-select-label">Active Admin Roles</label>            <select multiple class="form-control user-select-box" id="availableRoles" style="width: 200px; height: 180px;">                <?php foreach ($roles as $role): ?>                    <?php if (!in_array($role->id, $allowedRoles)): ?>                        <option value="<?= $role->id ?>"><?= htmlspecialchars($role->name) ?></option>                    <?php endif; ?>                <?php endforeach; ?>            </select>        </div>        <!-- Button Controls -->        <div class="dual-select-controls">            <button type="button" id="addRole" class="btn btn-default" onclick="moveSelected('availableRoles', 'assignedRoles')">➡️</button>            <button type="button" id="removeRole" class="btn btn-default" onclick="moveSelected('assignedRoles', 'availableRoles')">⬅️</button>        </div>        <!-- Assigned Admin Roles -->        <div class="user-select-block">            <label for="assignedRoles">Assigned Admin Role</label>            <select multiple class="form-control" name="pending_timesheets_roles[]" id="assignedRoles" style="width: 200px; height: 180px;">                <?php foreach ($roles as $role): ?>                    <?php if (in_array($role->id, $allowedRoles)): ?>                        <option value="<?= $role->id ?>"><?= htmlspecialchars($role->name) ?></option>                    <?php endif; ?>                <?php endforeach; ?>            </select>        </div>    </div>    <div style="margin-top: 14px;">        <button type="submit" class="btn btn-primary">Save View Permissions</button>    </div></form><!-- Form End for premission to view all Timesheet --><hr><h4>Assign a Admin Role or Roles that can Approve and Unapprove Pending Timesheets</h4><p class="text-muted" style="margin-bottom:16px;">    Use the boxes below to assign or unassign <strong>Admin Roles</strong> with permission to approve and unapprove pending timesheets.<br>    ➤ Only roles in the <strong>“Assigned Admin Role”</strong> box will be saved.<br>    ➤ To select multiple admin roles, hold down <kbd>Ctrl</kbd> (or <kbd>Cmd</kbd> on Mac) while clicking.<br></p><?php if (isset($_GET['approval_success'])): ?>    <div style="background: #e1f3e1; padding: 8px; margin-bottom: 15px; border: 1px solid #8ad08a;">        Approval permissions updated.    </div><?php endif; ?><!-- Form Start for premission to approve Timesheet --><form method="post" onsubmit="selectAllAssignedRolesApprove()">    <div class="dual-select-controls-wrapper">        <!-- Active Admin Roles -->        <div class="user-select-block">            <label for="availableRolesApprove" class="user-select-label">Active Admin Roles</label>            <select multiple class="form-control user-select-box" id="availableRolesApprove" style="width: 200px; height: 180px;">                <?php foreach ($roles as $role): ?>                    <?php if (!in_array($role->id, $allowedApprovalRoles)): ?>                        <option value="<?= $role->id ?>"><?= htmlspecialchars($role->name) ?></option>                    <?php endif; ?>                <?php endforeach; ?>            </select>        </div>        <!-- Button Controls -->        <div class="dual-select-controls">            <button type="button" id="addRoleApprove" class="btn btn-default" onclick="moveSelected('availableRolesApprove', 'assignedRolesApprove')">➡️</button>            <button type="button" id="removeRoleApprove" class="btn btn-default" onclick="moveSelected('assignedRolesApprove', 'availableRolesApprove')">⬅️</button>        </div>        <!-- Assigned Admin Roles -->        <div class="user-select-block">            <label for="assignedRolesApprove">Assigned Admin Role</label>            <select multiple class="form-control" name="pending_timesheets_approval_roles[]" id="assignedRolesApprove" style="width: 200px; height: 180px;">                <?php foreach ($roles as $role): ?>                    <?php if (in_array($role->id, $allowedApprovalRoles)): ?>                        <option value="<?= $role->id ?>"><?= htmlspecialchars($role->name) ?></option>                    <?php endif; ?>                <?php endforeach; ?>            </select>        </div>    </div>    <h4>Validate Time Spent</h4>        <p class="text-muted" style="margin-bottom:16px;">            <label for="unbilled_time_validate_min">            Set the minimum time (in hours) to validate a task that is not marked as Billable or SLA:            <input type="number" step="0.1" min="0" name="unbilled_time_validate_min" id="unbilled_time_validate_min"                   value="<?= htmlspecialchars($unbilledTimeValidateMin ?? '') ?>" style="width: 80px;">        </label>        <small>Example: Enter 0.5 for 30 minutes.</small>        </p>    <div style="margin-top: 14px;">        <button type="submit" class="btn btn-primary">Save Approval Permissions</button>    </div></form><!-- Form End for premission to approve Timesheet --><!-- Scripts for view all Timesheet --><script>function moveSelected(fromId, toId) {    const fromSelect = document.getElementById(fromId);    const toSelect = document.getElementById(toId);    const selectedOptions = Array.from(fromSelect.selectedOptions);    selectedOptions.forEach(option => {        fromSelect.removeChild(option);        toSelect.appendChild(option);    });}function selectAllAssignedRoles() {    const assigned = document.getElementById('assignedRoles');    for (let i = 0; i < assigned.options.length; i++) {        assigned.options[i].selected = true;    }}</script><script>function moveSelected(fromId, toId) {    const fromSelect = document.getElementById(fromId);    const toSelect = document.getElementById(toId);    const selectedOptions = Array.from(fromSelect.selectedOptions);    selectedOptions.forEach(option => {        fromSelect.removeChild(option);        toSelect.appendChild(option);    });}// For approval sectionfunction selectAllAssignedRolesApprove() {    const assigned = document.getElementById('assignedRolesApprove');    for (let i = 0; i < assigned.options.length; i++) {        assigned.options[i].selected = true;    }}</script>
+<?php
+// expects: $roles (Capsule collection), $allowedRoles, $allowedApprovalRoles, $unbilledTimeValidateMin, $tkCsrf
+if (!isset($allowedRoles) || !is_array($allowedRoles)) $allowedRoles = [];
+if (!isset($allowedApprovalRoles) || !is_array($allowedApprovalRoles)) $allowedApprovalRoles = [];
+?>
+<h4>Assign Admin Roles that can view all Pending &amp; Approved Timesheets</h4>
+<p class="text-muted" style="margin-bottom:16px;">
+    Use the boxes below to assign or unassign <strong>Admin Roles</strong> with permission to view all pending and approved timesheets.<br>
+    ➤ Only roles in the <strong>“Assigned Admin Roles”</strong> box will be saved.<br>
+    ➤ To select multiple admin roles, hold down <kbd>Ctrl</kbd> (or <kbd>Cmd</kbd> on Mac) while clicking.
+</p>
+
+<form method="post" data-tk>
+    <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf, ENT_QUOTES, 'UTF-8'); ?>">
+    <div class="dual-select-controls-wrapper">
+        <!-- Active Admin Roles -->
+        <div class="user-select-block">
+            <label for="availableRoles" class="user-select-label">Active Admin Roles</label>
+            <select multiple class="form-control user-select-box" id="availableRoles">
+                <?php foreach ($roles as $role): ?>
+                    <?php if (!in_array((int)$role->id, $allowedRoles, true)): ?>
+                        <option value="<?= (int)$role->id ?>"><?= htmlspecialchars($role->name, ENT_QUOTES, 'UTF-8') ?></option>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <!-- Button Controls -->
+        <div class="dual-select-controls">
+            <button type="button" id="addRole" class="btn btn-secondary" aria-label="Add selected role(s)">➡️</button>
+            <button type="button" id="removeRole" class="btn btn-secondary" aria-label="Remove selected role(s)">⬅️</button>
+        </div>
+
+        <!-- Assigned Admin Roles -->
+        <div class="user-select-block">
+            <label for="assignedRoles" class="user-select-label">Assigned Admin Roles</label>
+            <select multiple class="form-control user-select-box" name="pending_timesheets_roles[]" id="assignedRoles">
+                <?php foreach ($roles as $role): ?>
+                    <?php if (in_array((int)$role->id, $allowedRoles, true)): ?>
+                        <option value="<?= (int)$role->id ?>"><?= htmlspecialchars($role->name, ENT_QUOTES, 'UTF-8') ?></option>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </select>
+        </div>
+    </div>
+    <div class="mt-3">
+        <button type="submit" class="btn btn-primary">Save View Permissions</button>
+    </div>
+</form>
+
+<hr>
+
+<h4>Assign Admin Roles that can approve / unapprove Pending Timesheets</h4>
+<p class="text-muted" style="margin-bottom:16px;">
+    Use the boxes below to assign or unassign <strong>Admin Roles</strong> that can approve and unapprove pending timesheets.<br>
+    ➤ Only roles in the <strong>“Assigned Admin Roles”</strong> box will be saved.
+</p>
+
+<form method="post" data-tk>
+    <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf, ENT_QUOTES, 'UTF-8'); ?>">
+    <div class="dual-select-controls-wrapper">
+        <!-- Active Admin Roles -->
+        <div class="user-select-block">
+            <label for="availableRolesApprove" class="user-select-label">Active Admin Roles</label>
+            <select multiple class="form-control user-select-box" id="availableRolesApprove">
+                <?php foreach ($roles as $role): ?>
+                    <?php if (!in_array((int)$role->id, $allowedApprovalRoles, true)): ?>
+                        <option value="<?= (int)$role->id ?>"><?= htmlspecialchars($role->name, ENT_QUOTES, 'UTF-8') ?></option>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <!-- Button Controls -->
+        <div class="dual-select-controls">
+            <button type="button" id="addRoleApprove" class="btn btn-secondary" aria-label="Add selected role(s)">➡️</button>
+            <button type="button" id="removeRoleApprove" class="btn btn-secondary" aria-label="Remove selected role(s)">⬅️</button>
+        </div>
+
+        <!-- Assigned Admin Roles -->
+        <div class="user-select-block">
+            <label for="assignedRolesApprove" class="user-select-label">Assigned Admin Roles</label>
+            <select multiple class="form-control user-select-box" name="pending_timesheets_approval_roles[]" id="assignedRolesApprove">
+                <?php foreach ($roles as $role): ?>
+                    <?php if (in_array((int)$role->id, $allowedApprovalRoles, true)): ?>
+                        <option value="<?= (int)$role->id ?>"><?= htmlspecialchars($role->name, ENT_QUOTES, 'UTF-8') ?></option>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </select>
+        </div>
+    </div>
+
+    <h4 class="mt-3">Validate Time Spent</h4>
+    <p class="text-muted" style="margin-bottom:16px;">
+        <label for="unbilled_time_validate_min">
+            Set the minimum time (in hours) to validate a task that is not marked as Billable or SLA:
+            <input
+                type="number"
+                step="0.1"
+                min="0"
+                name="unbilled_time_validate_min"
+                id="unbilled_time_validate_min"
+                value="<?= htmlspecialchars((string)($unbilledTimeValidateMin ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                style="width:80px;"
+            >
+        </label>
+        <small>Example: Enter 0.5 for 30 minutes.</small>
+    </p>
+
+    <div class="mt-3">
+        <button type="submit" class="btn btn-primary">Save Approval Permissions</button>
+    </div>
+</form>

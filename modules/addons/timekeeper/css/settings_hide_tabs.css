@@ -1,1 +1,56 @@
-/* Hide Menu Tabs Settings Table Styling */.timekeeper-hide-tabs-settings {    margin-top: 10px;}.timekeeper-hide-tabs-settings table {    width: 60%;    border-collapse: collapse;}.timekeeper-hide-tabs-settings th,.timekeeper-hide-tabs-settings td {    border: 1px solid #ddd;    padding: 2px;    text-align: center;    vertical-align: middle;}.timekeeper-hide-tabs-settings th {    background-color: #f9f9f9;    font-weight: bold;    text-align: center;}/* Column width consistency */.timekeeper-hide-tabs-settings th:first-child,.timekeeper-hide-tabs-settings td:first-child {    width: 150px; /* Role column */    text-align: left;}.timekeeper-hide-tabs-settings th:not(:first-child),.timekeeper-hide-tabs-settings td:not(:first-child) {    width: 70px; /* Checkbox columns */}/* Checkbox alignment */.timekeeper-hide-tabs-settings input[type="checkbox"] {    transform: scale(1.2);    cursor: pointer;}
+/* Hide Menu Tabs – scoped */
+.timekeeper-root .timekeeper-hide-tabs-settings { margin-top: 10px; }
+
+/* Table sizing (works with Bootstrap .table + .table-bordered) */
+.timekeeper-root .timekeeper-hide-tabs-settings .table {
+  width: 100%;
+  min-width: 700px; /* replaces inline style */
+}
+
+/* Cells */
+.timekeeper-root .timekeeper-hide-tabs-settings .table th,
+.timekeeper-root .timekeeper-hide-tabs-settings .table td {
+  padding: 4px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Header */
+.timekeeper-root .timekeeper-hide-tabs-settings .table thead th {
+  background-color: #f9f9f9;
+  font-weight: bold;
+}
+
+/* First column (role name) */
+.timekeeper-root .timekeeper-hide-tabs-settings .table th:first-child,
+.timekeeper-root .timekeeper-hide-tabs-settings .table td:first-child {
+  width: 200px;
+  text-align: left;
+}
+
+/* Checkbox alignment/size + brand color */
+.timekeeper-root .timekeeper-hide-tabs-settings input[type="checkbox"] {
+  transform: scale(1.15);
+  cursor: pointer;
+  line-height: 1;
+  accent-color: #1a73e8; /* modern browsers */
+}
+
+/* Keyboard focus */
+.timekeeper-root .timekeeper-hide-tabs-settings input[type="checkbox"]:focus-visible {
+  outline: 2px solid #1a73e8;
+  outline-offset: 2px;
+}
+
+/* Row hover to aid scanning */
+.timekeeper-root .timekeeper-hide-tabs-settings .table tbody tr:hover {
+  background-color: #f8fbff;
+}
+
+/* Small screens */
+@media (max-width: 768px) {
+  .timekeeper-root .timekeeper-hide-tabs-settings .table { min-width: 0; }
+  .timekeeper-root .timekeeper-hide-tabs-settings .table th:first-child,
+  .timekeeper-root .timekeeper-hide-tabs-settings .table td:first-child { width: auto; }
+  .timekeeper-root .timekeeper-hide-tabs-settings input[type="checkbox"] { transform: scale(1); }
+}
