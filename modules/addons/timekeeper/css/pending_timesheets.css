@@ -1,0 +1,82 @@
+/* ===== Timekeeper Pending Timesheets (scoped) ===== */
+.timekeeper-root .pending-root {}
+
+.timekeeper-root .pt-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 0 14px;
+  flex-wrap: wrap;
+}
+
+.timekeeper-root .pt-list {
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.timekeeper-root .pt-list header {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  font-weight: 600;
+}
+.timekeeper-root .pt-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 120px 120px 120px;
+  padding: 10px 12px;
+  border-top: 1px solid #f2f2f2;
+  align-items: center;
+}
+.timekeeper-root .pt-row:first-of-type { border-top: 0; }
+.timekeeper-root .pt-row .muted { color: #666; font-size: 13px; }
+
+.timekeeper-root .pt-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  border: 1px solid #ddd;
+}
+.timekeeper-root .pt-badge.pending { background: #fff; }
+.timekeeper-root .pt-badge.rejected { background: #fff3cd; border-color: #ffe8a1; }
+.timekeeper-root .pt-badge.approved { background: #e2f0d9; border-color: #a2d28f; }
+
+.timekeeper-root .pt-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.timekeeper-root .pt-actions .btn { white-space: nowrap; }
+
+.timekeeper-root .pt-detail {
+  margin-top: 16px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+}
+.timekeeper-root .pt-detail header {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  font-weight: 600;
+}
+.timekeeper-root .pt-detail .body { padding: 12px; }
+
+/* Edit rows, same “row” styling as timesheet */
+.timekeeper-root .pt-entry-row {
+  display: grid;
+  grid-template-columns:
+    180px 180px 180px 100px 1fr 100px 100px 90px 70px 100px 70px 100px 90px 90px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f2f2f2;
+}
+.timekeeper-root .pt-entry-row:last-of-type { border-bottom: 0; }
+
+.timekeeper-root .col-hidden { visibility: hidden; height: 0; }
+.timekeeper-root .col-show   { visibility: visible; height: auto; }
+
+.timekeeper-root .pt-totals {
+  display: flex;
+  gap: 20px;
+  justify-content: flex-end;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
