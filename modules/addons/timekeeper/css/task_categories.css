@@ -43,7 +43,7 @@
 
 /* Add a little space between consecutive rows */
 .timekeeper-root .tc-rows form {
-  margin-bottom: 10px;
+  margin-bottom: 5px;
 }
 .timekeeper-root .tc-rows form:last-of-type {
   margin-bottom: 0;
