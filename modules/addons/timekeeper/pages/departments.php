@@ -1,4 +1,3 @@
-
 <?php
 
 use WHMCS\Database\Capsule;
@@ -7,117 +6,143 @@ if (!defined('WHMCS')) {
     die('Access denied');
 }
 
-session_start();
-
 $modulelink = "addonmodules.php?module=timekeeper&timekeeperpage=departments";
+$message = "";
 
-// --- Handle Add Department ---
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['action'] === 'add') {
-    // check_token(); // CSRF token disabled
+/**
+ * Build a bootstrap-ish alert message (kept simple)
+ */
+function tk_flash(string $type, string $text): string {
+    $cls = $type === 'error' ? 'alert-danger' : 'alert-success';
+    return '<div class="alert ' . $cls . '">' . htmlspecialchars($text, ENT_QUOTES, 'UTF-8') . '</div>';
+}
 
-    $name = trim($_POST['name'] ?? '');
-    if ($name !== '') {
-        Capsule::table('mod_timekeeper_departments')->insert([
-            'name' => $name,
-            'status' => 'active',
-            'created_at' => date('Y-m-d H:i:s')
-        ]);
-        header("Location: {$modulelink}&success=1");
+/**
+ * Redirect helper
+ */
+function tk_redirect(string $url): void {
+    if (!headers_sent()) {
+        header("Location: {$url}");
         exit;
+    }
+    echo '<script>location.href=' . json_encode($url) . ';</script>';
+    exit;
+}
+
+/* ==============================
+   POST: Add / Edit
+============================== */
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
+
+    if ($action === 'add') {
+        // check_token(); // (disabled in dev)
+        $name = trim((string)($_POST['name'] ?? ''));
+        if ($name === '') {
+            tk_redirect($modulelink . "&error=empty");
+        }
+
+        try {
+            Capsule::table('mod_timekeeper_departments')->insert([
+                'name'       => $name,
+                'status'     => 'active',
+                'created_at' => date('Y-m-d H:i:s'),
+            ]);
+            tk_redirect($modulelink . "&success=1");
+        } catch (\Throwable $e) {
+            // Handle unique constraint violations gracefully
+            $msg = $e->getMessage();
+            if (stripos($msg, 'Duplicate') !== false || stripos($msg, 'uq_department_name') !== false) {
+                tk_redirect($modulelink . "&error=duplicate");
+            }
+            tk_redirect($modulelink . "&error=1");
+        }
+    }
+
+    if ($action === 'edit') {
+        // check_token(); // (disabled in dev)
+        $id   = (int)($_POST['id'] ?? 0);
+        $name = trim((string)($_POST['name'] ?? ''));
+
+        if ($id <= 0 || $name === '') {
+            tk_redirect($modulelink . "&error=empty");
+        }
+
+        try {
+            Capsule::table('mod_timekeeper_departments')
+                ->where('id', $id)
+                ->update(['name' => $name]);
+            tk_redirect($modulelink . "&updated=1");
+        } catch (\Throwable $e) {
+            $msg = $e->getMessage();
+            if (stripos($msg, 'Duplicate') !== false || stripos($msg, 'uq_department_name') !== false) {
+                tk_redirect($modulelink . "&error=duplicate");
+            }
+            tk_redirect($modulelink . "&error=1");
+        }
     }
 }
 
-// --- Handle Edit Department ---
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['action'] === 'edit') {
-    // check_token(); // CSRF token disabled
-
-    $id = (int) $_POST['id'];
-    $name = trim($_POST['name'] ?? '');
-    if ($id && $name !== '') {
-        Capsule::table('mod_timekeeper_departments')
-            ->where('id', $id)
-            ->update(['name' => $name]);
-        header("Location: {$modulelink}&updated=1");
-        exit;
-    }
-}
-
-
+/* ==============================
+   GET: Delete (soft delete)
+   - Only if no linked task categories exist
+============================== */
 if (isset($_GET['delete'])) {
     $id = (int) $_GET['delete'];
+
+    // Prevent removing a department that still has task categories
     $hasLinked = Capsule::table('mod_timekeeper_task_categories')
         ->where('department_id', $id)
         ->exists();
 
     if ($hasLinked) {
-        header("Location: $modulelink&error=has_subtasks");
-    } else {
-        Capsule::table('mod_timekeeper_departments')
-            ->where('id', $id)
-            ->update(['status' => 'inactive']);
-        header("Location: $modulelink&deleted=1");
+        tk_redirect($modulelink . "&error=has_subtasks");
     }
-    exit;
-}
-// --- Handle Delete Department ---
-if (isset($_GET['delete']) && isset($_GET['token'])) {
-    // check_token(); // CSRF token disabled
 
-    $id = (int) $_GET['delete'];
-    $hasSubtasks = Capsule::table('mod_timekeeper_subtasks')->where('department_id', $id)->exists();
-    if (!$hasSubtasks) {
-        Capsule::table('mod_timekeeper_departments')->where('id', $id)->delete();
-        header("Location: {$modulelink}&deleted=1");
-        exit;
-    } else {
-        header("Location: {$modulelink}&error=has_subtasks");
-        exit;
-    }
+    Capsule::table('mod_timekeeper_departments')
+        ->where('id', $id)
+        ->update(['status' => 'inactive']);
+
+    tk_redirect($modulelink . "&deleted=1");
 }
 
-// --- Load Departments ---
+/* ==============================
+   Load departments (active only)
+============================== */
 $departments = Capsule::table('mod_timekeeper_departments')
     ->where('status', 'active')
     ->orderBy('name')
     ->get();
 
-include __DIR__ . '/../templates/includes/timesheet_menu.tpl';
-
-ob_start();
-include __DIR__ . '/../templates/admin/departments.tpl';
-$content = ob_get_clean();
-
-// Build the DEPARTMENT_ROWS rows from departments.tpl
-$rows = '';
-$confirmJS = 'return confirm(\'Are you sure you want to delete this department?\');';
-foreach ($departments as $dept) {
-    $rows .= '<form method="post" class="border p-3 mb-3 rounded bg-light" style="padding-bottom: 5px;">';
-    $rows .= '<div class="row align-items-center" style="width: 50%;">';
-    $rows .= '<div class="col-md-6 mb-2">';
-    $rows .= '<input type="text" name="name" value="' . htmlspecialchars($dept->name) . '" class="form-control" required>';
-    $rows .= '</div>';
-    $rows .= '<div class="col-md-6 d-flex gap-2 flex-wrap">';
-    $rows .= '<input type="hidden" name="id" value="' . $dept->id . '">';
-    $rows .= '<input type="hidden" name="action" value="edit">';
-    $rows .= '<button type="submit" class="btn btn-success">Save</button>';
-    $rows .= '<a href="' . $modulelink . '&delete=' . $dept->id . '" class="btn btn-danger" style="margin-left:5px;" onclick="' . $confirmJS . '">Delete</a>';
-    $rows .= '</div>';
-    $rows .= '</div>';
-    $rows .= '</form>';
-}
-
-$message = '';
+/* ==============================
+   Flash messages (via query flags)
+============================== */
 if (isset($_GET['success'])) {
-    $message = '<div class="alert alert-success">Department added successfully.</div>';
+    $message = tk_flash('success', 'Department added successfully.');
 } elseif (isset($_GET['updated'])) {
-    $message = '<div class="alert alert-success">Department updated successfully.</div>';
+    $message = tk_flash('success', 'Department updated successfully.');
 } elseif (isset($_GET['deleted'])) {
-    $message = '<div class="alert alert-success">Department deleted successfully.</div>';
-} elseif (isset($_GET['error']) && $_GET['error'] === 'has_subtasks') {
-    $message = '<div class="alert alert-danger">Cannot delete department: Subtasks are still linked.</div>';
+    $message = tk_flash('success', 'Department deleted successfully.');
+} elseif (isset($_GET['error'])) {
+    switch ($_GET['error']) {
+        case 'has_subtasks':
+            $message = tk_flash('error', 'Cannot delete department: Task categories are still linked.');
+            break;
+        case 'duplicate':
+            $message = tk_flash('error', 'A department with that name already exists.');
+            break;
+        case 'empty':
+            $message = tk_flash('error', 'Please provide a department name.');
+            break;
+        default:
+            $message = tk_flash('error', 'An error occurred. Please try again.');
+    }
 }
 
-$content = str_replace('<!--MESSAGE-->', $message, $content);
-$content = str_replace('<!--DEPARTMENT_ROWS-->', $rows, $content);
-
-echo $content;
+/* ==============================
+   Render template
+   - Pass variables directly; no string replacement
+============================== */
+$modulelink = $modulelink; // keep for template clarity
+// The template will use: $message, $modulelink, $departments
+include __DIR__ . '/../templates/admin/departments.tpl';
