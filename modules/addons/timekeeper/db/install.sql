@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS `mod_timekeeper_timesheets` (
   `status` ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
   `admin_rejection_note` TEXT DEFAULT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
   `approved_at` TIMESTAMP NULL DEFAULT NULL,
   `approved_by` INT UNSIGNED DEFAULT NULL,
   `rejected_at` DATETIME DEFAULT NULL,

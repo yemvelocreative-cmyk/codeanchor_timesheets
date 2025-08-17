@@ -6,9 +6,20 @@ if (!defined('WHMCS')) {
     die('Access Denied');
 }
 
-/**
- * Helpers
- */
+// helper near the top (under use + die guard)
+function tk_has_col(string $table, string $col): bool {
+    try { return Capsule::schema()->hasColumn($table, $col); } catch (\Throwable $e) {
+        try {
+            $cols = Capsule::select("SHOW COLUMNS FROM `$table`");
+            foreach ($cols as $c) {
+                $f = is_object($c) ? ($c->Field ?? null) : ($c['Field'] ?? null);
+                if ($f === $col) return true;
+            }
+        } catch (\Throwable $e2) {}
+        return false;
+    }
+}
+
 function tk_parse_id_list(?string $csv): array {
     if (!$csv) return [];
     $out = [];
@@ -61,10 +72,14 @@ $unbilledTimeValidateMin = ($unbilledTimeValidateMin === '' || $unbilledTimeVali
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['resubmit_timesheet_id'])) {
     $resubmitId = (int) $_POST['resubmit_timesheet_id'];
 
+    $upd = ['status' => 'pending'];
+if (tk_has_col('mod_timekeeper_timesheets', 'updated_at')) {
+    $upd['updated_at'] = date('Y-m-d H:i:s');
+}
     Capsule::table('mod_timekeeper_timesheets')
         ->where('id', $resubmitId)
         ->where('status', 'rejected')
-        ->update(['status' => 'pending', 'updated_at' => date('Y-m-d H:i:s')]);
+        ->update($upd);
 
     header("Location: addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&resubmitted=1&timesheet_id={$resubmitId}");
     exit;
@@ -173,14 +188,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_new_entry'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['approve_timesheet_id']) && $canApprove) {
     $timesheetId = (int) $_POST['approve_timesheet_id'];
 
-    Capsule::table('mod_timekeeper_timesheets')
-        ->where('id', $timesheetId)
-        ->update([
-            'status'      => 'approved',
-            'approved_at' => date('Y-m-d H:i:s'),
-            'approved_by' => $adminId,
-            'updated_at'  => date('Y-m-d H:i:s'),
-        ]);
+    $now = date('Y-m-d H:i:s');
+$update = [
+    'status' => 'approved',
+    'approved_at' => $now,
+    'approved_by' => $adminId,
+];
+    if (tk_has_col('mod_timekeeper_timesheets', 'updated_at')) {
+        $update['updated_at'] = $now;
+    }
+        Capsule::table('mod_timekeeper_timesheets')
+            ->where('id', $timesheetId)
+            ->update($update);
 
     // Update per-entry "no_billing_verified"
     $entries = Capsule::table('mod_timekeeper_timesheet_entries')
@@ -209,15 +228,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reject_timesheet_id']
     $timesheetId = (int) $_POST['reject_timesheet_id'];
     $adminRejectionNote = trim((string) ($_POST['admin_rejection_note'] ?? ''));
 
-    Capsule::table('mod_timekeeper_timesheets')
-        ->where('id', $timesheetId)
-        ->update([
-            'status'               => 'rejected',
-            'admin_rejection_note' => $adminRejectionNote,
-            'rejected_at'          => date('Y-m-d H:i:s'),
-            'rejected_by'          => $adminId,
-            'updated_at'           => date('Y-m-d H:i:s'),
-        ]);
+    $now = date('Y-m-d H:i:s');
+    $update = [
+        'status'               => 'rejected',
+        'admin_rejection_note' => $adminRejectionNote,
+        'rejected_at'          => $now,
+        'rejected_by'          => $adminId
+    ];
+        if (tk_has_col('mod_timekeeper_timesheets', 'updated_at')) {
+            $update['updated_at'] = $now;
+        }
+            Capsule::table('mod_timekeeper_timesheets')
+                ->where('id', $timesheetId)
+                ->update($update);
 
     header("Location: addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&rejected=1");
     exit;

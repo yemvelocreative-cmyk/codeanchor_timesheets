@@ -116,7 +116,7 @@
               <input type="hidden" name="timesheet_date" value="<?= htmlspecialchars($editTimesheetDate) ?>">
 
               <!-- Client -->
-              <select name="client_id">
+              <select name="client_id" required>
                 <option value="">Select…</option>
                 <?php foreach ($clientMap as $id => $label): ?>
                   <option value="<?= (int)$id ?>"><?= htmlspecialchars($label) ?></option>
@@ -124,7 +124,7 @@
               </select>
 
               <!-- Department -->
-              <select name="department_id" id="department_id">
+              <select name="department_id" id="department_id" required>
                 <option value="">Select…</option>
                 <?php foreach ($departmentMap as $id => $label): ?>
                   <option value="<?= (int)$id ?>"><?= htmlspecialchars($label) ?></option>
@@ -132,7 +132,7 @@
               </select>
 
               <!-- Task Category (filtered by department) -->
-              <select name="task_category_id" id="task_category_id">
+              <select name="task_category_id" id="task_category_id" required>
                 <option value="">Select…</option>
                 <?php foreach ($taskCategories as $cat): ?>
                   <option value="<?= (int)$cat->id ?>" data-dept="<?= (int)$cat->department_id ?>">
@@ -146,8 +146,8 @@
               <input type="text" name="description" placeholder="">
 
               <!-- Times -->
-              <input type="time" name="start_time">
-              <input type="time" name="end_time">
+              <input type="time" name="start_time" required>
+              <input type="time" name="end_time" required>
               <input type="text" name="time_spent" readonly>
 
               <!-- Billable / Time -->
@@ -301,7 +301,7 @@
               }
             ?>
 
-            <form method="post" class="pt-approve-form" style="margin-top: 12px;">
+           <form method="post" id="approve-form" class="pt-approve-form" style="margin-top: 12px;">
               <input type="hidden" name="approve_timesheet_id" value="<?= (int)$timesheet->id ?>">
 
               <?php if (!empty($verifyList)): ?>

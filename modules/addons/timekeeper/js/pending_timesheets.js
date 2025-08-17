@@ -2,10 +2,10 @@
 (function () {
   'use strict';
 
-  // Simple helper to query by name in a form
-  function qn(form, name) { return form.querySelector('[name="' + name + '"]'); }
+  // --- helpers ---
+  function qn(form, name) { return form ? form.querySelector('[name="' + name + '"]') : null; }
 
-  // Toggle a time input & header by checkbox
+  // Toggle a time input & optional header by checkbox
   function toggleTimeField(form, chkName, inputName, headerEl) {
     const chk = qn(form, chkName);
     const inp = qn(form, inputName);
@@ -24,11 +24,11 @@
     apply();
   }
 
-  // Calculate time_spent for edit/add rows (basic HH:MM validation)
-  function bindTimeCalc(form) {
-    const start = qn(form, 'start_time');
-    const end   = qn(form, 'end_time');
-    const spent = qn(form, 'time_spent');
+  // Calculate time_spent for a form with start/end/time_spent fields
+  function bindTimeCalc(scope) {
+    const start = scope.querySelector('[name="start_time"]');
+    const end   = scope.querySelector('[name="end_time"]');
+    const spent = scope.querySelector('[name="time_spent"]');
     if (!start || !end || !spent) return;
 
     function calc() {
@@ -62,15 +62,38 @@
     apply();
   }
 
-  // Confirmations
+  // Bind edit rows (matches your template classes)
+  function bindEditRows() {
+    document.querySelectorAll('.pending-edit-department').forEach(function (deptSel) {
+      const form = deptSel.closest('form');
+      const taskSel = form ? form.querySelector('.pending-edit-task-category') : null;
+      if (taskSel) bindDeptTaskFilter(deptSel, taskSel);
+      if (form) bindTimeCalc(form);
+    });
+  }
+
+  // Approve form: copy verify_unbilled_* checkboxes into the form on submit
+  function bindApproveInjection() {
+    var approveForm = document.getElementById('approve-form'); // ensure this id is on the Approve form
+    if (!approveForm) return;
+    approveForm.addEventListener('submit', function () {
+      document.querySelectorAll('input[type="checkbox"][name^="verify_unbilled_"]').forEach(function (chk) {
+        var hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = chk.name;
+        hidden.value = chk.checked ? '1' : '0';
+        approveForm.appendChild(hidden);
+      });
+    });
+  }
+
+  // Optional confirms (only fire if you add these classes in the template later)
   function bindConfirms() {
-    // Approve
     document.querySelectorAll('form.pt-approve-form').forEach(f => {
       f.addEventListener('submit', function (e) {
         if (!confirm('Approve this timesheet?')) e.preventDefault();
       });
     });
-    // Reject
     document.querySelectorAll('form.pt-reject-form').forEach(f => {
       f.addEventListener('submit', function (e) {
         const note = qn(f, 'admin_rejection_note');
@@ -81,7 +104,6 @@
         }
       });
     });
-    // Resubmit
     document.querySelectorAll('form.pt-resubmit-form').forEach(f => {
       f.addEventListener('submit', function (e) {
         if (!confirm('Re-submit this timesheet for approval?')) e.preventDefault();
@@ -89,31 +111,25 @@
     });
   }
 
-  // For edit rows: bind dept -> task filter
-  function bindEditRows() {
-    document.querySelectorAll('.pt-entry-row').forEach(row => {
-      const deptSel = row.querySelector('.edit-department');
-      const taskSel = row.querySelector('.edit-task-category');
-      if (deptSel && taskSel) bindDeptTaskFilter(deptSel, taskSel);
-      bindTimeCalc(row);
-    });
-  }
-
   document.addEventListener('DOMContentLoaded', function () {
-    bindConfirms();
     bindEditRows();
+    bindApproveInjection();
+    bindConfirms();
 
-    // Add-form helpers (if detail view has an add form)
-    const addForm = document.getElementById('pt-add-form');
+    // Add-row bindings (use your current IDs from the template)
+    var addDept = document.getElementById('pending-add-department');
+    var addTask = document.getElementById('pending-add-task-category');
+    var addRowScope = document; // inputs have unique IDs, so scope can be document
+
+    if (addDept && addTask) bindDeptTaskFilter(addDept, addTask);
+    // Time calc for the add row uses the named fields within the same "row" (IDs exist so this works)
+    bindTimeCalc(addRowScope);
+
+    // Optional: show/hide billable/sla inputs in Add row if you want dynamic visibility
+    var billHdr = document.getElementById('pt-billable-header'); // add these spans if desired
+    var slaHdr  = document.getElementById('pt-sla-header');
+    var addForm = document.querySelector('form[action*="timekeeperpage=pending_timesheets"]'); // first form on the add row
     if (addForm) {
-      const dept = addForm.querySelector('#department_id');
-      const task = addForm.querySelector('#task_category_id');
-      if (dept && task) bindDeptTaskFilter(dept, task);
-      bindTimeCalc(addForm);
-
-      // Show/hide billable/sla inputs & headers in the add form
-      const billHdr = document.getElementById('pt-billable-header');
-      const slaHdr  = document.getElementById('pt-sla-header');
       toggleTimeField(addForm, 'billable', 'billable_time', billHdr);
       toggleTimeField(addForm, 'sla', 'sla_time', slaHdr);
     }

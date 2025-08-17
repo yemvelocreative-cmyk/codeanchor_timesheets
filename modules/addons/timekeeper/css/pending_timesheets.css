@@ -56,7 +56,7 @@
   border-bottom: 1px solid #eee;
   font-weight: 600;
 }
-.timekeeper-root .pt-detail .body { padding: 12px; }
+.timekeeper-root .pt-detail .body { padding: 12px; overflow-x: auto; }
 
 /* Edit rows, same “row” styling as timesheet */
 .timekeeper-root .pt-entry-row {
