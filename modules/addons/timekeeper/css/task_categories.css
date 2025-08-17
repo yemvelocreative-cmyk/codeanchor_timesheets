@@ -41,10 +41,10 @@
   white-space: nowrap;  /* avoids breaking long button labels */
 }
 
-/* Add a little space between consecutive rows 
+ Add a little space between consecutive rows 
 .timekeeper-root .tc-rows form {
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
-.timekeeper-root .tc-rows form:last-of-type {
+/*.timekeeper-root .tc-rows form:last-of-type {
   margin-bottom: 0;
 }*/
