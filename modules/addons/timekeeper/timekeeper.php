@@ -148,6 +148,8 @@ function timekeeper_output($vars) {
         } else {
             tk_load_assets_if_exists(['css' => ['timekeeper.css'], 'js' => ['timekeeper.js']]);
         }
+        // Always include navigation assets if they exist
+        tk_load_assets_if_exists(['css' => ['navigation.css'], 'js' => ['navigation.js']]);
 
         // ---- Subpage auto-loader conventions ----
         // Generic: ?sub=foo  -> loads <page>_foo.css/js if present
@@ -180,10 +182,12 @@ function timekeeper_output($vars) {
 
 
     // Include navigation (but not during CSV export)
+    // Include navigation (but not during CSV export)
     if (!isset($_GET['export']) || $_GET['export'] !== '1') {
+        echo '<div class="timekeeper-root">'; // open scope FIRST so nav is styled
         include __DIR__ . '/includes/navigation.php';
-        echo '<div class="timekeeper-root">'; // scope all page markup
     }
+
 
     switch ($page) {
         case 'dashboard':

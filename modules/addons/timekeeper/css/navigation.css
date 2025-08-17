@@ -1,0 +1,27 @@
+/* Timekeeper Navigation */
+
+.timekeeper-root .timekeeper-nav {
+  margin: 8px 0 0 0;
+}
+
+/* Banner */
+.timekeeper-root .timekeeper-banner {
+  margin: 8px 0;
+  padding: 10px;
+  border: 1px solid #f5c2c2;
+  background: #fff3cd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border-radius: 4px;
+}
+.timekeeper-root .timekeeper-banner .message {
+  font-size: 14px;
+}
+.timekeeper-root .timekeeper-banner .actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Tabs are already styled globally in timekeeper.css via .timekeeper-tabs */
