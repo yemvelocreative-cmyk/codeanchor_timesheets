@@ -1,0 +1,89 @@
+/* ===== Timekeeper Timesheet (scoped) ===== */
+.timekeeper-root .timesheet-root {}
+
+.timekeeper-root .ts-alert {
+  padding: 10px;
+  border: 1px solid;
+  border-radius: 4px;
+  margin: 10px 0 16px;
+}
+.timekeeper-root .ts-alert-warning {
+  background: #fff3cd;
+  border-color: #ffeeba;
+  color: #856404;
+}
+
+.timekeeper-root .ts-meta {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+/* Layout rows */
+.timekeeper-root .ts-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+}
+.timekeeper-root .ts-header {
+  font-weight: bold;
+  padding-bottom: 6px;
+  margin-top: 16px;
+}
+.timekeeper-root .ts-subheader {
+  font-weight: 600;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #ccc;
+  margin-top: 6px;
+}
+.timekeeper-root .ts-entryform,
+.timekeeper-root .ts-item {
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+/* Horizontal scroll wrapper for wide forms */
+.timekeeper-root .ts-scroll {
+  overflow-x: auto;
+}
+
+/* Fixed width helpers (match your original inline widths) */
+.timekeeper-root .w-50 { width: 50px; }
+.timekeeper-root .w-70 { width: 70px; }
+.timekeeper-root .w-80 { width: 80px; }
+.timekeeper-root .w-90 { width: 90px; }
+.timekeeper-root .w-180 { width: 180px; }
+.timekeeper-root .w-190 { width: 190px; }
+.timekeeper-root .w-200 { width: 200px; }
+.timekeeper-root .w-240 { width: 240px; }
+.timekeeper-root .w-250 { width: 250px; }
+
+.timekeeper-root .align-right { text-align: right; }
+.timekeeper-root .align-left { text-align: left; }
+
+.timekeeper-root .sla-group { display: flex; align-items: center; gap: 4px; }
+
+/* Hide/show columns (for billable/sla time) */
+.timekeeper-root .col-hidden { visibility: hidden; height: 0; }
+.timekeeper-root .col-show   { visibility: visible; height: auto; }
+
+/* Totals */
+.timekeeper-root .ts-totals {
+  display: flex;
+  gap: 20px;
+  justify-content: flex-end;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+/* Compact table-like spacing for forms */
+.timekeeper-root .timesheet-root .table.compact th,
+.timekeeper-root .timesheet-root .table.compact td {
+  padding: 6px 8px;
+}
+
+/* Small buttons same width */
+.timekeeper-root .btn.w-70 { width: 70px; }

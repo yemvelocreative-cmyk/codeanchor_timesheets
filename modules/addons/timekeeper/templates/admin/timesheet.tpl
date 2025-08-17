@@ -4,372 +4,199 @@ foreach ($clients as $c) {
     $clientMap[$c->id] = $c->companyname ?: ($c->firstname . ' ' . $c->lastname);
 }
 $departmentMap = [];
-foreach ($departments as $d) {
-    $departmentMap[$d->id] = $d->name;
-}
+foreach ($departments as $d) { $departmentMap[$d->id] = $d->name; }
 $taskMap = [];
-foreach ($taskCategories as $t) {
-    $taskMap[$t->id] = $t->name;
-}
+foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
 ?>
-<div class="timekeeper-fullwidth">
-    <?php echo "<!-- Timesheet Status: $timesheetStatus -->"; ?>
-    <?php if ($timesheetStatus === 'not_assigned'): ?>
-        <div style="margin-top: 20px; background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; padding: 15px; border-radius: 4px;">
-            <strong>Notice:</strong> No timesheet available for today. You may not be assigned, or today is not an active day. Please contact your administrator.
-        </div>
-    <?php endif; ?>
 
-    <?php if ($timesheetStatus !== 'not_assigned'): ?>
+<div class="timekeeper-fullwidth timesheet-root">
+  <?= "<!-- Timesheet Status: " . htmlspecialchars($timesheetStatus, ENT_QUOTES, 'UTF-8') . " -->"; ?>
+
+  <?php if ($timesheetStatus === 'not_assigned'): ?>
+    <div class="ts-alert ts-alert-warning">
+      <strong>Notice:</strong> No timesheet available for today. You may not be assigned, or today is not an active day. Please contact your administrator.
+    </div>
+  <?php endif; ?>
+
+  <?php if ($timesheetStatus !== 'not_assigned'): ?>
 
     <h2>Daily Timesheet</h2>
 
-    <div class="mb-4">
-        <p><strong>You are logged in as:</strong> <?= $adminName ?></p>
-        <p><strong>Timesheet Date:</strong> <?= $timesheetDate ?></p>
-        <p><strong>Status:</strong> <?= ucfirst($timesheetStatus) ?></p>
+    <div class="ts-meta">
+      <div><strong>You are logged in as:</strong> <?= htmlspecialchars($adminName, ENT_QUOTES, 'UTF-8') ?></div>
+      <div><strong>Timesheet Date:</strong> <?= htmlspecialchars($timesheetDate, ENT_QUOTES, 'UTF-8') ?></div>
+      <div><strong>Status:</strong> <?= htmlspecialchars(ucfirst($timesheetStatus), ENT_QUOTES, 'UTF-8') ?></div>
     </div>
 
     <!-- Field Labels -->
-    <div style="display: flex; flex-wrap: nowrap; gap: 8px; font-weight: bold; padding-bottom: 6px; margin-top: 20px;">
-      <div style="width: 200px;">Client</div>
-      <div style="width: 180px;">Department</div>
-      <div style="width: 180px;">Task Category</div>
-      <div style="width: 90px;">Ticket ID</div>
-      <div style="width: 250px;">Description</div>
-      <div style="width: 90px;">Start Time</div>
-      <div style="width: 90px;">End Time</div>
-      <div style="width: 80px;">Time Spent</div>
-      <div style="width: 50px;">Billable</div>
-      <div style="width: 90px;"><span id="billableTimeHeader" style="display: none;">Time Billed</span></div>
-      <div style="width: 50px;">SLA</div>
-      <div style="width: 90px;"><span id="slaTimeHeader" style="display: none;">SLA Time</span></div>
-      <div style="width: 70px;"></div> <!-- Reserved space for Add button -->
+    <div class="ts-row ts-header">
+      <div class="w-200">Client</div>
+      <div class="w-180">Department</div>
+      <div class="w-180">Task Category</div>
+      <div class="w-90">Ticket ID</div>
+      <div class="w-250">Description</div>
+      <div class="w-90">Start Time</div>
+      <div class="w-90">End Time</div>
+      <div class="w-80">Time Spent</div>
+      <div class="w-50">Billable</div>
+      <div class="w-90"><span id="billableTimeHeader" class="col-hidden">Time Billed</span></div>
+      <div class="w-50">SLA</div>
+      <div class="w-90"><span id="slaTimeHeader" class="col-hidden">SLA Time</span></div>
+      <div class="w-70">&nbsp;</div>
     </div>
 
     <!-- Entry Row -->
-    <div style="overflow-x: auto;">
-      <form method="post" id="addTaskForm" style="display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; flex-direction: row;">
-          <select name="client_id" id="client_id" required oninvalid="this.setCustomValidity('Please select a client.')"
-    oninput="this.setCustomValidity('')" style="width: 200px; display: inline-block;">
-              <option value="">Select Client</option>
-              <?php foreach ($clients as $client): ?>
-                <option value="<?= $client->id ?>"><?= htmlspecialchars($client->companyname ?: $client->firstname . ' ' . $client->lastname) ?></option>
-              <?php endforeach; ?>
-          </select>
+    <div class="ts-scroll">
+      <form method="post" id="addTaskForm" class="ts-row ts-entryform">
+        <select name="client_id" id="client_id" required>
+          <option value="">Select Client</option>
+          <?php foreach ($clients as $client): ?>
+            <option value="<?= (int) $client->id ?>">
+              <?= htmlspecialchars($client->companyname ?: ($client->firstname . ' ' . $client->lastname), ENT_QUOTES, 'UTF-8') ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
 
-          <select name="department_id" id="department_id" required oninvalid="this.setCustomValidity('Please select a department.')"
-    oninput="this.setCustomValidity('')" style="width: 180px; display: inline-block;">
-              <option value="">Select Department</option>
-              <?php foreach ($departments as $dept): ?>
-                    <option value="<?= $dept->id ?>"><?= htmlspecialchars($dept->name) ?></option>
-              <?php endforeach; ?>
-          </select>
+        <select name="department_id" id="department_id" required>
+          <option value="">Select Department</option>
+          <?php foreach ($departments as $dept): ?>
+            <option value="<?= (int) $dept->id ?>"><?= htmlspecialchars($dept->name, ENT_QUOTES, 'UTF-8') ?></option>
+          <?php endforeach; ?>
+        </select>
 
-          <select name="task_category_id" id="task_category_id" required oninvalid="this.setCustomValidity('Please select a task category.')" style="width: 180px; display: inline-block;">
-              <option value="">Select Task Category</option>
-              <?php foreach ($taskCategories as $task): ?>
-                <option value="<?= $task->id ?>" data-dept="<?= $task->department_id ?>"><?= htmlspecialchars($task->name) ?></option>
-              <?php endforeach; ?>
-          </select>
+        <select name="task_category_id" id="task_category_id" required>
+          <option value="">Select Task Category</option>
+          <?php foreach ($taskCategories as $task): ?>
+            <option value="<?= (int) $task->id ?>" data-dept="<?= (int) $task->department_id ?>">
+              <?= htmlspecialchars($task->name, ENT_QUOTES, 'UTF-8') ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
 
-          <input type="text" name="ticket_id" placeholder="Ticket ID" style="width: 90px; display: inline-block;">
-          <input type="text" name="description" placeholder="Description" required 
-                oninvalid="this.setCustomValidity('Please provide a task description.')" 
-                oninput="this.setCustomValidity('')" 
-                style="width: 250px; display: inline-block;">
-          <input type="time" name="start_time" required
-                oninvalid="this.setCustomValidity('Please select or manually enter a start time.')"
-                onchange="this.setCustomValidity('')" 
-                style="width: 90px; display: inline-block;">
-          <input type="time" name="end_time" required
-                oninvalid="this.setCustomValidity('Please select or manually enter an end time.')"
-                onchange="this.setCustomValidity('')" 
-                style="width: 90px; display: inline-block;">
-          <input type="text" name="time_spent" placeholder="0.00" readonly style="width: 80px; display: inline-block;">
-          <input type="checkbox" name="billable" onchange="toggleBillableTime(this)" style="width: 50px; display: inline-block;">
-          <input type="text" name="billable_time" placeholder="Billable Time" style="width: 90px; visibility: hidden height: 0;">
-          <div class="sla-group" style="display: flex; align-items: center; gap: 4px;">
-              <input type="checkbox" name="sla" id="sla-checkbox" value="1" onchange="toggleSlaTime(this)">
-              <input type="text" name="sla_time" id="sla-time" placeholder="SLA Time" style="visibility: hidden; height: 0; width: 90px;">
-            
-              <!-- Hidden fields (grouped here, no layout impact) -->
-              <div style="display: none;">
-                <input type="hidden" name="timesheet_id" value="<?= $timesheetId ?>">
-                <input type="hidden" name="admin_id" value="<?= $adminId ?>">
-              </div>
-            </div>
-          <button type="submit" class="btn btn-sm btn-primary" style="width: 70px;">Add</button>
+        <input type="text" name="ticket_id" placeholder="Ticket ID">
+        <input type="text" name="description" placeholder="Description" required>
+        <input type="time" name="start_time" required>
+        <input type="time" name="end_time" required>
+        <input type="text" name="time_spent" placeholder="0.00" readonly class="align-right">
+        <input type="checkbox" name="billable">
+        <input type="text" name="billable_time" placeholder="Billable Time" class="col-hidden">
+        <div class="sla-group">
+          <input type="checkbox" name="sla" id="sla-checkbox" value="1">
+          <input type="text" name="sla_time" id="sla-time" placeholder="SLA Time" class="col-hidden">
+          <div class="visually-hidden">
+            <input type="hidden" name="timesheet_id" value="<?= (int) $timesheetId ?>">
+            <input type="hidden" name="admin_id" value="<?= (int) $adminId ?>">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-sm btn-primary w-70">Add</button>
       </form>
     </div>
 
     <!-- Existing Tasks -->
-    <?php if (!empty($existingTasks) && $timesheetStatus !== 'not_assigned'): ?>
-    <div id="existingTasks" style="margin-top: 30px;">
+    <?php if (!empty($existingTasks)): ?>
+      <div id="existingTasks" class="ts-existing">
         <h4>Saved Entries</h4>
-    
+
         <!-- Header Row -->
-        <div style="display: flex; flex-wrap: nowrap; gap: 8px; font-weight: bold; padding-bottom: 6px; border-bottom: 1px solid #ccc;">
-            <div style="width: 190px;">Client</div>
-            <div style="width: 180px;">Department</div>
-            <div style="width: 180px;">Task Category</div>
-            <div style="width: 90px;">Ticket ID</div>
-            <div style="width: 240px;">Description</div>
-            <div style="width: 90px;">Start</div>
-            <div style="width: 90px;">End</div>
-            <div style="width: 80px; text-align: left;">Time</div>
-            <div style="width: 140px;">Billable Time</div>
-            <div style="width: 140px;">SLA Time</div>
+        <div class="ts-row ts-subheader">
+          <div class="w-200">Client</div>
+          <div class="w-180">Department</div>
+          <div class="w-180">Task Category</div>
+          <div class="w-90">Ticket ID</div>
+          <div class="w-250">Description</div>
+          <div class="w-90">Start</div>
+          <div class="w-90">End</div>
+          <div class="w-80 align-left">Time</div>
+          <div class="w-50">Billable</div>
+          <div class="w-90">Billable Time</div>
+          <div class="w-50">SLA</div>
+          <div class="w-90">SLA Time</div>
+          <div class="w-70">&nbsp;</div>
+          <div class="w-70">&nbsp;</div>
         </div>
-    
+
         <!-- Entry Rows -->
         <?php foreach ($existingTasks as $task): ?>
-        <?php $editing = isset($_GET['edit_id']) && $_GET['edit_id'] == $task->id; ?>
-        <form method="post" style="display: flex; flex-wrap: nowrap; gap: 8px; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 14px;">
-            <input type="hidden" name="edit_id" value="<?= $task->id ?>">
-    
+          <?php $editing = isset($_GET['edit_id']) && (int) $_GET['edit_id'] === (int) $task->id; ?>
+
+          <form method="post" class="ts-row ts-item">
+            <input type="hidden" name="edit_id" value="<?= (int) $task->id ?>">
+
             <?php if ($editing): ?>
-                <select name="client_id" style="width: 200px;">
-                    <?php foreach ($clients as $c): ?>
-                        <option value="<?= $c->id ?>" <?= $task->client_id == $c->id ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($c->companyname ?: ($c->firstname . ' ' . $c->lastname)) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-    
-                <select name="department_id" class="edit-department" style="width: 180px;">
-                    <?php foreach ($departments as $dept): ?>
-                        <option value="<?= $dept->id ?>" <?= $task->department_id == $dept->id ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($dept->name) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-    
-                <select name="task_category_id" class="edit-task-category" style="width: 180px;">
-                    <?php foreach ($taskCategories as $cat): ?>
-                        <option value="<?= $cat->id ?>" data-dept="<?= $cat->department_id ?>" <?= $task->task_category_id == $cat->id ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($cat->name) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-    
-                <input type="text" name="ticket_id" value="<?= htmlspecialchars($task->ticket_id) ?>" style="width: 90px;">
-                <input type="text" name="description" value="<?= htmlspecialchars($task->description) ?>" style="width: 250px;">
-                <input type="time" name="start_time" value="<?= $task->start_time ?>" style="width: 90px;">
-                <input type="time" name="end_time" value="<?= $task->end_time ?>" style="width: 90px;">
-                <input type="text" name="time_spent" value="<?= number_format($task->time_spent, 2) ?>" style="width: 80px;" readonly>
-                <input type="checkbox" name="billable" value="1" <?= $task->billable ? 'checked' : '' ?> style="width: 50px;">
-                <input type="text" name="billable_time" value="<?= number_format($task->billable_time, 2) ?>" style="width: 90px;">
-                <input type="checkbox" name="sla" value="1" <?= $task->sla ? 'checked' : '' ?> style="width: 50px;" onchange="toggleSlaTime(this)" class="sla-edit-checkbox">
-                <input type="text" name="sla_time" value="<?= number_format($task->sla_time, 2) ?>" style="width: 90px;">
-                <button type="submit" class="btn btn-sm btn-success" style="width: 70px;">Save</button>
-                <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet" class="btn btn-sm btn-secondary" style="width: 70px;">Cancel</a>
+              <select name="client_id" class="w-200">
+                <?php foreach ($clients as $c): ?>
+                  <option value="<?= (int) $c->id ?>" <?= ((int)$task->client_id === (int)$c->id) ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($c->companyname ?: ($c->firstname . ' ' . $c->lastname), ENT_QUOTES, 'UTF-8') ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+
+              <select name="department_id" class="w-180 edit-department">
+                <?php foreach ($departments as $dept): ?>
+                  <option value="<?= (int) $dept->id ?>" <?= ((int)$task->department_id === (int)$dept->id) ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($dept->name, ENT_QUOTES, 'UTF-8') ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+
+              <select name="task_category_id" class="w-180 edit-task-category">
+                <?php foreach ($taskCategories as $cat): ?>
+                  <option value="<?= (int) $cat->id ?>" data-dept="<?= (int) $cat->department_id ?>" <?= ((int)$task->task_category_id === (int)$cat->id) ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($cat->name, ENT_QUOTES, 'UTF-8') ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+
+              <input type="text" name="ticket_id" value="<?= htmlspecialchars($task->ticket_id, ENT_QUOTES, 'UTF-8') ?>" class="w-90">
+              <input type="text" name="description" value="<?= htmlspecialchars($task->description, ENT_QUOTES, 'UTF-8') ?>" class="w-250">
+              <input type="time" name="start_time" value="<?= htmlspecialchars($task->start_time, ENT_QUOTES, 'UTF-8') ?>" class="w-90">
+              <input type="time" name="end_time" value="<?= htmlspecialchars($task->end_time, ENT_QUOTES, 'UTF-8') ?>" class="w-90">
+              <input type="text" name="time_spent" value="<?= number_format((float)$task->time_spent, 2) ?>" class="w-80 align-right" readonly>
+              <input type="checkbox" name="billable" value="1" <?= $task->billable ? 'checked' : '' ?> class="w-50">
+              <input type="text" name="billable_time" value="<?= number_format((float)$task->billable_time, 2) ?>" class="w-90">
+              <input type="checkbox" name="sla" value="1" <?= $task->sla ? 'checked' : '' ?> class="w-50 edit-sla">
+              <input type="text" name="sla_time" value="<?= number_format((float)$task->sla_time, 2) ?>" class="w-90">
+              <button type="submit" class="btn btn-sm btn-success w-70">Save</button>
+              <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet" class="btn btn-sm btn-default w-70">Cancel</a>
+
             <?php else: ?>
-                <div style="width: 200px;"><?= $clientMap[$task->client_id] ?? 'N/A' ?></div>
-                <div style="width: 180px;"><?= $departmentMap[$task->department_id] ?? 'N/A' ?></div>
-                <div style="width: 180px;"><?= $taskMap[$task->task_category_id] ?? 'N/A' ?></div>
-                <div style="width: 90px;"><?= htmlspecialchars($task->ticket_id) ?></div>
-                <div style="width: 250px;"><?= htmlspecialchars($task->description) ?></div>
-                <div style="width: 90px;"><?= $task->start_time ?></div>
-                <div style="width: 90px;"><?= $task->end_time ?></div>
-                <div style="width: 80px;"><?= number_format($task->time_spent, 2) ?> hrs</div>
-                <div style="width: 50px;"><?= $task->billable ? 'Yes' : 'No' ?></div>
-                <div style="width: 90px;"><?= number_format($task->billable_time, 2) ?> hrs</div>
-                <div style="width: 50px;"><?= $task->sla ? 'Yes' : 'No' ?></div>
-                <div style="width: 90px;"><?= number_format($task->sla_time, 2) ?> hrs</div>
-                <div style="width: 70px;">
-                    <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet&edit_id=<?= $task->id ?>" class="btn btn-sm btn-outline-secondary">Edit</a>
-                </div>
-                <div style="width: 70px;">
-                    <form method="post" onsubmit="return confirm('Are you sure you want to delete this entry?');">
-                        <input type="hidden" name="delete_id" value="<?= $task->id ?>">
-                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                    </form>
-                </div>
-
+              <div class="w-200"><?= htmlspecialchars($clientMap[$task->client_id] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></div>
+              <div class="w-180"><?= htmlspecialchars($departmentMap[$task->department_id] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></div>
+              <div class="w-180"><?= htmlspecialchars($taskMap[$task->task_category_id] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></div>
+              <div class="w-90"><?= htmlspecialchars($task->ticket_id, ENT_QUOTES, 'UTF-8') ?></div>
+              <div class="w-250"><?= htmlspecialchars($task->description, ENT_QUOTES, 'UTF-8') ?></div>
+              <div class="w-90"><?= htmlspecialchars($task->start_time, ENT_QUOTES, 'UTF-8') ?></div>
+              <div class="w-90"><?= htmlspecialchars($task->end_time, ENT_QUOTES, 'UTF-8') ?></div>
+              <div class="w-80"><?= number_format((float)$task->time_spent, 2) ?> hrs</div>
+              <div class="w-50"><?= $task->billable ? 'Yes' : 'No' ?></div>
+              <div class="w-90"><?= number_format((float)$task->billable_time, 2) ?> hrs</div>
+              <div class="w-50"><?= $task->sla ? 'Yes' : 'No' ?></div>
+              <div class="w-90"><?= number_format((float)$task->sla_time, 2) ?> hrs</div>
+              <div class="w-70">
+                <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet&edit_id=<?= (int) $task->id ?>" class="btn btn-sm btn-default">Edit</a>
+              </div>
+              <div class="w-70">
+                <form method="post" class="ts-delete-form">
+                  <input type="hidden" name="delete_id" value="<?= (int) $task->id ?>">
+                  <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                </form>
+              </div>
             <?php endif; ?>
-        </form>
-    <?php endforeach; ?>
-    </div>
-    <?php endif; ?> <!-- This closes the if (!empty($existingTasks)) -->
-
-
-
-
+          </form>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
 
     <!-- Totals from DB -->
-    <div class="d-flex justify-content-end mt-4" style="gap: 20px;">
-        <div><strong>Total Time:</strong> <?= $totalTime ?> hrs</div>
-        <div><strong>Total Billable Time:</strong> <?= $totalBillableTime ?> hrs</div>
-        <div><strong>Total SLA Time:</strong> <?= $totalSlaTime ?> hrs</div>
-
+    <div class="ts-totals">
+      <div><strong>Total Time:</strong> <?= $totalTime ?> hrs</div>
+      <div><strong>Total Billable Time:</strong> <?= $totalBillableTime ?> hrs</div>
+      <div><strong>Total SLA Time:</strong> <?= $totalSlaTime ?> hrs</div>
     </div>
 
-<?php endif; ?> <!-- timesheetStatus !== 'not_assigned' -->
+  <?php endif; ?> <!-- timesheetStatus !== 'not_assigned' -->
 
-    <!-- Select2 CSS + JS -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
+  <!-- Select2 (kept via CDN for now; we can vendor locally later if you prefer) -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const billableCheckbox = document.querySelector('[name="billable"]');
-    const slaCheckbox = document.querySelector('[name="sla"]');
-
-    if (billableCheckbox) toggleBillableTime(billableCheckbox);
-    if (slaCheckbox) toggleSlaTime(slaCheckbox);
-});
-
-function toggleBillableTime(checkbox) {
-    const form = checkbox.closest('form');
-    const input = form?.querySelector('[name="billable_time"]');
-    const header = document.getElementById('billableTimeHeader');
-
-    if (input) {
-        if (checkbox.checked) {
-            input.style.visibility = 'visible';
-            input.style.height = 'auto';
-            if (header) {
-                header.style.visibility = 'visible';
-                header.style.height = 'auto';
-            }
-        } else {
-            input.style.visibility = 'hidden';
-            input.style.height = '0';
-            input.value = '';
-            if (header) {
-                header.style.visibility = 'hidden';
-                header.style.height = '0';
-            }
-        }
-    }
-}
-
-function toggleSlaTime(checkbox) {
-    const form = checkbox.closest('form');
-    const input = form?.querySelector('[name="sla_time"]');
-    const header = document.getElementById('slaTimeHeader');
-
-    if (input) {
-        if (checkbox.checked) {
-            input.style.visibility = 'visible';
-            input.style.height = 'auto';
-            if (header) {
-                header.style.visibility = 'visible';
-                header.style.height = 'auto';
-            }
-        } else {
-            input.style.visibility = 'hidden';
-            input.style.height = '0';
-            input.value = '';
-            if (header) {
-                header.style.visibility = 'hidden';
-                header.style.height = '0';
-            }
-        }
-    }
-}
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const departmentSelect = document.getElementById('department_id');
-    const taskSelect = document.getElementById('task_category_id');
-
-    function filterTasksByDepartment() {
-        const selectedDept = departmentSelect.value;
-        Array.from(taskSelect.options).forEach(option => {
-            const deptId = option.getAttribute('data-dept');
-            option.style.display = (!deptId || deptId === selectedDept || option.value === "") ? 'block' : 'none';
-        });
-        taskSelect.value = "";
-    }
-
-    departmentSelect.addEventListener('change', filterTasksByDepartment);
-    filterTasksByDepartment();
-});
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('form').forEach(form => {
-        const startInput = form.querySelector('[name="start_time"]');
-        const endInput = form.querySelector('[name="end_time"]');
-        const timeSpentInput = form.querySelector('[name="time_spent"]');
-
-        function calculateTimeSpent() {
-            const start = startInput?.value;
-            const end = endInput?.value;
-
-            if (start && end) {
-                const [sh, sm] = start.split(':').map(Number);
-                const [eh, em] = end.split(':').map(Number);
-                const diff = (eh * 60 + em) - (sh * 60 + sm);
-
-                if (diff <= 0) {
-                    alert('End time must be later than start time.');
-                    endInput.value = '';
-                    timeSpentInput.value = '';
-                    return;
-                }
-
-                const hours = (diff / 60).toFixed(2);
-                timeSpentInput.value = hours;
-            } else {
-                timeSpentInput.value = '';
-            }
-        }
-
-        if (startInput && endInput) {
-            startInput.addEventListener('change', calculateTimeSpent);
-            endInput.addEventListener('change', calculateTimeSpent);
-        }
-    });
-});
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    // For each edit row, bind department change to filter corresponding task category dropdown
-    document.querySelectorAll('.edit-department').forEach(function(deptSelect) {
-        const form = deptSelect.closest('form');
-        const taskSelect = form.querySelector('.edit-task-category');
-
-        function filterEditTasksByDepartment() {
-            const selectedDept = deptSelect.value;
-            Array.from(taskSelect.options).forEach(option => {
-                const deptId = option.getAttribute('data-dept');
-                option.style.display = (!deptId || deptId === selectedDept || option.value === "") ? 'block' : 'none';
-            });
-            // Optionally reset selected value if not in filtered set
-            if (
-                taskSelect.value &&
-                taskSelect.selectedOptions.length &&
-                taskSelect.selectedOptions[0].style.display === 'none'
-            ) {
-                taskSelect.value = '';
-            }
-        }
-
-        deptSelect.addEventListener('change', filterEditTasksByDepartment);
-        // Run on load so it pre-filters based on initial value
-        filterEditTasksByDepartment();
-    });
-});
-</script>
-
-<script>
-$('#client_id').select2({
-    width: '200px',
-    placeholder: 'Select Client',
-    matcher: function(params, data) {
-        if ($.trim(params.term) === '') return data;
-        const term = params.term.toLowerCase();
-        const text = data.text.toLowerCase();
-        return text.indexOf(term) > -1 ? data : null;
-    }
-});
-</script>
-
