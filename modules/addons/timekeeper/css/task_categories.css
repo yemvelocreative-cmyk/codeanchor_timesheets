@@ -30,12 +30,12 @@
   width: 100% !important; /* override inline 50% width */
 }
 
-/*.timekeeper-root .tc-actions {
-   display: flex;
+.timekeeper-root .tc-actions {
+  /* display: flex;
   gap: 8px;
-  flex-wrap: nowrap;    <-- the key: keep Save + Delete on one line 
-  padding-top: 3px;
-}*/
+  flex-wrap: nowrap;    <-- the key: keep Save + Delete on one line */
+  padding-top: 1px;
+}
 
 .timekeeper-root .tc-actions .btn {
   white-space: nowrap;  /* avoids breaking long button labels */
