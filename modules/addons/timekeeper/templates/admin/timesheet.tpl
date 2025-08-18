@@ -46,8 +46,9 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
     </div>
 
     <!-- Entry Row -->
-    <div class="ts-scroll">
+    <div class="ts-grid-scroll">
       <form method="post" id="addTaskForm" class="ts-row ts-entryform">
+        <div class="w-200">Client</div>
         <select name="client_id" id="client_id" required>
           <option value="">Select Client</option>
           <?php foreach ($clients as $client): ?>

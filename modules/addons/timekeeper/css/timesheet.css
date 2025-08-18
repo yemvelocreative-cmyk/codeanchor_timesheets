@@ -20,13 +20,7 @@
   margin-bottom: 8px;
 }
 
-/* Layout rows */
-.timekeeper-root .ts-row {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 8px;
-}
+/* Headings / rows */
 .timekeeper-root .ts-header {
   font-weight: bold;
   padding-bottom: 6px;
@@ -45,16 +39,14 @@
   font-size: 14px;
 }
 
-/* Horizontal scroll wrapper for wide forms */
-.timekeeper-root .ts-scroll {
-  overflow-x: auto;
-}
+/* Horizontal scroll wrapper for wide tables */
+.timekeeper-root .ts-scroll { overflow-x: auto; }
 
-/* Fixed width helpers (match your original inline widths) */
-.timekeeper-root .w-50 { width: 50px; }
-.timekeeper-root .w-70 { width: 70px; }
-.timekeeper-root .w-80 { width: 80px; }
-.timekeeper-root .w-90 { width: 90px; }
+/* Fixed width helpers (used outside grid or for buttons) */
+.timekeeper-root .w-50  { width: 50px; }
+.timekeeper-root .w-70  { width: 70px; }
+.timekeeper-root .w-80  { width: 80px; }
+.timekeeper-root .w-90  { width: 90px; }
 .timekeeper-root .w-180 { width: 180px; }
 .timekeeper-root .w-190 { width: 190px; }
 .timekeeper-root .w-200 { width: 200px; }
@@ -62,7 +54,7 @@
 .timekeeper-root .w-250 { width: 250px; }
 
 .timekeeper-root .align-right { text-align: right; }
-.timekeeper-root .align-left { text-align: left; }
+.timekeeper-root .align-left  { text-align: left; }
 
 .timekeeper-root .sla-group { display: flex; align-items: center; gap: 4px; }
 
@@ -70,7 +62,7 @@
 .timekeeper-root .col-hidden { visibility: hidden; height: 0; }
 .timekeeper-root .col-show   { visibility: visible; height: auto; }
 
-/* Totals */
+/* Totals row */
 .timekeeper-root .ts-totals {
   display: flex;
   gap: 20px;
@@ -79,104 +71,49 @@
   flex-wrap: wrap;
 }
 
-/* Compact table-like spacing for forms */
+/* Compact table-like spacing */
 .timekeeper-root .timesheet-root .table.compact th,
 .timekeeper-root .timesheet-root .table.compact td {
   padding: 6px 8px;
 }
 
-/* Small buttons same width */
+/* Small buttons unified width */
 .timekeeper-root .btn.w-70 { width: 70px; }
 
-/* ===== Timesheet: form row alignment ===== */
-.timekeeper-root .form-group {
-  display: flex;                 /* put label + control on one row */
-  align-items: center;           /* vertically center label / selects / checkboxes */
-  gap: 10px;
-  margin-bottom: 10px;
+/* ===== Timesheet: lock columns so header and inputs align perfectly (Grid) ===== */
+.timekeeper-root .ts-row {
+  display: grid;
+  grid-template-columns:
+    200px  /* Client */
+    180px  /* Department */
+    180px  /* Task Category */
+    90px   /* Ticket ID */
+    250px  /* Description */
+    90px   /* Start */
+    90px   /* End */
+    80px   /* Time */
+    50px   /* Billable */
+    90px   /* Billable Time */
+    50px   /* SLA */
+    90px   /* SLA Time */
+    70px   /* Save/Edit */
+    70px;  /* Cancel/Actions */
+  column-gap: 8px;            /* spacing between columns */
+  align-items: center;        /* vertical centering per row */
 }
 
-/* Headings/labels: align with inputs and pull left ~10px as requested */
-.timekeeper-root .form-group > label,
-.timekeeper-root .control-label {
-  flex: 0 0 170px;               /* fixed label column; tweak to taste */
-  margin: 0;
-  padding: 0;
-  translate: -10px 0;            /* shift headings left by ~10px */
-  text-align: left;
-}
+/* Header row uses same grid; keep bold style */
+.timekeeper-root .ts-subheader { font-weight: 600; }
 
-/* Keep the controls fluid next to the label column */
-.timekeeper-root .form-group > .form-control,
-.timekeeper-root .form-group > select,
-.timekeeper-root .form-group > input,
-.timekeeper-root .form-group > textarea {
-  flex: 0 0 auto;
+/* Let grid govern widths inside rows (ignore .w-XXX in grid cells) */
+.timekeeper-root .ts-row > [class^="w-"],
+.timekeeper-root .ts-row > [class*=" w-"] { width: auto; }
+
+/* Inputs expand to the cell width neatly */
+.timekeeper-root .ts-row select,
+.timekeeper-root .ts-row input[type="text"],
+.timekeeper-root .ts-row input[type="time"],
+.timekeeper-root .ts-row textarea {
+  width: 100%;
   box-sizing: border-box;
-}
-
-/* Checkboxes/radios align neatly with labels */
-.timekeeper-root .form-check,
-.timekeeper-root .form-group .form-check {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-}
-
-/* ===== Field-specific widths (adjust values as you prefer) ===== */
-
-/* Department */
-.timekeeper-root select[id*="depart" i],
-.timekeeper-root select[name*="depart" i] { width: 120px; }
-
-/* Task Category */
-.timekeeper-root select[id*="category" i],
-.timekeeper-root select[name*="category" i] { width: 120px; }
-
-/* Date */
-.timekeeper-root input[type="date"],
-.timekeeper-root input[id*="date" i],
-.timekeeper-root input[name*="date" i] { width: 160px; }
-
-/* Time Spent (hours/mins) */
-.timekeeper-root input[id*="time" i],
-.timekeeper-root input[name*="time" i] { width: 120px; }
-
-/* SLA / Billable dropdowns (if dropdowns) */
-.timekeeper-root select[id*="sla" i],
-.timekeeper-root select[name*="sla" i],
-.timekeeper-root select[id*="billable" i],
-.timekeeper-root select[name*="billable" i] { width: 160px; }
-
-/* Billable checkbox (if checkbox) – keep label close */
-.timekeeper-root input[type="checkbox"][id*="billable" i],
-.timekeeper-root input[type="checkbox"][name*="billable" i] { width: auto; }
-
-/* Description / Notes (let this breathe) */
-.timekeeper-root textarea[id*="desc" i],
-.timekeeper-root textarea[name*="desc" i],
-.timekeeper-root textarea[id*="notes" i],
-.timekeeper-root textarea[name*="notes" i] {
-  width: min(720px, 100%);
-  min-height: 90px;
-  resize: vertical;
-}
-
-/* Keep selects and inputs from stretching full-width unless intended */
-.timekeeper-root .form-group .form-control {
-  max-width: 100%;
-}
-
-/* Mobile: stack rows neatly */
-@media (max-width: 768px) {
-  .timekeeper-root .form-group {
-    flex-wrap: wrap;
-    gap: 6px 10px;
-  }
-  .timekeeper-root .form-group > label,
-  .timekeeper-root .control-label {
-    flex: 0 0 100%;
-    translate: 0 0;              /* no left shift on narrow screens */
-  }
 }
