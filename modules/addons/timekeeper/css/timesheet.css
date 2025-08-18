@@ -87,3 +87,96 @@
 
 /* Small buttons same width */
 .timekeeper-root .btn.w-70 { width: 70px; }
+
+/* ===== Timesheet: form row alignment ===== */
+.timekeeper-root .form-group {
+  display: flex;                 /* put label + control on one row */
+  align-items: center;           /* vertically center label / selects / checkboxes */
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+/* Headings/labels: align with inputs and pull left ~10px as requested */
+.timekeeper-root .form-group > label,
+.timekeeper-root .control-label {
+  flex: 0 0 170px;               /* fixed label column; tweak to taste */
+  margin: 0;
+  padding: 0;
+  translate: -10px 0;            /* shift headings left by ~10px */
+  text-align: left;
+}
+
+/* Keep the controls fluid next to the label column */
+.timekeeper-root .form-group > .form-control,
+.timekeeper-root .form-group > select,
+.timekeeper-root .form-group > input,
+.timekeeper-root .form-group > textarea {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+}
+
+/* Checkboxes/radios align neatly with labels */
+.timekeeper-root .form-check,
+.timekeeper-root .form-group .form-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+/* ===== Field-specific widths (adjust values as you prefer) ===== */
+
+/* Department */
+.timekeeper-root select[id*="depart" i],
+.timekeeper-root select[name*="depart" i] { width: 240px; }
+
+/* Task Category */
+.timekeeper-root select[id*="category" i],
+.timekeeper-root select[name*="category" i] { width: 220px; }
+
+/* Date */
+.timekeeper-root input[type="date"],
+.timekeeper-root input[id*="date" i],
+.timekeeper-root input[name*="date" i] { width: 160px; }
+
+/* Time Spent (hours/mins) */
+.timekeeper-root input[id*="time" i],
+.timekeeper-root input[name*="time" i] { width: 120px; }
+
+/* SLA / Billable dropdowns (if dropdowns) */
+.timekeeper-root select[id*="sla" i],
+.timekeeper-root select[name*="sla" i],
+.timekeeper-root select[id*="billable" i],
+.timekeeper-root select[name*="billable" i] { width: 160px; }
+
+/* Billable checkbox (if checkbox) – keep label close */
+.timekeeper-root input[type="checkbox"][id*="billable" i],
+.timekeeper-root input[type="checkbox"][name*="billable" i] { width: auto; }
+
+/* Description / Notes (let this breathe) */
+.timekeeper-root textarea[id*="desc" i],
+.timekeeper-root textarea[name*="desc" i],
+.timekeeper-root textarea[id*="notes" i],
+.timekeeper-root textarea[name*="notes" i] {
+  width: min(720px, 100%);
+  min-height: 90px;
+  resize: vertical;
+}
+
+/* Keep selects and inputs from stretching full-width unless intended */
+.timekeeper-root .form-group .form-control {
+  max-width: 100%;
+}
+
+/* Mobile: stack rows neatly */
+@media (max-width: 768px) {
+  .timekeeper-root .form-group {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+  .timekeeper-root .form-group > label,
+  .timekeeper-root .control-label {
+    flex: 0 0 100%;
+    translate: 0 0;              /* no left shift on narrow screens */
+  }
+}
