@@ -126,3 +126,15 @@
   align-items: flex-start !important;
   text-align: left !important;
 }
+
+/* Center the arrow buttons between the two selects */
+.timekeeper-root .dual-select-controls-wrapper {
+  align-items: center !important;   /* vertical center */
+}
+
+/* Keep the mobile behavior from your existing media query */
+@media (max-width: 768px) {
+  .timekeeper-root .dual-select-controls-wrapper {
+    align-items: stretch !important; /* matches your mobile row layout */
+  }
+}
