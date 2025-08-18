@@ -128,11 +128,11 @@
 
 /* Department */
 .timekeeper-root select[id*="depart" i],
-.timekeeper-root select[name*="depart" i] { width: 240px; }
+.timekeeper-root select[name*="depart" i] { width: 120px; }
 
 /* Task Category */
 .timekeeper-root select[id*="category" i],
-.timekeeper-root select[name*="category" i] { width: 220px; }
+.timekeeper-root select[name*="category" i] { width: 120px; }
 
 /* Date */
 .timekeeper-root input[type="date"],
