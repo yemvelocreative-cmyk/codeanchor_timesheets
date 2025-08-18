@@ -27,7 +27,7 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
 
     <form method="post" id="addTaskForm" action="<?= htmlspecialchars($actionUrl, ENT_QUOTES, 'UTF-8') ?>" class="tk-card ts-entryform">
 
-      <!-- Compact header replaces "Add Entry" -->
+      <!-- Compact header -->
       <div class="tk-card-header tk-card-header--compact">
         <div class="tk-meta-grid">
           <div><strong>Daily Timesheet</strong></div>
@@ -39,7 +39,7 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
 
       <!-- Two-column wrapper -->
       <div class="tk-block-grid-2">
-        <!-- Block 1: Details (Support Ticket under Description) -->
+        <!-- Block 1: Details -->
         <section class="tk-card">
           <div class="tk-section-title">1) Details</div>
           <div class="tk-grid">
@@ -125,7 +125,8 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
             <div class="tk-field">
               <div class="tk-label">Time Spent (hrs)</div>
               <div class="tk-input">
-                <input type="text" name="time_spent" placeholder="0.00" readonly class="align-right"
+                <input type="text" name="time_spent" placeholder="0.00" readonly
+                       class="align-right tk-half"
                        value="<?= $isEditing ? number_format((float)($task->time_spent ?? 0), 2) : '0.00' ?>">
               </div>
             </div>
@@ -133,11 +134,12 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
             <div class="tk-field">
               <div class="tk-label">Billable</div>
               <div class="tk-input tk-inline">
-                <label class="checkbox-inline">
+                <label class="checkbox-inline tk-inline-check">
                   <input type="checkbox" name="billable" id="billable-checkbox" value="1" <?= $isEditing && !empty($task->billable) ? 'checked' : '' ?>>
-                  Yes
+                  <span>Yes</span>
                 </label>
                 <input type="text" name="billable_time" id="billable-time" placeholder="Billable Time"
+                       class="tk-inline-time-input"
                        style="<?= ($isEditing && !empty($task->billable)) ? 'display:inline-block;' : 'display:none;' ?>"
                        value="<?= $isEditing ? number_format((float)($task->billable_time ?? 0), 2) : '' ?>">
               </div>
@@ -146,19 +148,20 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
             <div class="tk-field">
               <div class="tk-label">SLA</div>
               <div class="tk-input tk-inline">
-                <label class="checkbox-inline">
+                <label class="checkbox-inline tk-inline-check">
                   <input type="checkbox" name="sla" id="sla-checkbox" value="1" class="edit-sla"
                          <?= $isEditing && !empty($task->sla) ? 'checked' : '' ?>>
-                  Yes
+                  <span>Yes</span>
                 </label>
                 <input type="text" name="sla_time" id="sla-time" placeholder="SLA Time"
+                       class="tk-inline-time-input"
                        style="<?= ($isEditing && !empty($task->sla)) ? 'display:inline-block;' : 'display:none;' ?>"
                        value="<?= $isEditing ? number_format((float)($task->sla_time ?? 0), 2) : '' ?>">
               </div>
             </div>
           </div>
 
-          <!-- Actions moved below the right block -->
+          <!-- Actions under the right block -->
           <div class="tk-actions-right">
             <button type="submit" class="btn btn-sm btn-primary"><?= $isEditing ? 'Save Changes' : 'Add' ?></button>
             <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet" class="btn btn-sm btn-default">Cancel</a>
@@ -171,9 +174,7 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
       <input type="hidden" name="admin_id" value="<?= (int) $adminId ?>">
     </form>
 
-    <!-- =========================
-         Existing Tasks (unchanged)
-         ========================= -->
+    <!-- Existing Tasks (unchanged listing/edit behaviour) -->
     <?php if (!empty($existingTasks)): ?>
       <div id="existingTasks" class="ts-existing">
         <h4>Saved Entries</h4>
@@ -288,19 +289,25 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
     .tk-inline-times { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
     .tk-inline-times .tk-time { flex: 0 1 35%; min-width: 140px; }
 
+    /* Time Spent 50% width */
+    .tk-half { width: 50%; min-width: 120px; }
+
+    /* Inline checkbox + time input alignment */
+    .tk-inline { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+    .tk-inline-check { display: inline-flex; align-items: center; gap: .35rem; margin-right: .35rem; }
+    .tk-inline-time-input { display: none; min-width: 120px; }
+
     /* Actions under right block */
     .tk-actions-right { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1rem; }
-
-    /* Keep inline alignment clean */
-    .tk-inline input[type="text"],
-    .tk-inline input[type="time"] { vertical-align: middle; }
   </style>
 
   <script>
     (function () {
       function toggleInlineInput(checkbox, input) {
         if (!checkbox || !input) return;
-        function set() { input.style.display = checkbox.checked ? 'inline-block' : 'none'; }
+        function set() {
+          input.style.display = checkbox.checked ? 'inline-block' : 'none';
+        }
         checkbox.addEventListener('change', set);
         set();
       }
