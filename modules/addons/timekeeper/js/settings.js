@@ -6,12 +6,22 @@
   // ----- Core helpers -----
   function hasOptionWithValue(selectEl, value) {
     if (!selectEl) return false;
-    // Faster than Array.from(...).some(...)
     for (let i = 0; i < selectEl.options.length; i++) {
       if (selectEl.options[i].value === value) return true;
     }
     return false;
   }
+
+  TK.sortSelect = function (selectEl) {
+    if (!selectEl) return;
+    const opts = Array.from(selectEl.options);
+    opts.sort((a, b) =>
+      a.text.localeCompare(b.text, navigator.language || undefined, { sensitivity: 'base' })
+    );
+    const frag = document.createDocumentFragment();
+    opts.forEach(o => frag.appendChild(o));
+    selectEl.appendChild(frag);
+  };
 
   TK.moveSelected = function (fromId, toId) {
     const from = document.getElementById(fromId);
@@ -22,7 +32,6 @@
     const moved = [];
 
     Array.from(from.selectedOptions).forEach(opt => {
-      // Avoid duplicates if markup gets out of sync
       if (!hasOptionWithValue(to, opt.value)) {
         moved.push(opt);
         frag.appendChild(opt);
@@ -32,7 +41,6 @@
     if (moved.length) {
       to.appendChild(frag);
       TK.sortSelect(to);
-      // Optional: deselect after moving
       moved.forEach(o => { o.selected = false; });
       to.focus();
     }
@@ -46,7 +54,6 @@
     const frag = document.createDocumentFragment();
     const moved = [];
 
-    // Copy into array first; the live collection changes as we move
     Array.from(from.options).forEach(opt => {
       if (!hasOptionWithValue(to, opt.value)) {
         moved.push(opt);
@@ -62,15 +69,6 @@
     }
   };
 
-  TK.sortSelect = function (selectEl) {
-    if (!selectEl) return;
-    const opts = Array.from(selectEl.options);
-    opts.sort((a, b) => a.text.localeCompare(b.text, navigator.language || undefined, { sensitivity: 'base' }));
-    const frag = document.createDocumentFragment();
-    opts.forEach(o => frag.appendChild(o));
-    selectEl.appendChild(frag);
-  };
-
   // Select all MULTIPLE <select>s that have a name attribute (assigned boxes) within a form
   TK.selectAllFormMultis = function (form) {
     form.querySelectorAll('select[multiple][name]').forEach(sel => {
@@ -81,7 +79,7 @@
   };
 
   document.addEventListener('DOMContentLoaded', function () {
-    // Utility to attach dual-select behaviors
+    // Utility to attach dual-select behaviors safely (no-op if elements missing)
     function bindDualSelect(cfg) {
       const { availId, assignedId, addBtnId, removeBtnId } = cfg;
       const avail = document.getElementById(availId);
@@ -89,13 +87,25 @@
       const addBtn = document.getElementById(addBtnId);
       const removeBtn = document.getElementById(removeBtnId);
 
-      if (addBtn) addBtn.addEventListener('click', () => { TK.moveSelected(availId, assignedId); });
-      if (removeBtn) removeBtn.addEventListener('click', () => { TK.moveSelected(assignedId, availId); });
-      if (avail)   avail.addEventListener('dblclick', () => { TK.moveSelected(availId, assignedId); });
-      if (assigned)assigned.addEventListener('dblclick', () => { TK.moveSelected(assignedId, availId); });
+      if (!avail || !assigned || !addBtn || !removeBtn) return;
 
-      if (avail)   TK.sortSelect(avail);
-      if (assigned)TK.sortSelect(assigned);
+      addBtn.addEventListener('click', () => { TK.moveSelected(availId, assignedId); });
+      removeBtn.addEventListener('click', () => { TK.moveSelected(assignedId, availId); });
+
+      // Nice-to-have UX: double-click to move
+      avail.addEventListener('dblclick', () => { TK.moveSelected(availId, assignedId); });
+      assigned.addEventListener('dblclick', () => { TK.moveSelected(assignedId, availId); });
+
+      TK.sortSelect(avail);
+      TK.sortSelect(assigned);
+
+      // On submit of the closest form, ensure assigned options are selected
+      const form = addBtn.closest('form');
+      if (form) {
+        form.addEventListener('submit', function () {
+          TK.selectAllFormMultis(form);
+        });
+      }
     }
 
     // Users (cron tab)
@@ -106,7 +116,7 @@
       removeBtnId: 'removeUser'
     });
 
-    // Roles - View permissions
+    // Roles - View permissions (approvals tab)
     bindDualSelect({
       availId: 'availableRoles',
       assignedId: 'assignedRoles',
@@ -114,7 +124,7 @@
       removeBtnId: 'removeRole'
     });
 
-    // Roles - Approve permissions
+    // Roles - Approve permissions (approvals tab)
     bindDualSelect({
       availId: 'availableRolesApprove',
       assignedId: 'assignedRolesApprove',
@@ -134,14 +144,14 @@
       });
     });
 
-    // Reset the guard if user navigates back to the page (bfcache)
+    // Reset the guard if user navigates back (bfcache)
     window.addEventListener('pageshow', function (evt) {
       if (evt.persisted) {
         document.querySelectorAll('form[data-tk]').forEach(f => { delete f.dataset.submitting; });
       }
     });
 
-    // Also handle explicit save buttons if present
+    // Optional: explicit save buttons by id
     ['saveSettingsButton'].forEach(id => {
       const btn = document.getElementById(id);
       if (btn) btn.addEventListener('click', function () {
