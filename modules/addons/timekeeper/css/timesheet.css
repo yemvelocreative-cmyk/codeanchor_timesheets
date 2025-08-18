@@ -117,3 +117,75 @@
   width: 100%;
   box-sizing: border-box;
 }
+
+/* ---------- Tablet & below: progressively hide low-priority columns ---------- */
+/* Column order (for reference):
+   1 Client, 2 Dept, 3 TaskCat, 4 Ticket, 5 Description, 6 Start, 7 End,
+   8 Time, 9 Billable, 10 Billable Time, 11 SLA, 12 SLA Time, 13 Save/Edit, 14 Cancel/Actions
+*/
+
+/* ≤1200px: hide Billable Time (10) and SLA Time (12) */
+@media (max-width: 1200px) {
+  .timekeeper-root .ts-row > :nth-child(10),
+  .timekeeper-root .ts-row > :nth-child(12) { display: none; }
+
+  .timekeeper-root .ts-row {
+    grid-template-columns:
+      200px 180px 180px 90px 250px 90px 90px 80px 50px /* (cols 1-9) */
+      50px  /* (col 11: SLA) */
+      70px  /* (col 13: Save/Edit) */
+      70px; /* (col 14: Cancel/Actions) */
+  }
+}
+
+/* ≤992px: also hide Ticket ID (4) */
+@media (max-width: 992px) {
+  .timekeeper-root .ts-row > :nth-child(4) { display: none; }
+
+  .timekeeper-root .ts-row {
+    grid-template-columns:
+      200px 180px 180px /* 1-3: Client, Dept, TaskCat */
+      250px             /* 5: Description */
+      90px 90px         /* 6-7: Start, End */
+      80px              /* 8: Time */
+      50px              /* 9: Billable */
+      50px              /* 11: SLA */
+      70px 70px;        /* 13-14: Actions */
+  }
+}
+
+/* ---------- Mobile: card layout with inline labels (no header row) ---------- */
+@media (max-width: 768px) {
+  /* Hide the separate header row entirely */
+  .timekeeper-root .ts-subheader { display: none; }
+
+  /* Each row becomes a 2-column card: Label (auto) + Value (1fr) */
+  .timekeeper-root .ts-row {
+    grid-template-columns: 130px 1fr;
+    column-gap: 12px;
+    row-gap: 8px;
+    align-items: start;
+  }
+
+  /* Every cell shows its own tiny label above the value using data-col */
+  .timekeeper-root .ts-row > *[data-col]::before {
+    content: attr(data-col);
+    display: block;
+    font-size: 12px;
+    line-height: 1.2;
+    color: #6c757d;
+    margin-bottom: 4px;
+  }
+
+  /* Put actions on one line at the bottom spanning both columns */
+  .timekeeper-root .ts-row > :nth-last-child(2),
+  .timekeeper-root .ts-row > :last-child {
+    grid-column: 1 / -1;
+  }
+
+  /* Let long fields breathe */
+  .timekeeper-root .ts-row input[type="text"],
+  .timekeeper-root .ts-row textarea {
+    min-height: 32px;
+  }
+}

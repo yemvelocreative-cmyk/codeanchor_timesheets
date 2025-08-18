@@ -119,4 +119,24 @@
     bindDeleteConfirms();
     initSelect2();
   });
+
+  (function () {
+    'use strict';
+    document.addEventListener('DOMContentLoaded', function () {
+      const header = document.querySelector('.timekeeper-root .ts-subheader');
+      if (!header) return;
+
+      const labels = Array.from(header.children).map(el => el.textContent.trim());
+
+      // Apply data-col to every non-header row so CSS can show inline labels on mobile
+      document.querySelectorAll('.timekeeper-root .ts-row:not(.ts-subheader)').forEach(row => {
+        Array.from(row.children).forEach((cell, i) => {
+          // Only set if not already present
+          if (!cell.hasAttribute('data-col') && labels[i]) {
+            cell.setAttribute('data-col', labels[i]);
+          }
+        });
+      });
+    });
+  })();
 })();
