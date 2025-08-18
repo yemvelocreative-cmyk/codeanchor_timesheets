@@ -133,7 +133,7 @@ switch ($activeTab) {
         $tkCsrf = $_SESSION['timekeeper_csrf'];
 
         // Unified template include
-        include __DIR__ . '/../templates/settings.tpl';
+        include __DIR__ . '/../templates/admin/settings.tpl';
         break;
 
     case 'approval':
@@ -209,7 +209,7 @@ switch ($activeTab) {
             ->value('setting_value');
 
         $tkCsrf = $_SESSION['timekeeper_csrf'];
-        include __DIR__ . '/../templates/settings.tpl';
+        include __DIR__ . '/../templates/admin/settings.tpl';
         break;
 
     case 'hide_tabs':
@@ -252,10 +252,10 @@ switch ($activeTab) {
         }
 
         $tkCsrf = $_SESSION['timekeeper_csrf'];
-        include __DIR__ . '/../templates/settings.tpl';
+        include __DIR__ . '/../templates/admin/settings.tpl';
         break;
 
     default:
-        include __DIR__ . '/../templates/settings.tpl';
+        include __DIR__ . '/../templates/admin/settings.tpl';
         break;
 }
