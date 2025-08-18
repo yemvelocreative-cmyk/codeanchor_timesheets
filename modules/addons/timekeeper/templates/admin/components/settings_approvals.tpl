@@ -8,10 +8,10 @@ $allowedApprovalRoles    = (isset($allowedApprovalRoles) && is_array($allowedApp
 $unbilledTimeValidateMin = isset($unbilledTimeValidateMin) ? $unbilledTimeValidateMin : '';
 $tkCsrf                  = isset($tkCsrf) ? (string)$tkCsrf : '';
 
-if (isset($roles) && $roles instanceof \Illuminate\Support\Collection)) {
+if (isset($roles) && $roles instanceof \Illuminate\Support\Collection) {
     $roles = $roles->all();
 }
-$roles  = is_array($roles) ? $roles : [];
+$roles   = is_array($roles) ? $roles : [];
 $noRoles = empty($roles);
 ?>
 
