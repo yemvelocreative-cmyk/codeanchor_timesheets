@@ -178,15 +178,14 @@ switch ($activeTab) {
                     ['setting_value' => $approvalRoleList]
                 );
 
-                // Save minimum unbilled time validate setting
-                $minTime = $_POST['unbilled_time_validate_min'] ?? null;
-                $minTime = is_numeric($minTime) ? (float)$minTime : null;
-
-                Capsule::table('mod_timekeeper_permissions')->updateOrInsert(
-                    ['setting_key' => 'unbilled_time_validate_min', 'role_id' => 0],
-                    ['setting_value' => $minTime]
-                );
-
+                if (array_key_exists('unbilled_time_validate_min', $_POST)) {
+                    $raw = trim((string)($_POST['unbilled_time_validate_min'] ?? ''));
+                    $minTime = ($raw === '') ? 0.0 : (is_numeric($raw) ? max(0, (float)$raw) : 0.0);
+                    Capsule::table('mod_timekeeper_permissions')->updateOrInsert(
+                        ['setting_key' => 'unbilled_time_validate_min', 'role_id' => 0],
+                        ['setting_value' => (string)$minTime] // never NULL
+                    );
+                }
                 $redir = 'addonmodules.php?module=timekeeper&timekeeperpage=settings&subtab=approval&approval_success=1';
                 if (!headers_sent()) { header('Location: ' . $redir); exit; }
                 echo '<script>window.location.replace(' . json_encode($redir) . ');</script>'; return;
