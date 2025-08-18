@@ -28,71 +28,154 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
       <div><strong>Status:</strong> <?= htmlspecialchars(ucfirst($timesheetStatus), ENT_QUOTES, 'UTF-8') ?></div>
     </div>
 
-    <!-- Field Labels -->
-    <div class="ts-row ts-header">
-      <div class="w-200">Client</div>
-      <div class="w-180">Department</div>
-      <div class="w-180">Task Category</div>
-      <div class="w-90">Ticket ID</div>
-      <div class="w-250">Description</div>
-      <div class="w-90">Start Time</div>
-      <div class="w-90">End Time</div>
-      <div class="w-80">Time Spent</div>
-      <div class="w-50">Billable</div>
-      <div class="w-90"><span id="billableTimeHeader" class="col-hidden">Time Billed</span></div>
-      <div class="w-50">SLA</div>
-      <div class="w-90"><span id="slaTimeHeader" class="col-hidden">SLA Time</span></div>
-      <div class="w-70">&nbsp;</div>
-    </div>
-
-    <!-- Entry Row -->
-    <div class="ts-grid-scroll">
-      <form method="post" id="addTaskForm" class="ts-row ts-entryform">
-        <select name="client_id" id="client_id" required>
-          <option value="">Select Client</option>
-          <?php foreach ($clients as $client): ?>
-            <option value="<?= (int) $client->id ?>">
-              <?= htmlspecialchars($client->companyname ?: ($client->firstname . ' ' . $client->lastname), ENT_QUOTES, 'UTF-8') ?>
-            </option>
-          <?php endforeach; ?>
-        </select>
-
-        <select name="department_id" id="department_id" required>
-          <option value="">Select Department</option>
-          <?php foreach ($departments as $dept): ?>
-            <option value="<?= (int) $dept->id ?>"><?= htmlspecialchars($dept->name, ENT_QUOTES, 'UTF-8') ?></option>
-          <?php endforeach; ?>
-        </select>
-
-        <select name="task_category_id" id="task_category_id" required>
-          <option value="">Select Task Category</option>
-          <?php foreach ($taskCategories as $task): ?>
-            <option value="<?= (int) $task->id ?>" data-dept="<?= (int) $task->department_id ?>">
-              <?= htmlspecialchars($task->name, ENT_QUOTES, 'UTF-8') ?>
-            </option>
-          <?php endforeach; ?>
-        </select>
-
-        <input type="text" name="ticket_id" placeholder="Ticket ID">
-        <input type="text" name="description" placeholder="Description" required>
-        <input type="time" name="start_time" required>
-        <input type="time" name="end_time" required>
-        <input type="text" name="time_spent" placeholder="0.00" readonly class="align-right">
-        <input type="checkbox" name="billable">
-        <input type="text" name="billable_time" placeholder="Billable Time" class="col-hidden">
-        <div class="sla-group">
-          <input type="checkbox" name="sla" id="sla-checkbox" value="1">
-          <input type="text" name="sla_time" id="sla-time" placeholder="SLA Time" class="col-hidden">
-          <div class="visually-hidden">
-            <input type="hidden" name="timesheet_id" value="<?= (int) $timesheetId ?>">
-            <input type="hidden" name="admin_id" value="<?= (int) $adminId ?>">
-          </div>
+    <!-- =========================
+         Add / Edit Entry (Block-based)
+         ========================= -->
+    <?php
+      // Detect if you’re editing a draft entry before it’s saved as a row (optional pattern)
+      $isEditing = isset($task) && isset($task->id);
+      $actionUrl = 'addonmodules.php?module=timekeeper&timekeeperpage=timesheet' . ($isEditing ? '&edit_id='.(int)$task->id : '');
+    ?>
+    <form method="post" id="addTaskForm" action="<?= htmlspecialchars($actionUrl, ENT_QUOTES, 'UTF-8') ?>" class="tk-card ts-entryform">
+      <div class="tk-card-header">
+        <h3 class="tk-card-title"><?= $isEditing ? 'Edit Entry' : 'Add Entry' ?></h3>
+        <div class="tk-actions">
+          <button type="submit" class="btn btn-sm btn-primary"><?= $isEditing ? 'Save Changes' : 'Add' ?></button>
+          <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet" class="btn btn-sm btn-default">Cancel</a>
         </div>
-        <button type="submit" class="btn btn-sm btn-primary w-70">Add</button>
-      </form>
-    </div>
+      </div>
 
-    <!-- Existing Tasks -->
+      <!-- On wide screens, show blocks side-by-side (CSS controls 2–3 columns) -->
+      <div class="tk-block-grid-3">
+        <!-- Block 1: Details -->
+        <section class="tk-card">
+          <div class="tk-section-title">1) Details</div>
+          <div class="tk-grid">
+            <div class="tk-field">
+              <div class="tk-label">Client</div>
+              <div class="tk-input">
+                <select name="client_id" id="client_id" required>
+                  <option value="">Select Client</option>
+                  <?php foreach ($clients as $client): ?>
+                    <option value="<?= (int) $client->id ?>">
+                      <?= htmlspecialchars($client->companyname ?: ($client->firstname . ' ' . $client->lastname), ENT_QUOTES, 'UTF-8') ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+            </div>
+
+            <div class="tk-field">
+              <div class="tk-label">Department</div>
+              <div class="tk-input">
+                <select name="department_id" id="department_id" class="edit-department" required>
+                  <option value="">Select Department</option>
+                  <?php foreach ($departments as $dept): ?>
+                    <option value="<?= (int) $dept->id ?>"><?= htmlspecialchars($dept->name, ENT_QUOTES, 'UTF-8') ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+            </div>
+
+            <div class="tk-field">
+              <div class="tk-label">Task Category</div>
+              <div class="tk-input">
+                <select name="task_category_id" id="task_category_id" class="edit-task-category" required>
+                  <option value="">Select Task Category</option>
+                  <?php foreach ($taskCategories as $taskCat): ?>
+                    <option value="<?= (int) $taskCat->id ?>" data-dept="<?= (int) $taskCat->department_id ?>">
+                      <?= htmlspecialchars($taskCat->name, ENT_QUOTES, 'UTF-8') ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+            </div>
+
+            <div class="tk-field">
+              <div class="tk-label">Description</div>
+              <div class="tk-input">
+                <input type="text" name="description" placeholder="Description" required
+                       value="<?= $isEditing ? htmlspecialchars($task->description ?? '', ENT_QUOTES, 'UTF-8') : '' ?>">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Block 2: Support Ticket (keeps your existing ticket_id for now) -->
+        <section class="tk-card">
+          <div class="tk-section-title">2) Support Ticket</div>
+          <div class="tk-grid">
+            <div class="tk-field">
+              <div class="tk-label">Ticket ID</div>
+              <div class="tk-input">
+                <input type="text" name="ticket_id" placeholder="e.g. 12345"
+                       value="<?= $isEditing ? htmlspecialchars($task->ticket_id ?? '', ENT_QUOTES, 'UTF-8') : '' ?>">
+              </div>
+            </div>
+            <!-- (Future) We’ll add search/link UI here -->
+          </div>
+        </section>
+
+        <!-- Block 3: Billing -->
+        <section class="tk-card">
+          <div class="tk-section-title">3) Billing</div>
+          <div class="tk-grid">
+            <div class="tk-field">
+              <div class="tk-label">Start / End</div>
+              <div class="tk-input tk-inline">
+                <input type="time" name="start_time" required
+                       value="<?= $isEditing ? htmlspecialchars($task->start_time ?? '', ENT_QUOTES, 'UTF-8') : '' ?>">
+                <input type="time" name="end_time" required
+                       value="<?= $isEditing ? htmlspecialchars($task->end_time ?? '', ENT_QUOTES, 'UTF-8') : '' ?>">
+              </div>
+            </div>
+
+            <div class="tk-field">
+              <div class="tk-label">Time Spent (hrs)</div>
+              <div class="tk-input">
+                <input type="text" name="time_spent" placeholder="0.00" readonly class="align-right"
+                       value="<?= $isEditing ? number_format((float)($task->time_spent ?? 0), 2) : '0.00' ?>">
+              </div>
+            </div>
+
+            <div class="tk-field">
+              <div class="tk-label">Billable</div>
+              <div class="tk-input tk-inline">
+                <label class="checkbox-inline">
+                  <input type="checkbox" name="billable" <?= $isEditing && !empty($task->billable) ? 'checked' : '' ?>>
+                  Yes
+                </label>
+                <input type="text" name="billable_time" placeholder="Billable Time"
+                       class="col-hidden"
+                       value="<?= $isEditing ? number_format((float)($task->billable_time ?? 0), 2) : '' ?>">
+              </div>
+            </div>
+
+            <div class="tk-field">
+              <div class="tk-label">SLA</div>
+              <div class="tk-input tk-inline">
+                <label class="checkbox-inline">
+                  <input type="checkbox" name="sla" id="sla-checkbox" value="1" class="edit-sla"
+                         <?= $isEditing && !empty($task->sla) ? 'checked' : '' ?>>
+                  Yes
+                </label>
+                <input type="text" name="sla_time" id="sla-time" placeholder="SLA Time"
+                       class="col-hidden"
+                       value="<?= $isEditing ? number_format((float)($task->sla_time ?? 0), 2) : '' ?>">
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Hidden fields required by your backend -->
+      <input type="hidden" name="timesheet_id" value="<?= (int) $timesheetId ?>">
+      <input type="hidden" name="admin_id" value="<?= (int) $adminId ?>">
+    </form>
+
+    <!-- =========================
+         Existing Tasks (unchanged)
+         ========================= -->
     <?php if (!empty($existingTasks)): ?>
       <div id="existingTasks" class="ts-existing">
         <h4>Saved Entries</h4>
@@ -196,7 +279,7 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
 
   <?php endif; ?> <!-- timesheetStatus !== 'not_assigned' -->
 
-  <!-- Select2 (kept via CDN for now; we can vendor locally later if you prefer) -->
+  <!-- Select2 (kept via CDN for now) -->
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 </div>
