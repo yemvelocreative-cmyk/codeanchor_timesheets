@@ -179,6 +179,38 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
          ========================= -->
     <?php if (!empty($existingTasks)): ?>
       <div id="existingTasks" class="ts-existing">
+      <?php
+        // Safe numeric extractor
+        $tk_num = static function ($v): float {
+          if ($v === null) return 0.0;
+          if (is_numeric($v)) return (float)$v;
+          // Strip everything except digits, dot, minus (handles "0.75 hrs", "1,25", etc.)
+          $v = preg_replace('/[^0-9\.\-]/', '', (string)$v);
+          // Normalize comma decimals just in case
+          $v = str_replace(',', '.', $v);
+          return (float)$v;
+        };
+
+        // Helper to read from object/array with fallbacks
+        $tk_get = static function ($row, array $keys) use ($tk_num): float {
+          foreach ($keys as $k) {
+            if (is_object($row) && isset($row->$k))   return $tk_num($row->$k);
+            if (is_array($row)  && isset($row[$k]))   return $tk_num($row[$k]);
+          }
+          return 0.0;
+        };
+
+        $tk_total_time = 0.0;
+        $tk_total_billable = 0.0;
+        $tk_total_sla = 0.0;
+
+        foreach ($existingTasks as $row) {
+          $tk_total_time     += $tk_get($row, ['time_spent', 'time_spent_hours', 'timespent']);
+          $tk_total_billable += $tk_get($row, ['billable_time', 'billable_hours', 'billable']);
+          $tk_total_sla      += $tk_get($row, ['sla_time', 'sla_hours', 'sla']);
+        }
+      ?>
+
         <h4>Saved Entries</h4>
         <div class="tk-totals-wrap">
           <div class="tk-totals-bar" role="status" aria-label="Daily totals">
@@ -323,18 +355,7 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
             </div>
           <?php endforeach; ?>
         </div>
-      </div>
-      <?php
-        $tk_total_time = 0.0;
-        $tk_total_billable = 0.0;
-        $tk_total_sla = 0.0;
-
-        foreach ($existingTasks as $t) {
-          $tk_total_time     += (float)($t->time_spent ?? 0);
-          $tk_total_billable += (float)($t->billable_time ?? 0);
-          $tk_total_sla      += (float)($t->sla_time ?? 0);
-        }
-      ?>
+      </div>      
     <?php endif; ?>
 
   <?php endif; ?> <!-- timesheetStatus !== 'not_assigned' -->
