@@ -53,7 +53,7 @@ $menuItems = [
     'settings'            => 'Settings',
 ];
 ?>
-<nav class="tk-nav tk-nav--seg">
+<nav class="tk-nav tk-nav--top">
   <?php if ($showRejectedBanner): ?>
     <div class="tk-banner">
       <div class="msg"><strong>Action needed:</strong> You have <?= (int)$navRejectedCount ?> rejected timesheet<?= $navRejectedCount > 1 ? 's' : '' ?>.</div>
@@ -64,51 +64,31 @@ $menuItems = [
     </div>
   <?php endif; ?>
 
-  <!-- Mobile: compact select -->
-  <div class="tk-seg-mobile">
-    <select id="tkSegSelect" class="form-control input-sm">
+  <div class="tk-top-wrap">
+    <div class="tk-top-scroller" role="tablist">
       <?php foreach ($menuItems as $pageKey => $label):
         if (!tk_isPageAllowedForRole($roleId, $pageKey)) continue;
+        $isActive = ($current === $pageKey) ? 'active' : '';
         $href = 'addonmodules.php?module=timekeeper&timekeeperpage=' . urlencode($pageKey);
       ?>
-        <option value="<?= htmlspecialchars($href, ENT_QUOTES, 'UTF-8') ?>" <?= $current === $pageKey ? 'selected' : '' ?>>
+        <a role="tab" aria-selected="<?= $isActive ? 'true' : 'false' ?>"
+           class="tk-top-link <?= $isActive ?>" href="<?= htmlspecialchars($href, ENT_QUOTES, 'UTF-8') ?>">
           <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
-        </option>
+        </a>
       <?php endforeach; ?>
-    </select>
-  </div>
-
-  <!-- Desktop: segmented pills -->
-  <div class="tk-seg-desktop" role="tablist" aria-label="Timekeeper sections">
-    <?php foreach ($menuItems as $pageKey => $label):
-      if (!tk_isPageAllowedForRole($roleId, $pageKey)) continue;
-      $isActive = ($current === $pageKey) ? 'active' : '';
-      $href = 'addonmodules.php?module=timekeeper&timekeeperpage=' . urlencode($pageKey);
-    ?>
-      <a role="tab" aria-selected="<?= $isActive ? 'true' : 'false' ?>"
-         class="tk-pill <?= $isActive ?>" href="<?= htmlspecialchars($href, ENT_QUOTES, 'UTF-8') ?>">
-        <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
-      </a>
-    <?php endforeach; ?>
+    </div>
   </div>
 
   <style>
-    .tk-nav--seg { margin-bottom: 12px; }
+    .tk-nav--top { margin-bottom: 12px; }
     .tk-banner{display:flex;justify-content:space-between;gap:.5rem;align-items:center;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:.5rem .75rem;margin-bottom:.5rem}
-    .tk-seg-mobile{display:none}
-    @media (max-width: 700px){ .tk-seg-mobile{display:block;margin-bottom:.5rem} }
-    .tk-seg-desktop{display:flex;gap:.35rem;flex-wrap:wrap}
-    @media (max-width:700px){ .tk-seg-desktop{display:none} }
-    .tk-pill{display:inline-flex;align-items:center;gap:.5rem;padding:.45rem .75rem;border:1px solid #E5E7EB;border-radius:999px;text-decoration:none;color:#374151;background:#FFF;font-size:13px}
-    .tk-pill:hover{background:#F9FAFB}
-    .tk-pill.active{border-color:#2563EB;background:#2563EB;color:#FFF;font-weight:600}
+    .tk-banner .msg{font-size:14px}
+    .tk-top-wrap{position:relative}
+    .tk-top-scroller{display:flex;gap:.25rem;overflow:auto;padding:.25rem;border-bottom:1px solid #E5E7EB}
+    .tk-top-link{position:relative;display:inline-flex;align-items:center;padding:.5rem .75rem;font-size:14px;color:#374151;text-decoration:none;border-radius:8px}
+    .tk-top-link:hover{background:#F3F4F6}
+    .tk-top-link.active{color:#111827;font-weight:600}
+    .tk-top-link.active::after{content:"";position:absolute;left:.5rem;right:.5rem;bottom:-1px;height:2px;background:#2563EB;border-radius:2px}
   </style>
-
-  <script>
-    (function(){
-      var sel=document.getElementById('tkSegSelect');
-      if(sel){ sel.addEventListener('change', function(){ window.location.href = this.value; }); }
-    })();
-  </script>
 </nav>
 
