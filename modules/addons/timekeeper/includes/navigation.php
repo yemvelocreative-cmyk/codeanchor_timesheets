@@ -1,9 +1,13 @@
 <?php
+if (!defined('WHMCS')) { die('Access Denied'); }
+
 use WHMCS\Database\Capsule;
 
-$navAdminId = (int) ($_SESSION['adminid'] ?? 0);
+/** Current admin + role **/
+$navAdminId = (int)($_SESSION['adminid'] ?? 0);
+$roleId     = tk_getAdminRoleId($navAdminId);
 
-// 1) Handle dismiss ASAP (session + cookie)
+/** 1) Dismiss banner (session + cookie) **/
 if (isset($_GET['dismiss_rejected_banner']) && $_GET['dismiss_rejected_banner'] === '1') {
     $_SESSION['timekeeper_hide_rejected_banner'] = '1';
     $expires = strtotime('tomorrow 00:00:00');
@@ -18,23 +22,37 @@ if (isset($_GET['dismiss_rejected_banner']) && $_GET['dismiss_rejected_banner'] 
     }
 }
 
-// 2) Compute rejected count for current admin
+/** 2) Rejected count for current admin **/
 $navRejectedCount = Capsule::table('mod_timekeeper_timesheets')
     ->where('admin_id', $navAdminId)
     ->where('status', 'rejected')
     ->count();
 
-// 3) Decide if we should show the banner
+/** 3) Should we show the banner? **/
 $hideViaSession = !empty($_SESSION['timekeeper_hide_rejected_banner']);
 $hideViaCookie  = !empty($_COOKIE['timekeeper_hide_rejected_banner']);
 $showRejectedBanner = ($navRejectedCount > 0) && !($hideViaSession || $hideViaCookie);
 
-// 4) Build a dismiss URL that keeps current params
+/** 4) Dismiss URL preserving current params **/
 $qs = $_GET;
 $qs['dismiss_rejected_banner'] = '1';
 $dismissUrl = 'addonmodules.php?' . http_build_query($qs);
-?>
 
+/** Active page (normalized) **/
+$current = isset($_GET['timekeeperpage']) ? tk_normalize_page((string)$_GET['timekeeperpage']) : 'dashboard';
+
+/** Menu items (keys must match router page keys) **/
+$menuItems = [
+    'dashboard'           => 'Dashboard',
+    'timesheet'           => 'Timesheets',
+    'pending_timesheets'  => 'Pending Timesheets',
+    'approved_timesheets' => 'Approved Timesheets',
+    'departments'         => 'Departments',
+    'task_categories'     => 'Task Categories',
+    'reports'             => 'Reports',
+    'settings'            => 'Settings',
+];
+?>
 <nav class="timekeeper-nav">
   <?php if ($showRejectedBanner): ?>
     <div class="timekeeper-banner">
@@ -44,7 +62,7 @@ $dismissUrl = 'addonmodules.php?' . http_build_query($qs);
       </div>
       <div class="actions">
         <a class="btn btn-sm btn-warning"
-           href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&status=rejected">
+           href="addonmodules.php?module=timekeeper&amp;timekeeperpage=pending_timesheets&amp;status=rejected">
           Review now
         </a>
         <a class="btn btn-sm btn-default" href="<?= htmlspecialchars($dismissUrl, ENT_QUOTES, 'UTF-8') ?>">
@@ -56,37 +74,16 @@ $dismissUrl = 'addonmodules.php?' . http_build_query($qs);
 
   <ul class="timekeeper-tabs">
     <?php
-    // Get current admin role ID
-    $currentAdminRoleId = Capsule::table('tbladmins')
-        ->where('id', $_SESSION['adminid'])
-        ->value('roleid');
-
-    // Get hidden tabs for this role
-    $hiddenTabs = Capsule::table('mod_timekeeper_hidden_tabs')
-        ->where('role_id', $currentAdminRoleId)
-        ->pluck('tab_name')
-        ->toArray();
-
-    $menuItems = [
-        'dashboard' => 'Dashboard',
-        'timesheet' => 'Timesheets',
-        'pending_timesheets' => 'Pending Timesheets',
-        'approved_timesheets' => 'Approved Timesheets',
-        'departments' => 'Departments',
-        'task_categories' => 'Task Categories',
-        'reports' => 'Reports',
-        'settings' => 'Settings'
-    ];
-
-    // Remove hidden tabs
-    foreach ($hiddenTabs as $hiddenTab) {
-        unset($menuItems[$hiddenTab]);
-    }
-
-    $page = $_GET['timekeeperpage'] ?? '';
-    foreach ($menuItems as $key => $label) {
-        $activeClass = ($page === $key) ? 'active' : '';
-        echo "<li><a href='addonmodules.php?module=timekeeper&timekeeperpage={$key}' class='{$activeClass}'>{$label}</a></li>";
+    foreach ($menuItems as $pageKey => $label) {
+        // Hide item in nav if role is not allowed (driven by Hide Menu Tabs JSON)
+        if (!tk_isPageAllowedForRole($roleId, $pageKey)) {
+            continue;
+        }
+        $isActive = ($current === $pageKey) ? 'active' : '';
+        $href = 'addonmodules.php?module=timekeeper&timekeeperpage=' . urlencode($pageKey);
+        echo '<li><a class="' . $isActive . '" href="' . htmlspecialchars($href, ENT_QUOTES, 'UTF-8') . '">'
+           . htmlspecialchars($label, ENT_QUOTES, 'UTF-8')
+           . '</a></li>';
     }
     ?>
   </ul>
