@@ -180,7 +180,18 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
     <?php if (!empty($existingTasks)): ?>
       <div id="existingTasks" class="ts-existing">
         <h4>Saved Entries</h4>
-
+        <div class="tk-totals-wrap">
+          <div class="tk-totals-bar" role="status" aria-label="Daily totals">
+            <span class="lbl">Total</span>
+            <strong class="val"><?= number_format($tk_total_time, 2) ?></strong><span class="unit">hrs</span>
+            <span class="sep">•</span>
+            <span class="lbl">Billable</span>
+            <strong class="val"><?= number_format($tk_total_billable, 2) ?></strong><span class="unit">hrs</span>
+            <span class="sep">•</span>
+            <span class="lbl">SLA</span>
+            <strong class="val"><?= number_format($tk_total_sla, 2) ?></strong><span class="unit">hrs</span>
+          </div>
+        </div>
         <div class="tk-saved-list">
           <?php foreach ($existingTasks as $task): ?>
             <?php $editing = isset($_GET['edit_id']) && (int) $_GET['edit_id'] === (int) $task->id; ?>
@@ -313,6 +324,17 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
           <?php endforeach; ?>
         </div>
       </div>
+      <?php
+        $tk_total_time = 0.0;
+        $tk_total_billable = 0.0;
+        $tk_total_sla = 0.0;
+
+        foreach ($existingTasks as $t) {
+          $tk_total_time     += (float)($t->time_spent ?? 0);
+          $tk_total_billable += (float)($t->billable_time ?? 0);
+          $tk_total_sla      += (float)($t->sla_time ?? 0);
+        }
+      ?>
     <?php endif; ?>
 
   <?php endif; ?> <!-- timesheetStatus !== 'not_assigned' -->

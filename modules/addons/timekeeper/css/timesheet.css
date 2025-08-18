@@ -104,6 +104,12 @@
 
 /* Header row uses same grid; keep bold style */
 .timekeeper-root .ts-subheader { font-weight: 600; }
+.tk-totals-wrap { margin: .25rem 0 .5rem; }
+.tk-totals-bar { display: inline-flex; align-items: center; gap: .35rem; font-size: 14px; }
+.tk-totals-bar .lbl { color: #6B7280; }
+.tk-totals-bar .val { font-weight: 600; }
+.tk-totals-bar .unit { color: #6B7280; margin-left: .15rem; }
+.tk-totals-bar .sep { opacity: .5; margin: 0 .35rem; }
 
 /* Let grid govern widths inside rows (ignore .w-XXX in grid cells) */
 .timekeeper-root .ts-row > [class^="w-"],
@@ -298,4 +304,11 @@
     text-align: left;
     padding: 0;
   }
+}
+
+.tk-actions-right {
+  display: flex;
+  justify-content: flex-end;
+  gap: .5rem;
+  margin-top: 1rem;
 }
