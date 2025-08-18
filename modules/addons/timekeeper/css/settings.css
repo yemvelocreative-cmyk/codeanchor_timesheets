@@ -105,3 +105,28 @@
         height: 180px; /* keep height consistent while allowing width to flex */
     }
 }
+
+/* Left-align overrides */
+.timekeeper-root .timekeeper-user-select-wrapper,
+.timekeeper-root .dual-select-container {
+  justify-content: flex-start !important;
+  text-align: left;
+}
+
+/* Keep the inner columns left-aligned */
+.timekeeper-root .dual-select-controls-wrapper {
+  justify-content: flex-start;
+  align-items: flex-start;
+  text-align: left;
+}
+
+/* Make sure headings/paragraphs in settings are left aligned */
+.timekeeper-root h2,
+.timekeeper-root h3,
+.timekeeper-root h4,
+.timekeeper-root p,
+.timekeeper-root label,
+.timekeeper-root form,
+.timekeeper-root .alert {
+  text-align: left;
+}
