@@ -106,53 +106,23 @@
     }
 }
 
-/* ==== Timekeeper Settings: force left alignment (scoped) ==== */
-
-/* 1) Kill any inherited center text inside our area */
-.timekeeper-root,
-.timekeeper-root .container,
-.timekeeper-root .container * {
+/* Make the Bootstrap container inside Timekeeper full-width & left-aligned */
+.timekeeper-root > .container.mt-4 {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
   text-align: left !important;
 }
 
-/* 2) If any parent turned the wrapper into a centered flex row, undo it */
-.timekeeper-root,
-.timekeeper-root .container {
-  display: block !important;              /* defeat parent flex-centering */
-}
-
-/* 3) Tabs row alignment */
-.timekeeper-root .timekeeper-settings-tabs {
-  justify-content: flex-start !important; /* left-align tab list */
-}
-
-/* 4) Common flex wrappers inside the settings views */
+/* Tabs + content blocks stay left */
+.timekeeper-root .timekeeper-settings-tabs { justify-content: flex-start !important; }
 .timekeeper-root .dual-select-controls-wrapper,
 .timekeeper-root .dual-select-container,
 .timekeeper-root .timekeeper-user-select-wrapper {
-  display: flex !important;
   justify-content: flex-start !important;
   align-items: flex-start !important;
-}
-
-/* 5) Make sure inner blocks don't re-center via margins */
-.timekeeper-root .user-select-block,
-.timekeeper-root .dual-select-controls,
-.timekeeper-root form,
-.timekeeper-root .alert {
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-}
-
-/* 6) Beat Bootstrap/WHMCS utilities that may be applied above us */
-.timekeeper-root .text-center,
-.timekeeper-root .text-md-center,
-.timekeeper-root .text-lg-center {
-  text-align: left !important;
-}
-
-/* 7) Selects & labels: ensure left text */
-.timekeeper-root .user-select-box,
-.timekeeper-root label {
   text-align: left !important;
 }
