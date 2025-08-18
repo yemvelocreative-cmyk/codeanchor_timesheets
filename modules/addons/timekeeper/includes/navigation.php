@@ -28,7 +28,6 @@ $navRejectedCount = Capsule::table('mod_timekeeper_timesheets')
     ->where('status', 'rejected')
     ->count();
 
-<?php
 // Optional counts to show badges in nav
 $navPendingCount = Capsule::table('mod_timekeeper_timesheets')
   ->where('admin_id', $navAdminId)
@@ -39,8 +38,6 @@ $navApprovedCount = Capsule::table('mod_timekeeper_timesheets')
   ->where('admin_id', $navAdminId)
   ->where('status', 'approved')
   ->count();
-?>
-
 
 /** 3) Should we show the banner? **/
 $hideViaSession = !empty($_SESSION['timekeeper_hide_rejected_banner']);
