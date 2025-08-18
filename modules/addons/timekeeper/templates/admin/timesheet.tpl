@@ -28,9 +28,6 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
       <div><strong>Status:</strong> <?= htmlspecialchars(ucfirst($timesheetStatus), ENT_QUOTES, 'UTF-8') ?></div>
     </div>
 
-    <!-- =========================
-         Add / Edit Entry (Now 2 blocks)
-         ========================= -->
     <?php
       $isEditing = isset($task) && isset($task->id);
       $actionUrl = 'addonmodules.php?module=timekeeper&timekeeperpage=timesheet' . ($isEditing ? '&edit_id='.(int)$task->id : '');
@@ -44,9 +41,9 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
         </div>
       </div>
 
-      <!-- Keep existing grid class for compatibility -->
-      <div class="tk-block-grid-3">
-        <!-- Block 1: Details (Support Ticket moved here under Description) -->
+      <!-- Switched to 2-column wrapper -->
+      <div class="tk-block-grid-2">
+        <!-- Block 1: Details (with Support Ticket under Description) -->
         <section class="tk-card">
           <div class="tk-section-title">1) Details</div>
           <div class="tk-grid">
@@ -102,7 +99,7 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
               </div>
             </div>
 
-            <!-- Support Ticket moved under Description (keeps same input name) -->
+            <!-- Support Ticket under Description -->
             <div class="tk-field">
               <div class="tk-label">Support Ticket</div>
               <div class="tk-input">
@@ -113,16 +110,19 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
           </div>
         </section>
 
-        <!-- Block 2: Billing (formerly 3) -->
+        <!-- Block 2: Billing -->
         <section class="tk-card">
           <div class="tk-section-title">2) Billing</div>
           <div class="tk-grid">
             <div class="tk-field">
-              <div class="tk-label">Start / End</div>
-              <div class="tk-input tk-inline">
+              <div class="tk-label">Start / End Time</div>
+              <!-- side-by-side times; wrap on small screens -->
+              <div class="tk-input tk-inline tk-inline-times">
                 <input type="time" name="start_time" required
+                       class="tk-time tk-time-start"
                        value="<?= $isEditing ? htmlspecialchars($task->start_time ?? '', ENT_QUOTES, 'UTF-8') : '' ?>">
                 <input type="time" name="end_time" required
+                       class="tk-time tk-time-end"
                        value="<?= $isEditing ? htmlspecialchars($task->end_time ?? '', ENT_QUOTES, 'UTF-8') : '' ?>">
               </div>
             </div>
@@ -139,11 +139,11 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
               <div class="tk-label">Billable</div>
               <div class="tk-input tk-inline">
                 <label class="checkbox-inline">
-                  <input type="checkbox" name="billable" value="1" <?= $isEditing && !empty($task->billable) ? 'checked' : '' ?>>
+                  <input type="checkbox" name="billable" id="billable-checkbox" value="1" <?= $isEditing && !empty($task->billable) ? 'checked' : '' ?>>
                   Yes
                 </label>
-                <input type="text" name="billable_time" placeholder="Billable Time"
-                       class="col-hidden"
+                <input type="text" name="billable_time" id="billable-time" placeholder="Billable Time"
+                       style="<?= ($isEditing && !empty($task->billable)) ? 'display:inline-block;' : 'display:none;' ?>"
                        value="<?= $isEditing ? number_format((float)($task->billable_time ?? 0), 2) : '' ?>">
               </div>
             </div>
@@ -157,7 +157,7 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
                   Yes
                 </label>
                 <input type="text" name="sla_time" id="sla-time" placeholder="SLA Time"
-                       class="col-hidden"
+                       style="<?= ($isEditing && !empty($task->sla)) ? 'display:inline-block;' : 'display:none;' ?>"
                        value="<?= $isEditing ? number_format((float)($task->sla_time ?? 0), 2) : '' ?>">
               </div>
             </div>
@@ -177,7 +177,6 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
       <div id="existingTasks" class="ts-existing">
         <h4>Saved Entries</h4>
 
-        <!-- Header Row -->
         <div class="ts-row ts-subheader">
           <div class="w-200">Client</div>
           <div class="w-180">Department</div>
@@ -195,7 +194,6 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
           <div class="w-70">&nbsp;</div>
         </div>
 
-        <!-- Entry Rows -->
         <?php foreach ($existingTasks as $task): ?>
           <?php $editing = isset($_GET['edit_id']) && (int) $_GET['edit_id'] === (int) $task->id; ?>
 
@@ -267,7 +265,6 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
       </div>
     <?php endif; ?>
 
-    <!-- Totals from DB -->
     <div class="ts-totals">
       <div><strong>Total Time:</strong> <?= $totalTime ?> hrs</div>
       <div><strong>Total Billable Time:</strong> <?= $totalBillableTime ?> hrs</div>
@@ -275,6 +272,26 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
     </div>
 
   <?php endif; ?> <!-- timesheetStatus !== 'not_assigned' -->
+
+  <!-- Inline helpers for layout + toggles (kept tiny & local) -->
+  <style>
+    .tk-inline-times { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+    .tk-inline-times .tk-time { flex: 0 1 35%; min-width: 140px; } /* ~35% each as requested */
+    .tk-inline input[type="text"], .tk-inline input[type="time"] { vertical-align: middle; }
+  </style>
+  <script>
+    (function () {
+      function toggleInlineInput(checkbox, input) {
+        if (!checkbox || !input) return;
+        function set() { input.style.display = checkbox.checked ? 'inline-block' : 'none'; }
+        checkbox.addEventListener('change', set);
+        set();
+      }
+      // Add form
+      toggleInlineInput(document.getElementById('billable-checkbox'), document.getElementById('billable-time'));
+      toggleInlineInput(document.getElementById('sla-checkbox'), document.getElementById('sla-time'));
+    })();
+  </script>
 
   <!-- Select2 (kept via CDN for now) -->
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
