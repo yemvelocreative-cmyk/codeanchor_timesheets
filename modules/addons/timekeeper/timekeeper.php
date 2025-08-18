@@ -62,56 +62,17 @@ function tk_normalize_page(string $page): string
  */
 function tk_getHiddenPagesByRole(): array
 {
-    $settingKey = 'hide_tabs_roles';
-
-    // Primary source: JSON in tbladdonmodules
     try {
-        $row = Capsule::table('tbladdonmodules')
+        $val = Capsule::table('tbladdonmodules')
             ->where('module', 'timekeeper')
-            ->where('setting', $settingKey)
+            ->where('setting', 'hide_tabs_roles')
             ->value('value');
 
-        if ($row) {
-            $data = json_decode($row, true);
-            if (is_array($data)) {
-                return $data;
-            }
-        }
+        $map = $val ? json_decode($val, true) : [];
+        return is_array($map) ? $map : [];
     } catch (\Throwable $e) {
-        // ignore and try legacy table next
+        return [];
     }
-
-    // ---- Legacy/table fallback (optional) ----
-    try {
-        $schema = Capsule::schema();
-        if ($schema->hasTable('mod_timekeeper_hidden_tabs')) {
-            $rows = Capsule::table('mod_timekeeper_hidden_tabs')->get();
-            $map  = [];
-
-            foreach ($rows as $r) {
-                $roleId = (int)($r->role_id ?? $r->roleid ?? 0);
-                $page   = (string)($r->page ?? $r->page_key ?? $r->tab ?? '');
-                if ($roleId > 0 && $page !== '') {
-                    $page = tk_normalize_page($page);
-                    $k = (string)$roleId;
-                    $map[$k] = $map[$k] ?? [];
-                    if (!in_array($page, $map[$k], true)) {
-                        $map[$k][] = $page;
-                    }
-                }
-            }
-
-            if (!empty($map)) {
-                // Persist to JSON for future calls
-                tk_saveHiddenPagesByRole($map);
-                return $map;
-            }
-        }
-    } catch (\Throwable $e) {
-        // ignore
-    }
-
-    return [];
 }
 
 /**
@@ -178,24 +139,24 @@ function tk_saveHiddenPagesByRole(array $map): bool
  */
 function tk_isPageAllowedForRole(int $roleId, string $page): bool
 {
-    $page = tk_normalize_page($page);
-
-    // Hidden map: roleId => [hiddenPage1, hiddenPage2, ...]
-    $hidden  = tk_getHiddenPagesByRole();
-    $roleKey = (string)$roleId;
-
-    $isHidden = in_array($page, $hidden[$roleKey] ?? [], true);
-
-    // Extra safety: default Settings to Full Admin only unless explicitly unhidden
-    if ($page === 'settings') {
-        if (!array_key_exists($roleKey, $hidden)) {
-            return $roleId === 1; // roleId=1 typically Full Administrator
-        }
-        return !$isHidden;
+    // Safety: Full Admin can always access (prevents accidental lockout)
+    if ($roleId === 1) {
+        return true;
     }
 
-    return !$isHidden;
+    $page   = tk_normalize_page($page);
+    $hidden = tk_getHiddenPagesByRole();
+    $roleKey = (string) $roleId;
+
+    // No config for this role? Allow everything.
+    if (!isset($hidden[$roleKey]) || !is_array($hidden[$roleKey])) {
+        return true;
+    }
+
+    // Deny only if this page is explicitly hidden for this role.
+    return !in_array($page, $hidden[$roleKey], true);
 }
+
 
 /**
  * Pick a safe fallback page the role CAN access.
@@ -350,7 +311,7 @@ function timekeeper_upgrade($vars)
  */
 function timekeeper_output($vars)
 {
-    $adminId = (int)($vars['adminid'] ?? 0);
+    $adminId = (int)($vars['adminid'] ?? ($_SESSION['adminid'] ?? 0));
     $roleId  = tk_getAdminRoleId($adminId);
 
     // Determine requested page and normalize once
@@ -391,10 +352,10 @@ function timekeeper_output($vars)
             'departments'         => ['css' => ['timekeeper.css', 'departments.css'],         'js' => ['timekeeper.js', 'departments.js']],
             'task_categories'     => ['css' => ['timekeeper.css', 'task_categories.css'],     'js' => ['timekeeper.js', 'task_categories.js']],
             'reports'             => ['css' => ['timekeeper.css', 'reports.css'],             'js' => ['timekeeper.js', 'reports.js']],
-            'settings'            => ['css' => ['timekeeper.css', 'settings.css'],            'js' => ['timekeeper.js', 'settings.js']],
-            'approval'            => ['css' => ['timekeeper.css', 'settings.css'],            'js' => ['timekeeper.js', 'settings.js']], // if routed as sub
-            'cron'                => ['css' => ['timekeeper.css', 'settings.css'],            'js' => ['timekeeper.js', 'settings.js']], // if routed as sub
-            'hide_tabs'           => ['css' => ['timekeeper.css', 'settings.css'],            'js' => ['timekeeper.js', 'settings.js']], // if routed as sub
+            'settings'            => ['css' => ['timekeeper.css', 'settings_tabs.css', 'settings.css'], 'js' => ['timekeeper.js', 'settings.js']],
+            'approval'            => ['css' => ['timekeeper.css', 'settings_tabs.css', 'settings.css'], 'js' => ['timekeeper.js', 'settings.js']], // if routed as sub
+            'cron'                => ['css' => ['timekeeper.css', 'settings_tabs.css', 'settings.css'], 'js' => ['timekeeper.js', 'settings.js']], // if routed as sub
+            'hide_tabs'           => ['css' => ['timekeeper.css', 'settings_tabs.css', 'settings.css'], 'js' => ['timekeeper.js', 'settings.js']], // if routed as sub
         ];
 
         if (isset($tkPageAssets[$page])) {
@@ -408,8 +369,8 @@ function timekeeper_output($vars)
 
         // ---- Subpage auto-loader conventions ----
         $genericSub = isset($_GET['sub']) ? preg_replace('/[^a-z0-9_\-]/i', '', (string) $_GET['sub']) : null;
-        $settingsSub = ($page === 'settings' && isset($_GET['settings_sub']))
-            ? preg_replace('/[^a-z0-9_\-]/i', '', (string) $_GET['settings_sub'])
+        $settingsSub = ($page === 'settings' && isset($_GET['subtab']))
+            ? preg_replace('/[^a-z0-9_\-]/i', '', (string) $_GET['subtab'])
             : null;
         $reportSub = ($page === 'reports' && isset($_GET['report_sub']))
             ? preg_replace('/[^a-z0-9_\-]/i', '', (string) $_GET['report_sub'])
