@@ -175,52 +175,42 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
     </form>
 
     <!-- =========================
-         Saved Entries (updated to new card/grid layout)
+         Saved Entries (compact row layout)
          ========================= -->
     <?php if (!empty($existingTasks)): ?>
       <div id="existingTasks" class="ts-existing">
         <h4>Saved Entries</h4>
 
-        <div class="tk-saved-grid">
+        <div class="tk-saved-list">
           <?php foreach ($existingTasks as $task): ?>
             <?php $editing = isset($_GET['edit_id']) && (int) $_GET['edit_id'] === (int) $task->id; ?>
 
-            <div class="tk-card tk-saved-item">
+            <div class="tk-row tk-card">
               <?php if ($editing): ?>
-                <form method="post" class="tk-saved-form">
+                <!-- Inline edit (restyled as row) -->
+                <form method="post" class="tk-row-edit">
                   <input type="hidden" name="edit_id" value="<?= (int) $task->id ?>">
 
-                  <div class="tk-saved-fields">
-                    <div class="tk-field">
-                      <div class="tk-label">Client</div>
-                      <div class="tk-input">
-                        <select name="client_id">
+                  <div class="tk-row-main">
+                    <div class="tk-row-left">
+                      <div class="tk-row-title">
+                        <select name="client_id" class="tk-row-select">
                           <?php foreach ($clients as $c): ?>
                             <option value="<?= (int) $c->id ?>" <?= ((int)$task->client_id === (int)$c->id) ? 'selected' : '' ?>>
                               <?= htmlspecialchars($c->companyname ?: ($c->firstname . ' ' . $c->lastname), ENT_QUOTES, 'UTF-8') ?>
                             </option>
                           <?php endforeach; ?>
                         </select>
-                      </div>
-                    </div>
-
-                    <div class="tk-field">
-                      <div class="tk-label">Department</div>
-                      <div class="tk-input">
-                        <select name="department_id" class="edit-department">
+                        <span class="sep">·</span>
+                        <select name="department_id" class="tk-row-select edit-department">
                           <?php foreach ($departments as $dept): ?>
                             <option value="<?= (int) $dept->id ?>" <?= ((int)$task->department_id === (int)$dept->id) ? 'selected' : '' ?>>
                               <?= htmlspecialchars($dept->name, ENT_QUOTES, 'UTF-8') ?>
                             </option>
                           <?php endforeach; ?>
                         </select>
-                      </div>
-                    </div>
-
-                    <div class="tk-field">
-                      <div class="tk-label">Task Category</div>
-                      <div class="tk-input">
-                        <select name="task_category_id" class="edit-task-category">
+                        <span class="sep">·</span>
+                        <select name="task_category_id" class="tk-row-select edit-task-category">
                           <?php foreach ($taskCategories as $cat): ?>
                             <option value="<?= (int) $cat->id ?>" data-dept="<?= (int) $cat->department_id ?>" <?= ((int)$task->task_category_id === (int)$cat->id) ? 'selected' : '' ?>>
                               <?= htmlspecialchars($cat->name, ENT_QUOTES, 'UTF-8') ?>
@@ -228,126 +218,95 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
                           <?php endforeach; ?>
                         </select>
                       </div>
-                    </div>
 
-                    <div class="tk-field">
-                      <div class="tk-label">Ticket ID</div>
-                      <div class="tk-input">
-                        <input type="text" name="ticket_id" value="<?= htmlspecialchars($task->ticket_id, ENT_QUOTES, 'UTF-8') ?>">
+                      <div class="tk-row-desc">
+                        <input type="text" name="description" value="<?= htmlspecialchars($task->description, ENT_QUOTES, 'UTF-8') ?>" class="tk-row-input">
                       </div>
-                    </div>
 
-                    <div class="tk-field tk-col-span-2">
-                      <div class="tk-label">Description</div>
-                      <div class="tk-input">
-                        <input type="text" name="description" value="<?= htmlspecialchars($task->description, ENT_QUOTES, 'UTF-8') ?>">
-                      </div>
-                    </div>
-
-                    <div class="tk-field">
-                      <div class="tk-label">Start / End Time</div>
-                      <div class="tk-input tk-inline tk-inline-times">
-                        <input type="time" name="start_time" value="<?= htmlspecialchars($task->start_time, ENT_QUOTES, 'UTF-8') ?>" class="tk-time">
-                        <input type="time" name="end_time" value="<?= htmlspecialchars($task->end_time, ENT_QUOTES, 'UTF-8') ?>" class="tk-time">
-                      </div>
-                    </div>
-
-                    <div class="tk-field">
-                      <div class="tk-label">Time Spent (hrs)</div>
-                      <div class="tk-input">
-                        <input type="text" name="time_spent" value="<?= number_format((float)$task->time_spent, 2) ?>" class="align-right tk-half" readonly>
-                      </div>
-                    </div>
-
-                    <div class="tk-field">
-                      <div class="tk-label">Billable</div>
-                      <div class="tk-input tk-inline tk-inline-nowrap">
+                      <div class="tk-row-meta">
+                        <div class="tk-inline tk-inline-times">
+                          <input type="time" name="start_time" value="<?= htmlspecialchars($task->start_time, ENT_QUOTES, 'UTF-8') ?>" class="tk-time">
+                          <input type="time" name="end_time" value="<?= htmlspecialchars($task->end_time, ENT_QUOTES, 'UTF-8') ?>" class="tk-time">
+                        </div>
+                        <span class="dot">•</span>
+                        <span><strong><?= number_format((float)$task->time_spent, 2) ?></strong> hrs</span>
+                        <span class="dot">•</span>
                         <label class="checkbox-inline tk-inline-check">
-                          <input type="checkbox" name="billable" value="1" id="billable-checkbox-<?= (int)$task->id ?>" <?= $task->billable ? 'checked' : '' ?>>
-                          <span>Yes</span>
+                          <input type="checkbox" name="billable" value="1" id="billable-checkbox-<?= (int)$task->id ?>" <?= $task->billable ? 'checked' : '' ?>><span>Billable</span>
                         </label>
-                        <input type="text" name="billable_time" id="billable-time-<?= (int)$task->id ?>" placeholder="Billable Time"
-                               class="tk-inline-time-input"
-                               style="<?= $task->billable ? 'display:inline-block;' : 'display:none;' ?>"
+                        <input type="text" name="billable_time" id="billable-time-<?= (int)$task->id ?>" placeholder="0.00"
+                               class="tk-inline-time-input" style="<?= $task->billable ? 'display:inline-block;' : 'display:none;' ?>"
                                value="<?= number_format((float)$task->billable_time, 2) ?>">
-                      </div>
-                    </div>
-
-                    <div class="tk-field">
-                      <div class="tk-label">SLA</div>
-                      <div class="tk-input tk-inline tk-inline-nowrap">
+                        <span class="dot">•</span>
                         <label class="checkbox-inline tk-inline-check">
-                          <input type="checkbox" name="sla" value="1" id="sla-checkbox-<?= (int)$task->id ?>" <?= $task->sla ? 'checked' : '' ?>>
-                          <span>Yes</span>
+                          <input type="checkbox" name="sla" value="1" id="sla-checkbox-<?= (int)$task->id ?>" <?= $task->sla ? 'checked' : '' ?>><span>SLA</span>
                         </label>
-                        <input type="text" name="sla_time" id="sla-time-<?= (int)$task->id ?>" placeholder="SLA Time"
-                               class="tk-inline-time-input"
-                               style="<?= $task->sla ? 'display:inline-block;' : 'display:none;' ?>"
+                        <input type="text" name="sla_time" id="sla-time-<?= (int)$task->id ?>" placeholder="0.00"
+                               class="tk-inline-time-input" style="<?= $task->sla ? 'display:inline-block;' : 'display:none;' ?>"
                                value="<?= number_format((float)$task->sla_time, 2) ?>">
                       </div>
                     </div>
-                  </div>
 
-                  <div class="tk-actions-right">
-                    <button type="submit" class="btn btn-sm btn-success">Save</button>
-                    <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet" class="btn btn-sm btn-default">Cancel</a>
+                    <div class="tk-row-right">
+                      <div class="tk-badges">
+                        <?php if (!empty($task->ticket_id)): ?>
+                          <span class="tk-badge tk-badge--success">Linked · Ticket #<?= htmlspecialchars($task->ticket_id, ENT_QUOTES, 'UTF-8') ?></span>
+                        <?php else: ?>
+                          <span class="tk-badge">No ticket</span>
+                        <?php endif; ?>
+                      </div>
+                      <div class="tk-actions-right tk-row-actions">
+                        <button type="submit" class="btn btn-sm btn-success">Save</button>
+                        <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet" class="btn btn-sm btn-default">Cancel</a>
+                      </div>
+                    </div>
                   </div>
                 </form>
               <?php else: ?>
-                <!-- Read-only card -->
-                <div class="tk-saved-fields">
-                  <div class="tk-field">
-                    <div class="tk-label">Client</div>
-                    <div class="tk-static"><?= htmlspecialchars($clientMap[$task->client_id] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></div>
-                  </div>
-                  <div class="tk-field">
-                    <div class="tk-label">Department</div>
-                    <div class="tk-static"><?= htmlspecialchars($departmentMap[$task->department_id] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></div>
-                  </div>
-                  <div class="tk-field">
-                    <div class="tk-label">Task Category</div>
-                    <div class="tk-static"><?= htmlspecialchars($taskMap[$task->task_category_id] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></div>
-                  </div>
-                  <div class="tk-field">
-                    <div class="tk-label">Ticket ID</div>
-                    <div class="tk-static"><?= htmlspecialchars($task->ticket_id, ENT_QUOTES, 'UTF-8') ?></div>
-                  </div>
-                  <div class="tk-field tk-col-span-2">
-                    <div class="tk-label">Description</div>
-                    <div class="tk-static"><?= htmlspecialchars($task->description, ENT_QUOTES, 'UTF-8') ?></div>
-                  </div>
-                  <div class="tk-field">
-                    <div class="tk-label">Start / End</div>
-                    <div class="tk-static"><?= htmlspecialchars($task->start_time, ENT_QUOTES, 'UTF-8') ?> — <?= htmlspecialchars($task->end_time, ENT_QUOTES, 'UTF-8') ?></div>
-                  </div>
-                  <div class="tk-field">
-                    <div class="tk-label">Time Spent</div>
-                    <div class="tk-static"><?= number_format((float)$task->time_spent, 2) ?> hrs</div>
-                  </div>
-                  <div class="tk-field">
-                    <div class="tk-label">Billable</div>
-                    <div class="tk-static"><?= $task->billable ? 'Yes' : 'No' ?></div>
-                  </div>
-                  <div class="tk-field">
-                    <div class="tk-label">Billable Time</div>
-                    <div class="tk-static"><?= number_format((float)$task->billable_time, 2) ?> hrs</div>
-                  </div>
-                  <div class="tk-field">
-                    <div class="tk-label">SLA</div>
-                    <div class="tk-static"><?= $task->sla ? 'Yes' : 'No' ?></div>
-                  </div>
-                  <div class="tk-field">
-                    <div class="tk-label">SLA Time</div>
-                    <div class="tk-static"><?= number_format((float)$task->sla_time, 2) ?> hrs</div>
-                  </div>
-                </div>
+                <!-- Read-only row -->
+                <div class="tk-row-main">
+                  <div class="tk-row-left">
+                    <div class="tk-row-title">
+                      <strong><?= htmlspecialchars($clientMap[$task->client_id] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></strong>
+                      <span class="sep">·</span>
+                      <span class="muted"><?= htmlspecialchars($departmentMap[$task->department_id] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></span>
+                      <span class="sep">·</span>
+                      <span class="muted"><?= htmlspecialchars($taskMap[$task->task_category_id] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></span>
+                    </div>
 
-                <div class="tk-actions-right">
-                  <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet&edit_id=<?= (int) $task->id ?>" class="btn btn-sm btn-default">Edit</a>
-                  <form method="post" class="ts-delete-form" style="display:inline-block;margin:0;">
-                    <input type="hidden" name="delete_id" value="<?= (int) $task->id ?>">
-                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                  </form>
+                    <div class="tk-row-desc">
+                      <?= htmlspecialchars($task->description, ENT_QUOTES, 'UTF-8') ?>
+                    </div>
+
+                    <div class="tk-row-meta">
+                      <span><?= htmlspecialchars($task->start_time, ENT_QUOTES, 'UTF-8') ?> – <?= htmlspecialchars($task->end_time, ENT_QUOTES, 'UTF-8') ?></span>
+                      <span class="dot">•</span>
+                      <span><strong><?= number_format((float)$task->time_spent, 2) ?></strong> hrs</span>
+                      <?php if ((float)$task->billable_time > 0): ?>
+                        <span class="dot">•</span><span>Billable <?= number_format((float)$task->billable_time, 2) ?> hrs</span>
+                      <?php endif; ?>
+                      <?php if ((float)$task->sla_time > 0): ?>
+                        <span class="dot">•</span><span>SLA <?= number_format((float)$task->sla_time, 2) ?> hrs</span>
+                      <?php endif; ?>
+                    </div>
+                  </div>
+
+                  <div class="tk-row-right">
+                    <div class="tk-badges">
+                      <?php if (!empty($task->ticket_id)): ?>
+                        <span class="tk-badge tk-badge--success">Linked · Ticket #<?= htmlspecialchars($task->ticket_id, ENT_QUOTES, 'UTF-8') ?></span>
+                      <?php else: ?>
+                        <span class="tk-badge">No ticket</span>
+                      <?php endif; ?>
+                    </div>
+                    <div class="tk-actions-right tk-row-actions">
+                      <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet&edit_id=<?= (int) $task->id ?>" class="btn btn-sm btn-default">Edit</a>
+                      <form method="post" class="ts-delete-form" style="display:inline-block;margin:0;">
+                        <input type="hidden" name="delete_id" value="<?= (int) $task->id ?>">
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                      </form>
+                    </div>
+                  </div>
                 </div>
               <?php endif; ?>
             </div>
@@ -385,22 +344,37 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
     .tk-inline-check { display: inline-flex; align-items: center; gap: .35rem; }
     .tk-inline-time-input { display: none; width: 130px; min-width: 120px; }
 
-    /* Saved entries grid */
-    .tk-saved-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-    @media (min-width: 900px) { .tk-saved-grid { grid-template-columns: 1fr 1fr; } }
-    .tk-saved-item { display: flex; flex-direction: column; }
-    .tk-saved-fields { display: grid; grid-template-columns: 1fr; gap: .75rem; }
-    .tk-saved-fields .tk-field { min-width: 0; }
-    .tk-col-span-2 { grid-column: span 1; }
+    /* ===== Saved entries: compact row layout ===== */
+    .tk-saved-list { display: grid; grid-template-columns: 1fr; gap: .75rem; }
+    .tk-row { padding: .75rem 1rem; }
+    .tk-row-main { display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: center; }
+    .tk-row-left { min-width: 0; }
+    .tk-row-right { display: grid; gap: .5rem; justify-items: end; }
     @media (min-width: 900px) {
-      .tk-saved-fields { grid-template-columns: 1fr 1fr; }
-      .tk-col-span-2 { grid-column: span 2; }
+      .tk-row-right { grid-auto-flow: row; }
     }
 
-    .tk-static { padding: .35rem .5rem; background:#fafafa; border:1px solid #eee; border-radius:4px; }
+    .tk-row-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem; font-size: 14px; }
+    .tk-row-title .sep { opacity: .5; }
+    .tk-row-title .muted { color: #666; }
 
-    /* Actions alignment */
-    .tk-actions-right { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1rem; }
+    .tk-row-desc { margin-top: .15rem; font-size: 14px; color: #222; overflow-wrap: anywhere; }
+    .tk-row-meta { margin-top: .25rem; font-size: 12px; color: #555; display: flex; flex-wrap: wrap; gap: .35rem .5rem; align-items: center; }
+    .tk-row-meta .dot { opacity: .5; }
+
+    .tk-badges { display: flex; gap: .5rem; align-items: center; }
+    .tk-badge { font-size: 12px; padding: .15rem .5rem; border: 1px solid #E5E7EB; border-radius: 999px; background: #F9FAFB; color: #374151; white-space: nowrap; }
+    .tk-badge--success { border-color: #C7F0D8; background: #ECFDF5; color: #065F46; }
+
+    .tk-row-actions { display: flex; gap: .5rem; }
+
+    /* Selects/inputs inside inline editor to look compact */
+    .tk-row-select { max-width: 220px; }
+    .tk-row-input { width: 100%; }
+
+    /* Keep the old saved-grid styles out of the way if present elsewhere */
+    .tk-saved-grid { display: none; }
+    .tk-saved-item { display: none; }
   </style>
 
   <script>
