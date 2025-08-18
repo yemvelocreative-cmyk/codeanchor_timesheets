@@ -20,30 +20,26 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
 
   <?php if ($timesheetStatus !== 'not_assigned'): ?>
 
-    <h2>Daily Timesheet</h2>
-
-    <div class="ts-meta">
-      <div><strong>You are logged in as:</strong> <?= htmlspecialchars($adminName, ENT_QUOTES, 'UTF-8') ?></div>
-      <div><strong>Timesheet Date:</strong> <?= htmlspecialchars($timesheetDate, ENT_QUOTES, 'UTF-8') ?></div>
-      <div><strong>Status:</strong> <?= htmlspecialchars(ucfirst($timesheetStatus), ENT_QUOTES, 'UTF-8') ?></div>
-    </div>
-
     <?php
       $isEditing = isset($task) && isset($task->id);
       $actionUrl = 'addonmodules.php?module=timekeeper&timekeeperpage=timesheet' . ($isEditing ? '&edit_id='.(int)$task->id : '');
     ?>
+
     <form method="post" id="addTaskForm" action="<?= htmlspecialchars($actionUrl, ENT_QUOTES, 'UTF-8') ?>" class="tk-card ts-entryform">
-      <div class="tk-card-header">
-        <h3 class="tk-card-title"><?= $isEditing ? 'Edit Entry' : 'Add Entry' ?></h3>
-        <div class="tk-actions">
-          <button type="submit" class="btn btn-sm btn-primary"><?= $isEditing ? 'Save Changes' : 'Add' ?></button>
-          <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet" class="btn btn-sm btn-default">Cancel</a>
+
+      <!-- Compact header replaces "Add Entry" -->
+      <div class="tk-card-header tk-card-header--compact">
+        <div class="tk-meta-grid">
+          <div><strong>Daily Timesheet</strong></div>
+          <div><strong>You are logged in as:</strong> <?= htmlspecialchars($adminName, ENT_QUOTES, 'UTF-8') ?></div>
+          <div><strong>Timesheet Date:</strong> <?= htmlspecialchars($timesheetDate, ENT_QUOTES, 'UTF-8') ?></div>
+          <div><strong>Status:</strong> <?= htmlspecialchars(ucfirst($timesheetStatus), ENT_QUOTES, 'UTF-8') ?></div>
         </div>
       </div>
 
-      <!-- Switched to 2-column wrapper -->
+      <!-- Two-column wrapper -->
       <div class="tk-block-grid-2">
-        <!-- Block 1: Details (with Support Ticket under Description) -->
+        <!-- Block 1: Details (Support Ticket under Description) -->
         <section class="tk-card">
           <div class="tk-section-title">1) Details</div>
           <div class="tk-grid">
@@ -116,7 +112,6 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
           <div class="tk-grid">
             <div class="tk-field">
               <div class="tk-label">Start / End Time</div>
-              <!-- side-by-side times; wrap on small screens -->
               <div class="tk-input tk-inline tk-inline-times">
                 <input type="time" name="start_time" required
                        class="tk-time tk-time-start"
@@ -161,6 +156,12 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
                        value="<?= $isEditing ? number_format((float)($task->sla_time ?? 0), 2) : '' ?>">
               </div>
             </div>
+          </div>
+
+          <!-- Actions moved below the right block -->
+          <div class="tk-actions-right">
+            <button type="submit" class="btn btn-sm btn-primary"><?= $isEditing ? 'Save Changes' : 'Add' ?></button>
+            <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet" class="btn btn-sm btn-default">Cancel</a>
           </div>
         </section>
       </div>
@@ -265,20 +266,36 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
       </div>
     <?php endif; ?>
 
-    <div class="ts-totals">
-      <div><strong>Total Time:</strong> <?= $totalTime ?> hrs</div>
-      <div><strong>Total Billable Time:</strong> <?= $totalBillableTime ?> hrs</div>
-      <div><strong>Total SLA Time:</strong> <?= $totalSlaTime ?> hrs</div>
-    </div>
-
   <?php endif; ?> <!-- timesheetStatus !== 'not_assigned' -->
 
-  <!-- Inline helpers for layout + toggles (kept tiny & local) -->
+  <!-- Layout & behaviour helpers -->
   <style>
+    /* Force two-column for main blocks, stack on narrow screens */
+    .tk-block-grid-2 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    @media (min-width: 900px) {
+      .tk-block-grid-2 { grid-template-columns: 1fr 1fr; }
+    }
+    .tk-card { height: 100%; }
+
+    /* Compact header layout */
+    .tk-card-header--compact { padding: .5rem 1rem; }
+    .tk-meta-grid { display: grid; grid-template-columns: 1fr; gap: .25rem; }
+    @media (min-width: 900px) {
+      .tk-meta-grid { grid-template-columns: auto auto auto auto; align-items: center; gap: 1rem; }
+    }
+
+    /* Start/End side-by-side; ~35% width each */
     .tk-inline-times { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
-    .tk-inline-times .tk-time { flex: 0 1 35%; min-width: 140px; } /* ~35% each as requested */
-    .tk-inline input[type="text"], .tk-inline input[type="time"] { vertical-align: middle; }
+    .tk-inline-times .tk-time { flex: 0 1 35%; min-width: 140px; }
+
+    /* Actions under right block */
+    .tk-actions-right { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1rem; }
+
+    /* Keep inline alignment clean */
+    .tk-inline input[type="text"],
+    .tk-inline input[type="time"] { vertical-align: middle; }
   </style>
+
   <script>
     (function () {
       function toggleInlineInput(checkbox, input) {
@@ -287,7 +304,6 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
         checkbox.addEventListener('change', set);
         set();
       }
-      // Add form
       toggleInlineInput(document.getElementById('billable-checkbox'), document.getElementById('billable-time'));
       toggleInlineInput(document.getElementById('sla-checkbox'), document.getElementById('sla-time'));
     })();
