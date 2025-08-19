@@ -1,110 +1,33 @@
-/* ===== Settings Page (scoped) ===== */
+/* ===== Settings Page (scoped to .timekeeper-root) ===== */
 
-.timekeeper-root .timekeeper-settings-cron code {
-    background-color: #f8f9fa;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 90%;
-    display: inline-block;
+/* Page header */
+.timekeeper-root .tk-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
 }
-.timekeeper-root .timekeeper-settings-cron h4 {
-    margin-bottom: 0.5rem;
-    font-size: 18px;
+.timekeeper-root .tk-page-title .tk-h2 {
+  margin: 0 0 2px 0;
+  font-size: 22px;
+  line-height: 1.2;
 }
-.timekeeper-root .timekeeper-settings-cron p.text-muted {
-    margin-bottom: 1rem;
-    font-size: 14px;
-    color: #6c757d;
-}
-.timekeeper-root .alert { margin-top: 8px; }
-
-/* Dual Select (users & roles) */
-.timekeeper-root .dual-select-controls-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-.timekeeper-root .dual-select-controls {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-.timekeeper-root .dual-select-controls .btn {
-    min-width: 36px;
-    height: 36px;
-    line-height: 1;
-    padding: 0 8px;
-}
-.timekeeper-root .dual-select-controls .btn:focus {
-    outline: 2px solid #1a73e8;
-    outline-offset: 2px;
+.timekeeper-root .tk-page-title .tk-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: #6c757d;
 }
 
-.timekeeper-root .user-select-block {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex: 0 0 auto;
-    width: 220px;
+/* Card */
+.timekeeper-root .tk-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
 }
-.timekeeper-root .user-select-block:last-of-type { margin-left: 16px; }
-.timekeeper-root .user-select-label { font-size: 14px; font-weight: 500; }
-
-/* Standard size for the multi-select boxes (so you can drop inline styles) */
-.timekeeper-root .user-select-box,
-.timekeeper-root select[multiple].user-select-box {
-    width: 200px;
-    height: 180px;
-}
-
-/* Improve keyboard focus visibility on selects */
-.timekeeper-root select[multiple].user-select-box:focus {
-    outline: 2px solid #1a73e8;
-    outline-offset: 2px;
-}
-
-/* Submit button spacing */
-.timekeeper-root #saveSettingsButton { margin-top: 16px; }
-
-/* Optional wrappers if you add them later */
-.timekeeper-root .timekeeper-user-select-wrapper {
-    width: 100%;
-    display: flex;
-    justify-content: flex-start;
-    margin-top: 1rem;
-}
-.timekeeper-root .dual-select-container {
-    display: flex;
-    gap: 24px;
-    align-items: flex-start;
-    justify-content: flex-start;
-    flex-wrap: nowrap;
-}
-
-/* Responsive tweaks */
-@media (max-width: 768px) {
-    .timekeeper-root .dual-select-controls-wrapper {
-        flex-wrap: wrap;
-        align-items: stretch;
-        gap: 12px;
-    }
-    .timekeeper-root .dual-select-controls {
-        flex-direction: row;
-        gap: 8px;
-        order: 2; /* keeps buttons between the two lists when wrapping */
-    }
-    .timekeeper-root .user-select-block {
-        width: 100%;
-        max-width: 320px;
-    }
-    .timekeeper-root .user-select-box,
-    .timekeeper-root select[multiple].user-select-box {
-        width: 100%;
-        height: 180px; /* keep height consistent while allowing width to flex */
-    }
-}
+.timekeeper-root .tk-card--padded { padding: 16px; }
+.timekeeper-root .tk-mt { margin-top: 12px; }
 
 /* Make the Bootstrap container inside Timekeeper full-width & left-aligned */
 .timekeeper-root > .container.mt-4 {
@@ -117,24 +40,129 @@
   text-align: left !important;
 }
 
-/* Tabs + content blocks stay left */
-.timekeeper-root .timekeeper-settings-tabs { justify-content: flex-start !important; }
-.timekeeper-root .dual-select-controls-wrapper,
-.timekeeper-root .dual-select-container,
-.timekeeper-root .timekeeper-user-select-wrapper {
+/* Tabs (rendered by settings.php) */
+.timekeeper-root .timekeeper-settings-tabs {
+  list-style: none;
+  display: flex;
+  gap: 8px;
+  padding: 0;
+  margin: 8px 0 12px 0;
+  border-bottom: 1px solid #e5e7eb;
   justify-content: flex-start !important;
-  align-items: flex-start !important;
+}
+.timekeeper-root .timekeeper-settings-tabs li {
+  margin: 0;
+}
+.timekeeper-root .timekeeper-settings-tabs a {
+  display: inline-block;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  text-decoration: none;
+  color: #374151;
+  font-weight: 500;
+}
+.timekeeper-root .timekeeper-settings-tabs li.active a {
+  background: #fff;
+  border-color: #e5e7eb;
+  color: #111827;
+}
+
+/* Cron section niceties */
+.timekeeper-root .timekeeper-settings-cron code {
+  background-color: #f8f9fa;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 90%;
+  display: inline-block;
+}
+.timekeeper-root .timekeeper-settings-cron h4 {
+  margin-bottom: 0.5rem;
+  font-size: 18px;
+}
+.timekeeper-root .timekeeper-settings-cron p.text-muted {
+  margin-bottom: 1rem;
+  font-size: 14px;
+  color: #6c757d;
+}
+.timekeeper-root .alert { margin-top: 8px; }
+
+/* Dual Select (users & roles) - consistent with timesheet layout */
+.timekeeper-root .dual-select-controls-wrapper {
+  display: flex;
+  align-items: center !important; /* center arrows */
+  gap: 16px;
+  justify-content: flex-start !important;
   text-align: left !important;
 }
-
-/* Center the arrow buttons between the two selects */
-.timekeeper-root .dual-select-controls-wrapper {
-  align-items: center !important;   /* vertical center */
+.timekeeper-root .dual-select-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.timekeeper-root .dual-select-controls .btn {
+  min-width: 36px;
+  height: 36px;
+  line-height: 1;
+  padding: 0 8px;
+}
+.timekeeper-root .dual-select-controls .btn:focus {
+  outline: 2px solid #1a73e8;
+  outline-offset: 2px;
 }
 
-/* Keep the mobile behavior from your existing media query */
+.timekeeper-root .user-select-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 0 0 auto;
+  width: 220px;
+}
+.timekeeper-root .user-select-block:last-of-type { margin-left: 16px; }
+.timekeeper-root .user-select-label { font-size: 14px; font-weight: 500; }
+
+/* Standard size for the multi-select boxes */
+.timekeeper-root .user-select-box,
+.timekeeper-root select[multiple].user-select-box {
+  width: 200px;
+  height: 180px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 6px;
+}
+
+/* Improve keyboard focus visibility on selects */
+.timekeeper-root select[multiple].user-select-box:focus {
+  outline: 2px solid #1a73e8;
+  outline-offset: 2px;
+}
+
+/* Submit button spacing */
+.timekeeper-root #saveSettingsButton { margin-top: 16px; }
+
+/* Responsive tweaks */
 @media (max-width: 768px) {
   .timekeeper-root .dual-select-controls-wrapper {
-    align-items: stretch !important; /* matches your mobile row layout */
+    flex-wrap: wrap;
+    align-items: stretch !important; /* mobile row layout */
+    gap: 12px;
+  }
+  .timekeeper-root .dual-select-controls {
+    flex-direction: row;
+    gap: 8px;
+    order: 2; /* keeps buttons between the two lists when wrapping */
+  }
+  .timekeeper-root .user-select-block {
+    width: 100%;
+    max-width: 320px;
+  }
+  .timekeeper-root .user-select-box,
+  .timekeeper-root select[multiple].user-select-box {
+    width: 100%;
+    height: 180px; /* consistent height; width flexes */
   }
 }
