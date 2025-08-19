@@ -116,22 +116,6 @@
       removeBtnId: 'removeUser'
     });
 
-    // Roles - View permissions (approvals tab)
-    bindDualSelect({
-      availId: 'availableRoles',
-      assignedId: 'assignedRoles',
-      addBtnId: 'addRole',
-      removeBtnId: 'removeRole'
-    });
-
-    // Roles - Approve permissions (approvals tab)
-    bindDualSelect({
-      availId: 'availableRolesApprove',
-      assignedId: 'assignedRolesApprove',
-      addBtnId: 'addRoleApprove',
-      removeBtnId: 'removeRoleApprove'
-    });
-
     // Double-submit guard + ensure assigned selects are submitted
     document.querySelectorAll('form[data-tk]').forEach(function (form) {
       form.addEventListener('submit', function (e) {
@@ -210,7 +194,7 @@
 })();
 
 /* ============================
-   Approvals – Dual Cards (robust init)
+   Approvals – Dual Cards (robust init) — FIXED
    ============================ */
 (function () {
   function run() {
@@ -243,14 +227,14 @@
       const t = e.target;
 
       if (t.classList.contains('js-approvals-viewall-toggleall')) {
-        const card = t.closest('.tk-approvals-card[data-scope="viewall"]`);
+        const card = t.closest('.tk-approvals-card[data-scope="viewall"]'); // <-- backtick removed
         card?.querySelectorAll('.js-approvals-viewall').forEach(cb => cb.checked = t.checked);
         update('viewall');
         return;
       }
 
       if (t.classList.contains('js-approvals-approve-toggleall')) {
-        const card = t.closest('.tk-approvals-card[data-scope="approve"]`);
+        const card = t.closest('.tk-approvals-card[data-scope="approve"]'); // <-- backtick removed
         card?.querySelectorAll('.js-approvals-approve').forEach(cb => cb.checked = t.checked);
         update('approve');
         return;
