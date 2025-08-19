@@ -52,6 +52,24 @@ function tk_load_or_create_today_timesheet(int $adminId, string $today): array
 // POST HANDLERS FIRST (avoid headers already sent issues)
 // ======================================================================
 
+// Helper: load today's timesheet if it exists
+function tk_load_today_timesheet(int $adminId, string $today): ?array
+{
+    $ts = Capsule::table('mod_timekeeper_timesheets')
+        ->where('admin_id', $adminId)
+        ->where('timesheet_date', $today)
+        ->first();
+
+    if ($ts) {
+        return [
+            'id'     => (int) $ts->id,
+            'status' => (string) $ts->status,
+            'date'   => $ts->timesheet_date ?: $today,
+        ];
+    }
+    return null;
+}
+
 // Delete entry
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
     $deleteId = (int) $_POST['delete_id'];
@@ -128,16 +146,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_id'])) {
 // GET RENDER PATH
 // ======================================================================
 
-// Ensure we have today's timesheet context for rendering
-$tsMeta          = tk_load_or_create_today_timesheet($adminId, $today);
-$timesheetId     = $tsMeta['id'];
-$timesheetDate   = $tsMeta['date'];
-$timesheetStatus = $tsMeta['status'];
+// Load-only for GET (do NOT create on visit)
+$tsMeta = tk_load_today_timesheet($adminId, $today);
 
-// Existing entries + totals
-$existingTasks = Capsule::table('mod_timekeeper_timesheet_entries')
-    ->where('timesheet_id', $timesheetId)
-    ->get();
+if ($tsMeta) {
+    $timesheetId     = $tsMeta['id'];
+    $timesheetDate   = $tsMeta['date'];
+    $timesheetStatus = $tsMeta['status'];
+
+    $existingTasks = Capsule::table('mod_timekeeper_timesheet_entries')
+        ->where('timesheet_id', $timesheetId)
+        ->get();
+} else {
+    // No timesheet exists yet for today
+    $timesheetId     = 0;
+    $timesheetDate   = $today;
+    $timesheetStatus = 'not_assigned'; // your template already supports this state
+    $existingTasks   = collect([]);    // empty Laravel collection (keeps foreach happy)
+}
 
 $totalTime = 0.0;
 $totalBillableTime = 0.0;
