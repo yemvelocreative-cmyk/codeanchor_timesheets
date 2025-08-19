@@ -78,14 +78,14 @@
 .timekeeper-root .tk-userchip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 999px;
-  background: #fff;
+  gap: 6px;
+  padding: 4px 0;
+  border: none;          /* remove oval */
+  border-radius: 0;      /* reset rounded */
+  background: transparent;
   cursor: pointer;
   user-select: none;
-  transition: box-shadow .15s ease;
+}
 }
 .timekeeper-root .tk-userchip:hover {
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
