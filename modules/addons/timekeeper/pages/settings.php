@@ -54,14 +54,24 @@ $tab_visibility   = (isset($_GET['tab_visibility']) && $_GET['tab_visibility'] =
 /* -------------------------------
    Render tab menu
 -------------------------------- */
-echo '<ul class="timekeeper-settings-tabs">';
-foreach ($settingsTabs as $tabKey => $tabLabel) {
-    $isActive = ($tabKey === $activeTab) ? 'active' : '';
-    echo '<li class="' . $isActive . '">
-            <a href="addonmodules.php?module=timekeeper&timekeeperpage=settings&subtab=' . $tabKey . '">' . htmlspecialchars($tabLabel, ENT_QUOTES, 'UTF-8') . '</a>
-          </li>';
-}
-echo '</ul>';
+<?php
+$settingsTabs = [
+  'cron'      => 'Daily Cron Setup',
+  'approval'  => 'Timesheet Settings',
+  'hide_tabs' => 'Hide Menu Tabs',
+];
+?>
+<nav class="tk-subnav tk-subnav--segmented" role="tablist" aria-label="Settings sub-navigation">
+  <?php foreach ($settingsTabs as $tabKey => $tabLabel): ?>
+    <a
+      class="tk-seg <?= $activeTab === $tabKey ? 'is-active' : '' ?>"
+      href="addonmodules.php?module=timekeeper&timekeeperpage=settings&subtab=<?= $tabKey ?>"
+      role="tab"
+      aria-selected="<?= $activeTab === $tabKey ? 'true' : 'false' ?>"
+      tabindex="<?= $activeTab === $tabKey ? '0' : '-1' ?>"
+    ><?= htmlspecialchars($tabLabel, ENT_QUOTES, 'UTF-8') ?></a>
+  <?php endforeach; ?>
+</nav>
 
 /* -------------------------------
    Tab-specific controllers
