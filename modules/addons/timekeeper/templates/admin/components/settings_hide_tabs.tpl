@@ -56,52 +56,45 @@ if (!isset($hiddenTabsByRole) || !is_array($hiddenTabsByRole)) {
         <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf, ENT_QUOTES, 'UTF-8'); ?>">
         <input type="hidden" name="hidemenutabs_save" value="1">
 
-        <!-- BEGIN: Card/Grid replacement for table -->
-<div class="tk-cards-grid">
-  <?php foreach ($tabs as $tabKey => $tabLabel): ?>
-    <div class="tk-card">
-      <div class="tk-card-head">
-        <h5 class="tk-card-title"><?= htmlspecialchars($tabLabel, ENT_QUOTES, 'UTF-8') ?></h5>
-        <span class="tk-card-sub">Hide for selected roles</span>
+        <!-- BEGIN: Role-centric replacement for table -->
+<div class="tk-roles-stack">
+  <?php foreach ($roles as $role): ?>
+    <?php $rid = (int) $role->id; ?>
+    <div class="tk-role-card">
+      <div class="tk-role-head">
+        <h5 class="tk-role-title"><?= htmlspecialchars($role->name, ENT_QUOTES, 'UTF-8') ?></h5>
+        <span class="tk-role-sub">Tick to hide tabs for this role</span>
       </div>
 
-      <div class="tk-card-body">
-        <div class="tk-role-grid">
-          <?php foreach ($roles as $role):
-            $rid = (int) $role->id;
-            $isHidden = isset($hiddenTabsByRole[$rid]) && in_array($tabKey, $hiddenTabsByRole[$rid], true);
-          ?>
-            <label class="tk-role-toggle">
-              <input
-                type="checkbox"
-                name="hide_tabs[<?= $rid ?>][]"
-                value="<?= htmlspecialchars($tabKey, ENT_QUOTES, 'UTF-8') ?>"
-                <?= $isHidden ? 'checked' : '' ?>>
-              <span class="tk-role-name"><?= htmlspecialchars($role->name, ENT_QUOTES, 'UTF-8') ?></span>
-              <span class="tk-role-state" aria-hidden="true"><?= $isHidden ? 'Hidden' : 'Visible' ?></span>
-            </label>
-          <?php endforeach; ?>
-        </div>
+      <div class="tk-tabs-list">
+        <?php foreach ($tabs as $tabKey => $tabLabel):
+          $isHidden = isset($hiddenTabsByRole[$rid]) && in_array($tabKey, $hiddenTabsByRole[$rid], true);
+        ?>
+          <label class="tk-tab-toggle">
+            <span class="tk-tab-name"><?= htmlspecialchars($tabLabel, ENT_QUOTES, 'UTF-8') ?></span>
+            <input
+              type="checkbox"
+              name="hide_tabs[<?= $rid ?>][]"
+              value="<?= htmlspecialchars($tabKey, ENT_QUOTES, 'UTF-8') ?>"
+              <?= $isHidden ? 'checked' : '' ?>>
+          </label>
+        <?php endforeach; ?>
       </div>
     </div>
   <?php endforeach; ?>
 </div>
 
 <style>
-  .tk-cards-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:1rem; }
-  .tk-card { background:#fff; border:1px solid #e5e7eb; border-radius:.9rem; display:flex; flex-direction:column; }
-  .tk-card-head { padding:.9rem 1rem .25rem 1rem; }
-  .tk-card-title { margin:0; font-size:1rem; font-weight:700; color:#0f172a; }
-  .tk-card-sub { color:#64748b; font-size:.85rem; }
-  .tk-card-body { padding:.75rem 1rem 1rem 1rem; }
-  .tk-role-grid { display:grid; grid-template-columns: repeat(1, 1fr); gap:.5rem; }
-  @media (min-width: 540px){ .tk-role-grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (min-width: 900px){ .tk-role-grid { grid-template-columns: repeat(3, 1fr); } }
-  .tk-role-toggle { display:flex; align-items:center; gap:.5rem; padding:.5rem .6rem; border:1px solid #eef2f7; border-radius:.5rem; }
-  .tk-role-name { flex:1; }
-  .tk-role-state { color:#64748b; font-size:.85rem; }
+  .tk-roles-stack { display:grid; gap:1rem; }
+  .tk-role-card { background:#fff; border:1px solid #e5e7eb; border-radius:.9rem; }
+  .tk-role-head { padding:.9rem 1rem .25rem 1rem; }
+  .tk-role-title { margin:0; font-size:1rem; font-weight:700; color:#0f172a; }
+  .tk-role-sub { color:#64748b; font-size:.85rem; }
+  .tk-tabs-list { display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:.5rem; padding:.75rem 1rem 1rem 1rem; }
+  .tk-tab-toggle { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.5rem .6rem; border:1px solid #eef2f7; border-radius:.5rem; }
+  .tk-tab-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 </style>
-<!-- END: Card/Grid replacement -->
+<!-- END: Role-centric replacement -->
 
 
         <div class="tk-actions">
