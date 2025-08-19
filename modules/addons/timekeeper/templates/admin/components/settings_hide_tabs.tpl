@@ -56,91 +56,52 @@ if (!isset($hiddenTabsByRole) || !is_array($hiddenTabsByRole)) {
         <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf, ENT_QUOTES, 'UTF-8'); ?>">
         <input type="hidden" name="hidemenutabs_save" value="1">
 
-        <!-- BEGIN: Matrix replacement for table -->
-<div class="tk-matrix">
-
-  <!-- Header row -->
-  <div class="tk-mx-row tk-mx-header">
-    <div class="tk-mx-cell tk-mx-tabcol">Tab</div>
-    <?php foreach ($roles as $role): ?>
-      <div class="tk-mx-cell tk-mx-rolecol">
-        <div class="tk-mx-rolehead">
-          <span><?= htmlspecialchars($role->name, ENT_QUOTES, 'UTF-8') ?></span>
-          <!-- Optional: role toggle-all (client-side only) -->
-          <label class="tk-mx-head-toggle">
-            <input type="checkbox" class="js-role-toggle-all" data-role-id="<?= (int)$role->id ?>">
-            <span>All</span>
-          </label>
-        </div>
-      </div>
-    <?php endforeach; ?>
-  </div>
-
-  <!-- Rows -->
+        <!-- BEGIN: Card/Grid replacement for table -->
+<div class="tk-cards-grid">
   <?php foreach ($tabs as $tabKey => $tabLabel): ?>
-    <div class="tk-mx-row">
-      <div class="tk-mx-cell tk-mx-tabcol">
-        <span class="tk-mx-tablabel"><?= htmlspecialchars($tabLabel, ENT_QUOTES, 'UTF-8') ?></span>
+    <div class="tk-card">
+      <div class="tk-card-head">
+        <h5 class="tk-card-title"><?= htmlspecialchars($tabLabel, ENT_QUOTES, 'UTF-8') ?></h5>
+        <span class="tk-card-sub">Hide for selected roles</span>
       </div>
 
-      <?php foreach ($roles as $role):
-        $rid = (int) $role->id;
-        $isHidden = isset($hiddenTabsByRole[$rid]) && in_array($tabKey, $hiddenTabsByRole[$rid], true);
-      ?>
-        <div class="tk-mx-cell tk-mx-rolecol">
-          <label class="tk-mx-toggle">
-            <input
-              type="checkbox"
-              name="hide_tabs[<?= $rid ?>][]"
-              value="<?= htmlspecialchars($tabKey, ENT_QUOTES, 'UTF-8') ?>"
-              <?= $isHidden ? 'checked' : '' ?>
-              data-role-id="<?= $rid ?>">
-            <span class="tk-mx-toggle-fx" aria-hidden="true"></span>
-          </label>
+      <div class="tk-card-body">
+        <div class="tk-role-grid">
+          <?php foreach ($roles as $role):
+            $rid = (int) $role->id;
+            $isHidden = isset($hiddenTabsByRole[$rid]) && in_array($tabKey, $hiddenTabsByRole[$rid], true);
+          ?>
+            <label class="tk-role-toggle">
+              <input
+                type="checkbox"
+                name="hide_tabs[<?= $rid ?>][]"
+                value="<?= htmlspecialchars($tabKey, ENT_QUOTES, 'UTF-8') ?>"
+                <?= $isHidden ? 'checked' : '' ?>>
+              <span class="tk-role-name"><?= htmlspecialchars($role->name, ENT_QUOTES, 'UTF-8') ?></span>
+              <span class="tk-role-state" aria-hidden="true"><?= $isHidden ? 'Hidden' : 'Visible' ?></span>
+            </label>
+          <?php endforeach; ?>
         </div>
-      <?php endforeach; ?>
-
+      </div>
     </div>
   <?php endforeach; ?>
-
 </div>
 
 <style>
-  .tk-matrix { display:grid; gap:.5rem; }
-  .tk-mx-row { display:grid; grid-template-columns: 1.2fr repeat(var(--tk-role-cols,3), 1fr); align-items:center; }
-  .tk-mx-cell { padding:.6rem .75rem; background:#fff; border:1px solid #e5e7eb; }
-  .tk-mx-header { font-weight:600; color:#0f172a; }
-  .tk-mx-tabcol { border-radius:.6rem 0 0 .6rem; }
-  .tk-mx-row > .tk-mx-cell:last-child { border-radius:0 .6rem .6rem 0; }
-  .tk-mx-rolehead { display:flex; justify-content:space-between; align-items:center; gap:.5rem; }
-  .tk-mx-head-toggle { display:flex; align-items:center; gap:.35rem; font-weight:500; }
-  .tk-mx-tablabel { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
-  .tk-mx-toggle { display:flex; justify-content:center; align-items:center; width:100%; }
-  .tk-mx-toggle input { width:18px; height:18px; }
-  @media (max-width: 900px){
-    .tk-mx-row { grid-template-columns: 1fr 1fr; }
-    .tk-mx-header { display:none; }
-    .tk-mx-tabcol { border-radius:.6rem; }
-  }
+  .tk-cards-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:1rem; }
+  .tk-card { background:#fff; border:1px solid #e5e7eb; border-radius:.9rem; display:flex; flex-direction:column; }
+  .tk-card-head { padding:.9rem 1rem .25rem 1rem; }
+  .tk-card-title { margin:0; font-size:1rem; font-weight:700; color:#0f172a; }
+  .tk-card-sub { color:#64748b; font-size:.85rem; }
+  .tk-card-body { padding:.75rem 1rem 1rem 1rem; }
+  .tk-role-grid { display:grid; grid-template-columns: repeat(1, 1fr); gap:.5rem; }
+  @media (min-width: 540px){ .tk-role-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 900px){ .tk-role-grid { grid-template-columns: repeat(3, 1fr); } }
+  .tk-role-toggle { display:flex; align-items:center; gap:.5rem; padding:.5rem .6rem; border:1px solid #eef2f7; border-radius:.5rem; }
+  .tk-role-name { flex:1; }
+  .tk-role-state { color:#64748b; font-size:.85rem; }
 </style>
-
-<script>
-  (function(){
-    // reflect number of roles in the CSS grid
-    const roleCount = <?= count($roles) ?>;
-    document.querySelectorAll('.tk-matrix').forEach(m => m.style.setProperty('--tk-role-cols', roleCount));
-
-    // role "toggle all" (client-side only)
-    document.querySelectorAll('.js-role-toggle-all').forEach(headToggle=>{
-      headToggle.addEventListener('change', function(){
-        const rid = this.getAttribute('data-role-id');
-        const boxes = document.querySelectorAll('input[type="checkbox"][data-role-id="'+rid+'"]');
-        boxes.forEach(b => { b.checked = headToggle.checked; });
-      });
-    });
-  })();
-</script>
-<!-- END: Matrix replacement -->
+<!-- END: Card/Grid replacement -->
 
 
         <div class="tk-actions">
