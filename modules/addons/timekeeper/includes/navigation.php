@@ -28,7 +28,7 @@ $navRejectedCount = Capsule::table('mod_timekeeper_timesheets')
     ->where('status', 'rejected')
     ->count();
 
-// Optional counts to show badges in nav
+// Counts to show badges in nav
 $navPendingCount = Capsule::table('mod_timekeeper_timesheets')
   ->where('admin_id', $navAdminId)
   ->where('status', 'pending')
