@@ -162,7 +162,7 @@
 
 /* Match admin role header size to tab labels */
 .timekeeper-root .timekeeper-hide-tabs-settings {
-  --tk-tab-font-size: 1rem; /* tweak here if you want larger/smaller */
+  --tk-tab-font-size: 2rem; /* tweak here if you want larger/smaller */
 }
 
 .timekeeper-root .timekeeper-hide-tabs-settings .tk-role-title,
