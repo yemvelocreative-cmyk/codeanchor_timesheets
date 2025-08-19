@@ -54,3 +54,20 @@
   .timekeeper-root .timekeeper-hide-tabs-settings .table td:first-child { width: auto; }
   .timekeeper-root .timekeeper-hide-tabs-settings input[type="checkbox"] { transform: scale(1); }
 }
+
+/* Section titles/subtitles for consistency with new layout */
+.timekeeper-root .timekeeper-hide-tabs-settings .tk-section-title {
+  margin: 0 0 6px 0;
+  font-size: 18px;
+}
+.timekeeper-root .timekeeper-hide-tabs-settings .tk-section-subtitle {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+}
+
+/* Footer actions (right-aligned button row) */
+.timekeeper-root .timekeeper-hide-tabs-settings .tk-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}

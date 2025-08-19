@@ -46,9 +46,9 @@ if (!isset($hiddenTabsByRole) || !is_array($hiddenTabsByRole)) {
     }
 }
 ?>
-<div class="timekeeper-hide-tabs-settings mb-4">
-    <h4>Hide Menu Tabs by Admin Role</h4>
-    <p class="text-muted mb-3">
+<div class="timekeeper-hide-tabs-settings">
+    <h4 class="tk-section-title">Hide Menu Tabs by Admin Role</h4>
+    <p class="text-muted tk-section-subtitle">
         Tick a box to <strong>hide</strong> a tab for that admin role. By default, all tabs are visible.
     </p>
 
@@ -60,16 +60,18 @@ if (!isset($hiddenTabsByRole) || !is_array($hiddenTabsByRole)) {
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>Admin Role</th>
+                        <th scope="col">Admin Role</th>
                         <?php foreach ($tabs as $tabKey => $tabLabel): ?>
-                            <th class="text-center"><?= htmlspecialchars($tabLabel, ENT_QUOTES, 'UTF-8') ?></th>
+                            <th scope="col" class="text-center"><?= htmlspecialchars($tabLabel, ENT_QUOTES, 'UTF-8') ?></th>
                         <?php endforeach; ?>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($roles as $role): ?>
                         <tr>
-                            <td><?= htmlspecialchars($role->name, ENT_QUOTES, 'UTF-8') ?></td>
+                            <td>
+                                <?= htmlspecialchars($role->name, ENT_QUOTES, 'UTF-8') ?>
+                            </td>
                             <?php foreach ($tabs as $tabKey => $tabLabel): ?>
                                 <?php
                                     $rid = (int) $role->id;
@@ -92,6 +94,8 @@ if (!isset($hiddenTabsByRole) || !is_array($hiddenTabsByRole)) {
             </table>
         </div>
 
-        <button type="submit" class="btn btn-primary">Save Tab Visibility</button>
+        <div class="tk-actions">
+            <button type="submit" class="btn btn-primary">Save Tab Visibility</button>
+        </div>
     </form>
 </div>
