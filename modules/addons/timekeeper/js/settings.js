@@ -208,3 +208,50 @@
     }
   });
 })();
+
+/* ============================
+   Approvals – Dual Cards
+   ============================ */
+(function () {
+  const root = document.querySelector('.timekeeper-root .timekeeper-approvals-settings');
+  if (!root) return;
+
+  function updateCount(scope) {
+    const card = root.querySelector(`.tk-approvals-card[data-scope="${scope}"]`);
+    if (!card) return;
+    const checks = card.querySelectorAll(`.js-approvals-${scope}`);
+    const selected = Array.from(checks).filter(c => c.checked).length;
+    const counter = card.querySelector(`.js-approvals-${scope}-count`);
+    if (counter) counter.textContent = `Selected: ${selected}`;
+
+    // reflect tri-state on toggle-all
+    const allToggle = card.querySelector(`.js-approvals-${scope}-toggleall`);
+    if (allToggle) {
+      allToggle.indeterminate = selected > 0 && selected < checks.length;
+      allToggle.checked = checks.length > 0 && selected === checks.length;
+    }
+  }
+
+  // Init both cards
+  ['viewall', 'approve'].forEach(scope => updateCount(scope));
+
+  // Toggle-all per card
+  root.addEventListener('change', (e) => {
+    const t = e.target;
+
+    if (t.classList.contains('js-approvals-viewall-toggleall')) {
+      const card = t.closest('.tk-approvals-card');
+      card.querySelectorAll('.js-approvals-viewall').forEach(cb => cb.checked = t.checked);
+      updateCount('viewall');
+    }
+
+    if (t.classList.contains('js-approvals-approve-toggleall')) {
+      const card = t.closest('.tk-approvals-card');
+      card.querySelectorAll('.js-approvals-approve').forEach(cb => cb.checked = t.checked);
+      updateCount('approve');
+    }
+
+    if (t.classList.contains('js-approvals-viewall')) updateCount('viewall');
+    if (t.classList.contains('js-approvals-approve')) updateCount('approve');
+  });
+})();

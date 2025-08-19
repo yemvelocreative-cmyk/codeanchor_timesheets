@@ -1,0 +1,91 @@
+/* ============================
+   Approvals – Dual Cards
+   ============================ */
+.timekeeper-root .timekeeper-approvals-settings .tk-approvals-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 900px) {
+  .timekeeper-root .timekeeper-approvals-settings .tk-approvals-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.timekeeper-root .timekeeper-approvals-settings .tk-approvals-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: .9rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.timekeeper-root .timekeeper-approvals-settings .tk-approvals-head {
+  padding: .9rem 1rem .5rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  gap: .75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.timekeeper-root .timekeeper-approvals-settings .tk-approvals-title {
+  margin: 0;
+  font-size: 1.125rem; /* ~18px to match your larger labels */
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.timekeeper-root .timekeeper-approvals-settings .tk-approvals-actions {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+
+.timekeeper-root .timekeeper-approvals-settings .tk-approvals-toggleall {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  font-weight: 500;
+}
+
+.timekeeper-root .timekeeper-approvals-settings .tk-approvals-count {
+  color: #475569;
+  font-size: .85rem;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: .2rem .5rem;
+  border-radius: .5rem;
+}
+
+.timekeeper-root .timekeeper-approvals-settings .tk-approvals-body {
+  padding: .75rem 1rem 1rem 1rem;
+}
+
+.timekeeper-root .timekeeper-approvals-settings .tk-approvals-rolegrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: .5rem;
+}
+
+.timekeeper-root .timekeeper-approvals-settings .tk-approvals-chip {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .55rem .65rem;
+  border: 1px solid #eef2f7;
+  border-radius: .5rem;
+  background: #fff;
+}
+
+.timekeeper-root .timekeeper-approvals-settings .tk-approvals-chip input {
+  width: 18px;
+  height: 18px;
+}
+
+.timekeeper-root .timekeeper-approvals-settings .tk-approvals-note {
+  margin-top: .6rem;
+  color: #64748b;
+  font-size: .9rem;
+}

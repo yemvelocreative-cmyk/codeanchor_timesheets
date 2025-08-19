@@ -13,141 +13,126 @@ if (isset($roles) && $roles instanceof \Illuminate\Support\Collection) {
 }
 $roles   = is_array($roles) ? $roles : [];
 $noRoles = empty($roles);
+$h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 ?>
 
-<h4>Assign Admin Roles that can view all Pending &amp; Approved Timesheets</h4>
-<p class="text-muted mb-3">
-    Use the boxes below to assign or unassign <strong>Admin Roles</strong> with permission to view all pending and approved timesheets.<br>
-    ➤ Only roles in the <strong>“Assigned Admin Roles”</strong> box will be saved.<br>
-    ➤ To select multiple admin roles, hold down <kbd>Ctrl</kbd> (or <kbd>Cmd</kbd> on Mac) while clicking.
-</p>
-
-<?php if ($noRoles): ?>
+<div class="timekeeper-approvals-settings">
+  <?php if ($noRoles): ?>
     <div class="alert alert-warning tk-alert-narrow" role="alert">
-        No admin roles detected. You can still save, but please verify roles exist under WHMCS &raquo; Setup &raquo; Admin Roles.
+      No admin roles detected. Please verify roles exist under <strong>Setup → Admin Roles</strong>.
     </div>
-<?php endif; ?>
+  <?php endif; ?>
 
-<form method="post" data-tk>
-    <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf, ENT_QUOTES, 'UTF-8'); ?>">
-    <input type="hidden" name="tk_action" value="save_view_permissions">
+  <div class="tk-approvals-grid">
+    <!-- =========================
+         Card A: View All
+         ========================= -->
+    <form method="post" data-tk class="tk-approvals-card-form">
+      <input type="hidden" name="tk_csrf" value="<?= $h($tkCsrf) ?>">
+      <input type="hidden" name="tk_action" value="save_view_permissions">
 
-    <div class="dual-select-controls-wrapper">
-        <!-- Active Admin Roles -->
-        <div class="user-select-block">
-            <label for="availableRoles" class="user-select-label">Active Admin Roles</label>
-            <select multiple class="form-control user-select-box" id="availableRoles" size="8" aria-label="Available roles">
-                <?php foreach ($roles as $role): ?>
-                    <?php
-                    $rid   = (int)($role->id ?? $role['id'] ?? 0);
-                    $rname = (string)($role->name ?? $role['name'] ?? '');
-                    if (!in_array($rid, $allowedRoles, true)):
-                    ?>
-                        <option value="<?= $rid ?>"><?= htmlspecialchars($rname, ENT_QUOTES, 'UTF-8') ?></option>
-                    <?php endif; ?>
-                <?php endforeach; ?>
-            </select>
+      <div class="tk-approvals-card" data-scope="viewall">
+        <div class="tk-approvals-head">
+          <h5 class="tk-approvals-title">Roles that can View All Timesheets</h5>
+          <div class="tk-approvals-actions">
+            <label class="tk-approvals-toggleall">
+              <input type="checkbox" class="js-approvals-viewall-toggleall">
+              <span>Select all</span>
+            </label>
+            <span class="tk-approvals-count js-approvals-viewall-count">Selected: 0</span>
+          </div>
         </div>
 
-        <!-- Button Controls -->
-        <div class="dual-select-controls" aria-label="Move selected roles">
-            <button type="button" id="addRole" class="btn btn-secondary" aria-label="Add selected role(s)">➡️</button>
-            <button type="button" id="removeRole" class="btn btn-secondary" aria-label="Remove selected role(s)">⬅️</button>
+        <div class="tk-approvals-body">
+          <div class="tk-approvals-rolegrid">
+            <?php foreach ($roles as $r):
+              $rid   = (int)($r->id ?? $r['id'] ?? 0);
+              $rname = (string)($r->name ?? $r['name'] ?? '');
+              $isSel = in_array($rid, $allowedRoles, true);
+            ?>
+              <label class="tk-approvals-chip">
+                <input
+                  type="checkbox"
+                  name="pending_timesheets_roles[]"
+                  value="<?= $rid ?>"
+                  <?= $isSel ? 'checked' : '' ?>
+                  class="js-approvals-viewall">
+                <span><?= $h($rname) ?></span>
+              </label>
+            <?php endforeach; ?>
+          </div>
         </div>
 
-        <!-- Assigned Admin Roles -->
-        <div class="user-select-block">
-            <label for="assignedRoles" class="user-select-label">Assigned Admin Roles</label>
-            <select multiple class="form-control user-select-box" name="pending_timesheets_roles[]" id="assignedRoles" size="8" aria-label="Assigned roles">
-                <?php foreach ($roles as $role): ?>
-                    <?php
-                    $rid   = (int)($role->id ?? $role['id'] ?? 0);
-                    $rname = (string)($role->name ?? $role['name'] ?? '');
-                    if (in_array($rid, $allowedRoles, true)):
-                    ?>
-                        <option value="<?= $rid ?>"><?= htmlspecialchars($rname, ENT_QUOTES, 'UTF-8') ?></option>
-                    <?php endif; ?>
-                <?php endforeach; ?>
-            </select>
+        <div class="mt-3" style="padding: 0 1rem 1rem 1rem;">
+          <button type="submit" class="btn btn-primary">Save View Permissions</button>
         </div>
-    </div>
+      </div>
+    </form>
 
-    <div class="mt-3">
-        <button type="submit" class="btn btn-primary">Save View Permissions</button>
-    </div>
-</form>
+    <!-- =========================
+         Card B: Approve / Unapprove
+         ========================= -->
+    <form method="post" data-tk class="tk-approvals-card-form">
+      <input type="hidden" name="tk_csrf" value="<?= $h($tkCsrf) ?>">
+      <input type="hidden" name="tk_action" value="save_approval_permissions">
 
-<hr>
-
-<h4>Assign Admin Roles that can approve / unapprove Timesheets</h4>
-<p class="text-muted mb-3">
-    Use the boxes below to assign or unassign <strong>Admin Roles</strong> that can approve and unapprove pending timesheets.<br>
-    ➤ Only roles in the <strong>“Assigned Admin Roles”</strong> box will be saved.
-    ➤ To select multiple admin roles, hold down <kbd>Ctrl</kbd> (or <kbd>Cmd</kbd> on Mac) while clicking.
-</p>
-
-<form method="post" data-tk>
-    <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf, ENT_QUOTES, 'UTF-8'); ?>">
-    <input type="hidden" name="tk_action" value="save_approval_permissions">
-
-    <div class="dual-select-controls-wrapper">
-        <!-- Active Admin Roles -->
-        <div class="user-select-block">
-            <label for="availableRolesApprove" class="user-select-label">Active Admin Roles</label>
-            <select multiple class="form-control user-select-box" id="availableRolesApprove" size="8" aria-label="Available roles for approval">
-                <?php foreach ($roles as $role): ?>
-                    <?php
-                    $rid   = (int)($role->id ?? $role['id'] ?? 0);
-                    $rname = (string)($role->name ?? $role['name'] ?? '');
-                    if (!in_array($rid, $allowedApprovalRoles, true)):
-                    ?>
-                        <option value="<?= $rid ?>"><?= htmlspecialchars($rname, ENT_QUOTES, 'UTF-8') ?></option>
-                    <?php endif; ?>
-                <?php endforeach; ?>
-            </select>
+      <div class="tk-approvals-card" data-scope="approve">
+        <div class="tk-approvals-head">
+          <h5 class="tk-approvals-title">Roles that can Approve / Unapprove</h5>
+          <div class="tk-approvals-actions">
+            <label class="tk-approvals-toggleall">
+              <input type="checkbox" class="js-approvals-approve-toggleall">
+              <span>Select all</span>
+            </label>
+            <span class="tk-approvals-count js-approvals-approve-count">Selected: 0</span>
+          </div>
         </div>
 
-        <!-- Button Controls -->
-        <div class="dual-select-controls" aria-label="Move selected roles for approval">
-            <button type="button" id="addRoleApprove" class="btn btn-secondary" aria-label="Add selected role(s)">➡️</button>
-            <button type="button" id="removeRoleApprove" class="btn btn-secondary" aria-label="Remove selected role(s)">⬅️</button>
-        </div>
+        <div class="tk-approvals-body">
+          <div class="tk-approvals-rolegrid">
+            <?php foreach ($roles as $r):
+              $rid   = (int)($r->id ?? $r['id'] ?? 0);
+              $rname = (string)($r->name ?? $r['name'] ?? '');
+              $isSel = in_array($rid, $allowedApprovalRoles, true);
+            ?>
+              <label class="tk-approvals-chip">
+                <input
+                  type="checkbox"
+                  name="pending_timesheets_approval_roles[]"
+                  value="<?= $rid ?>"
+                  <?= $isSel ? 'checked' : '' ?>
+                  class="js-approvals-approve">
+                <span><?= $h($rname) ?></span>
+              </label>
+            <?php endforeach; ?>
+          </div>
 
-        <!-- Assigned Admin Roles -->
-        <div class="user-select-block">
-            <label for="assignedRolesApprove" class="user-select-label">Assigned Admin Roles</label>
-            <select multiple class="form-control user-select-box" name="pending_timesheets_approval_roles[]" id="assignedRolesApprove" size="8" aria-label="Assigned roles for approval">
-                <?php foreach ($roles as $role): ?>
-                    <?php
-                    $rid   = (int)($role->id ?? $role['id'] ?? 0);
-                    $rname = (string)($role->name ?? $role['name'] ?? '');
-                    if (in_array($rid, $allowedApprovalRoles, true)):
-                    ?>
-                        <option value="<?= $rid ?>"><?= htmlspecialchars($rname, ENT_QUOTES, 'UTF-8') ?></option>
-                    <?php endif; ?>
-                <?php endforeach; ?>
-            </select>
-        </div>
-    </div>
-
-    <div class="mt-3">
-        <h4>Validate Minimum Task Time</h4>
-        <small id="unbilledHelp" class="text-muted">Set the minimum hours for tasks marked as Not Billable. If the time entered meets or exceeds this value, the approver must confirm whether the task should be Billable or assigned to SLA (e.g., 0.5 = 30 minutes).</small>
-        <div class="d-flex align-items-center gap-2 tk-validate-row">
-            <input
+          <!-- Validate Minimum Task Time -->
+          <div class="mt-3">
+            <h6 class="mb-1" style="font-weight:600;">Validate Minimum Task Time</h6>
+            <small id="unbilledHelp" class="text-muted">
+              Set the minimum hours for tasks marked as Not Billable. If the time entered meets
+              or exceeds this value, the approver must confirm whether the task should be Billable
+              or assigned to SLA (e.g., 0.5 = 30 minutes).
+            </small>
+            <div class="d-flex align-items-center gap-2 tk-validate-row" style="margin-top:.4rem;">
+              <input
                 type="number"
                 step="0.1"
                 min="0"
                 name="unbilled_time_validate_min"
                 id="unbilled_time_validate_min"
                 class="form-control d-inline-block tk-input-w-80"
-                value="<?= htmlspecialchars((string)$unbilledTimeValidateMin, ENT_QUOTES, 'UTF-8') ?>"
-                aria-describedby="unbilledHelp"
-            >            
+                value="<?= $h((string)$unbilledTimeValidateMin) ?>"
+                aria-describedby="unbilledHelp">
+            </div>
+          </div>
         </div>
-    </div>
 
-    <div class="mt-3">
-        <button type="submit" class="btn btn-primary">Save Approval Permissions</button>
-    </div>
-</form>
+        <div class="mt-3" style="padding: 0 1rem 1rem 1rem;">
+          <button type="submit" class="btn btn-primary">Save Approval Permissions</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
