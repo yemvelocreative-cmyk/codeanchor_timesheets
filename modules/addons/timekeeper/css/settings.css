@@ -176,14 +176,15 @@
 /* Optional alignment row for the validate input + help text */
 .timekeeper-root .tk-validate-row { gap: 8px; }
 
-/* Segmented Subnav */
-.timekeeper-root .tk-subnav--segmented{
-  display:inline-flex; border:1px solid #e5e7eb; border-radius:10px; overflow:hidden; background:#fff; margin:8px 0 12px;
+/* Sidebar Rail */
+.timekeeper-root .tk-rail{ display:grid; grid-template-columns:220px 1fr; gap:16px; margin-top:12px; }
+.timekeeper-root .tk-rail__nav{
+  background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:8px; display:flex; flex-direction:column; gap:4px;
 }
-.timekeeper-root .tk-subnav--segmented .tk-seg{
-  padding:8px 14px; text-decoration:none; color:#374151; font-weight:500; border-right:1px solid #e5e7eb;
+.timekeeper-root .tk-rail__link{
+  padding:10px 12px; border-radius:8px; text-decoration:none; color:#374151; font-weight:500;
 }
-.timekeeper-root .tk-subnav--segmented .tk-seg:last-child{ border-right:none; }
-.timekeeper-root .tk-subnav--segmented .tk-seg:hover{ background:#f9fafb; }
-.timekeeper-root .tk-subnav--segmented .tk-seg.is-active{ background:#eef4ff; color:#0b57d0; font-weight:600; }
-@media (max-width:768px){ .timekeeper-root .tk-subnav--segmented{ display:flex; flex-wrap:wrap; } }
+.timekeeper-root .tk-rail__link:hover{ background:#f9fafb; }
+.timekeeper-root .tk-rail__link.is-active{ background:#eef4ff; color:#0b57d0; font-weight:600; }
+.timekeeper-root .tk-rail__content{ min-width:0; } /* prevent overflow */
+@media (max-width:992px){ .timekeeper-root .tk-rail{ grid-template-columns:1fr; } }

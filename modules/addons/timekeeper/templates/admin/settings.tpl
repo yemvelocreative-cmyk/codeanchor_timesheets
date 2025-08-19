@@ -23,28 +23,51 @@
       <div class="alert alert-success">Tab visibility updated.</div>
     <?php endif; ?>
 
-    <!-- The tab nav itself is rendered by settings.php above this template -->
-    <div class="tk-card tk-card--padded tk-mt">
-      <?php
-        // Whitelist & fallback (redundant with controller, but safe)
-        $validTabs = ['cron', 'approval', 'hide_tabs'];
-        $tab = (isset($activeTab) && in_array($activeTab, $validTabs, true)) ? $activeTab : 'cron';
+    <?php
+      // Build tab map from controller (fallback if not set)
+      $settingsTabs = isset($settingsTabs) && is_array($settingsTabs)
+        ? $settingsTabs
+        : [
+            'cron'      => 'Daily Cron Setup',
+            'approval'  => 'Timesheet Settings',
+            'hide_tabs' => 'Hide Menu Tabs',
+          ];
+      $validTabs = array_keys($settingsTabs);
+      $tab = (isset($activeTab) && in_array($activeTab, $validTabs, true)) ? $activeTab : 'cron';
+    ?>
 
-        switch ($tab) {
-          case 'approval':
-            include __DIR__ . '/components/settings_approvals.tpl';
-            break;
+    <!-- Sidebar rail layout -->
+    <div class="tk-rail">
+      <!-- Left nav -->
+      <aside class="tk-rail__nav" aria-label="Settings sub-navigation">
+        <?php foreach ($settingsTabs as $key => $label): ?>
+          <a
+            class="tk-rail__link <?= $tab === $key ? 'is-active' : '' ?>"
+            href="addonmodules.php?module=timekeeper&timekeeperpage=settings&subtab=<?= $key ?>"
+            aria-current="<?= $tab === $key ? 'page' : 'false' ?>"
+          ><?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?></a>
+        <?php endforeach; ?>
+      </aside>
 
-          case 'hide_tabs':
-            include __DIR__ . '/components/settings_hide_tabs.tpl';
-            break;
+      <!-- Right content -->
+      <div class="tk-rail__content tk-card tk-card--padded">
+        <?php
+          switch ($tab) {
+            case 'approval':
+              include __DIR__ . '/components/settings_approvals.tpl';
+              break;
 
-          case 'cron':
-          default:
-            include __DIR__ . '/components/settings_cron.tpl';
-            break;
-        }
-      ?>
+            case 'hide_tabs':
+              include __DIR__ . '/components/settings_hide_tabs.tpl';
+              break;
+
+            case 'cron':
+            default:
+              include __DIR__ . '/components/settings_cron.tpl';
+              break;
+          }
+        ?>
+      </div>
     </div>
 
   </div>

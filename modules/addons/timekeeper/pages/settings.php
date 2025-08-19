@@ -54,21 +54,14 @@ $tab_visibility   = (isset($_GET['tab_visibility']) && $_GET['tab_visibility'] =
 /* -------------------------------
    Render tab menu
 -------------------------------- */
-// Segmented subnav (replaces old <ul> tabs)
-echo '<nav class="tk-subnav tk-subnav--segmented" role="tablist" aria-label="Settings sub-navigation">';
-foreach ($settingsTabs as $tabKey => $tabLabel) {
-    $isActive     = ($activeTab === $tabKey) ? 'is-active' : '';
-    $ariaSelected = ($activeTab === $tabKey) ? 'true' : 'false';
-    $tabindex     = ($activeTab === $tabKey) ? '0' : '-1';
-
-    echo '<a class="tk-seg ' . $isActive . '"'
-       . ' href="addonmodules.php?module=timekeeper&timekeeperpage=settings&subtab=' . $tabKey . '"'
-       . ' role="tab" aria-selected="' . $ariaSelected . '" tabindex="' . $tabindex . '">'
-       . htmlspecialchars($tabLabel, ENT_QUOTES, 'UTF-8')
-       . '</a>';
-}
-echo '</nav>';
-
+//echo '<ul class="timekeeper-settings-tabs">';
+//foreach ($settingsTabs as $tabKey => $tabLabel) {
+//    $isActive = ($tabKey === $activeTab) ? 'active' : '';
+//    echo '<li class="' . $isActive . '">
+//            <a href="addonmodules.php?module=timekeeper&timekeeperpage=settings&subtab=' . $tabKey . '">' . htmlspecialchars($tabLabel, ENT_QUOTES, 'UTF-8') . '</a>
+//          </li>';
+//}
+//echo '</ul>';
 
 /* -------------------------------
    Tab-specific controllers
