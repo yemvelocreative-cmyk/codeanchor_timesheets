@@ -23,116 +23,73 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
     </div>
   <?php endif; ?>
 
-  <div class="tk-approvals-grid">
-    <!-- =========================
-         Card A: View All
-         ========================= -->
-    <form method="post" data-tk class="tk-approvals-card-form">
-      <input type="hidden" name="tk_csrf" value="<?= $h($tkCsrf) ?>">
-      <input type="hidden" name="tk_action" value="save_view_permissions">
+  <form method="post" data-tk>
+    <input type="hidden" name="tk_csrf" value="<?= $h($tkCsrf) ?>">
 
-      <div class="tk-approvals-card" data-scope="viewall">
-        <div class="tk-approvals-head">
-          <h5 class="tk-approvals-title">Roles that can View All Timesheets</h5>
-          <div class="tk-approvals-actions">
-            <label class="tk-approvals-toggleall">
-              <input type="checkbox" class="js-approvals-viewall-toggleall">
-              <span>Select all</span>
+    <!-- Role-centric cards -->
+    <div class="tk-roles-stack">
+      <?php foreach ($roles as $r): ?>
+        <?php
+          $rid   = (int)($r->id ?? $r['id'] ?? 0);
+          $rname = (string)($r->name ?? $r['name'] ?? '');
+          $canViewAll = in_array($rid, $allowedRoles, true);
+          $canApprove = in_array($rid, $allowedApprovalRoles, true);
+        ?>
+        <div class="tk-role-card" data-role-id="<?= $rid ?>">
+          <div class="tk-role-head">
+            <h5 class="tk-role-title"><?= $h($rname) ?></h5>
+          </div>
+
+          <div class="tk-role-perms" style="display:flex; gap:1rem; flex-wrap:wrap; padding: .5rem 1rem 1rem 1rem;">
+            <label class="tk-perm" style="display:flex; align-items:center; gap:.5rem;">
+              <input type="checkbox"
+                     name="pending_timesheets_roles[]"
+                     value="<?= $rid ?>"
+                     <?= $canViewAll ? 'checked' : '' ?>>
+              <span>View All</span>
             </label>
-            <span class="tk-approvals-count js-approvals-viewall-count">Selected: 0</span>
-          </div>
-        </div>
 
-        <div class="tk-approvals-body">
-          <div class="tk-approvals-rolegrid">
-            <?php foreach ($roles as $r):
-              $rid   = (int)($r->id ?? $r['id'] ?? 0);
-              $rname = (string)($r->name ?? $r['name'] ?? '');
-              $isSel = in_array($rid, $allowedRoles, true);
-            ?>
-              <label class="tk-approvals-chip">
-                <input
-                  type="checkbox"
-                  name="pending_timesheets_roles[]"
-                  value="<?= $rid ?>"
-                  <?= $isSel ? 'checked' : '' ?>
-                  class="js-approvals-viewall">
-                <span><?= $h($rname) ?></span>
-              </label>
-            <?php endforeach; ?>
-          </div>
-        </div>
-
-        <div class="mt-3" style="padding: 0 1rem 1rem 1rem;">
-          <button type="submit" class="btn btn-primary">Save View Permissions</button>
-        </div>
-      </div>
-    </form>
-
-    <!-- =========================
-         Card B: Approve / Unapprove
-         ========================= -->
-    <form method="post" data-tk class="tk-approvals-card-form">
-      <input type="hidden" name="tk_csrf" value="<?= $h($tkCsrf) ?>">
-      <input type="hidden" name="tk_action" value="save_approval_permissions">
-
-      <div class="tk-approvals-card" data-scope="approve">
-        <div class="tk-approvals-head">
-          <h5 class="tk-approvals-title">Roles that can Approve / Unapprove</h5>
-          <div class="tk-approvals-actions">
-            <label class="tk-approvals-toggleall">
-              <input type="checkbox" class="js-approvals-approve-toggleall">
-              <span>Select all</span>
+            <label class="tk-perm" style="display:flex; align-items:center; gap:.5rem;">
+              <input type="checkbox"
+                     name="pending_timesheets_approval_roles[]"
+                     value="<?= $rid ?>"
+                     <?= $canApprove ? 'checked' : '' ?>>
+              <span>Approve / Unapprove</span>
             </label>
-            <span class="tk-approvals-count js-approvals-approve-count">Selected: 0</span>
           </div>
         </div>
+      <?php endforeach; ?>
+    </div>
 
-        <div class="tk-approvals-body">
-          <div class="tk-approvals-rolegrid">
-            <?php foreach ($roles as $r):
-              $rid   = (int)($r->id ?? $r['id'] ?? 0);
-              $rname = (string)($r->name ?? $r['name'] ?? '');
-              $isSel = in_array($rid, $allowedApprovalRoles, true);
-            ?>
-              <label class="tk-approvals-chip">
-                <input
-                  type="checkbox"
-                  name="pending_timesheets_approval_roles[]"
-                  value="<?= $rid ?>"
-                  <?= $isSel ? 'checked' : '' ?>
-                  class="js-approvals-approve">
-                <span><?= $h($rname) ?></span>
-              </label>
-            <?php endforeach; ?>
-          </div>
-
-          <!-- Validate Minimum Task Time -->
-          <div class="mt-3">
-            <h6 class="mb-1" style="font-weight:600;">Validate Minimum Task Time</h6>
-            <small id="unbilledHelp" class="text-muted">
-              Set the minimum hours for tasks marked as Not Billable. If the time entered meets
-              or exceeds this value, the approver must confirm whether the task should be Billable
-              or assigned to SLA (e.g., 0.5 = 30 minutes).
-            </small>
-            <div class="d-flex align-items-center gap-2 tk-validate-row" style="margin-top:.4rem;">
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                name="unbilled_time_validate_min"
-                id="unbilled_time_validate_min"
-                class="form-control d-inline-block tk-input-w-80"
-                value="<?= $h((string)$unbilledTimeValidateMin) ?>"
-                aria-describedby="unbilledHelp">
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-3" style="padding: 0 1rem 1rem 1rem;">
-          <button type="submit" class="btn btn-primary">Save Approval Permissions</button>
-        </div>
+    <!-- Validate Minimum Task Time (applies to approval workflow) -->
+    <div class="mt-3" style="padding: 0 1rem;">
+      <h6 class="mb-1" style="font-weight:600;">Validate Minimum Task Time</h6>
+      <small id="unbilledHelp" class="text-muted">
+        Set the minimum hours for tasks marked as Not Billable. If the time entered meets
+        or exceeds this value, the approver must confirm whether the task should be Billable
+        or assigned to SLA (e.g., 0.5 = 30 minutes).
+      </small>
+      <div class="d-flex align-items-center gap-2 tk-validate-row" style="margin-top:.4rem; max-width:280px;">
+        <input
+          type="number"
+          step="0.1"
+          min="0"
+          name="unbilled_time_validate_min"
+          id="unbilled_time_validate_min"
+          class="form-control d-inline-block tk-input-w-80"
+          value="<?= $h((string)$unbilledTimeValidateMin) ?>"
+          aria-describedby="unbilledHelp">
       </div>
-    </form>
-  </div>
+    </div>
+
+    <!-- Actions: submit either view or approval (controller branches on tk_action) -->
+    <div class="tk-actions" style="display:flex; gap:.5rem; justify-content:flex-end; padding: 1rem;">
+      <button type="submit" class="btn btn-secondary" name="tk_action" value="save_view_permissions">
+        Save View Permissions
+      </button>
+      <button type="submit" class="btn btn-primary" name="tk_action" value="save_approval_permissions">
+        Save Approval Permissions
+      </button>
+    </div>
+  </form>
 </div>
