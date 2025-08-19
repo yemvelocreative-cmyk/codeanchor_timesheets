@@ -166,3 +166,12 @@
     height: 180px; /* consistent height; width flexes */
   }
 }
+
+/* Narrow alert container used on empty-roles warning */
+.timekeeper-root .tk-alert-narrow { max-width: 760px; }
+
+/* Small fixed-width numeric input for validation threshold */
+.timekeeper-root .tk-input-w-80 { width: 80px; }
+
+/* Optional alignment row for the validate input + help text */
+.timekeeper-root .tk-validate-row { gap: 8px; }

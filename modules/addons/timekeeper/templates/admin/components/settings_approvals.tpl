@@ -16,14 +16,14 @@ $noRoles = empty($roles);
 ?>
 
 <h4>Assign Admin Roles that can view all Pending &amp; Approved Timesheets</h4>
-<p class="text-muted" style="margin-bottom:16px;">
+<p class="text-muted mb-3">
     Use the boxes below to assign or unassign <strong>Admin Roles</strong> with permission to view all pending and approved timesheets.<br>
     ➤ Only roles in the <strong>“Assigned Admin Roles”</strong> box will be saved.<br>
     ➤ To select multiple admin roles, hold down <kbd>Ctrl</kbd> (or <kbd>Cmd</kbd> on Mac) while clicking.
 </p>
 
 <?php if ($noRoles): ?>
-    <div class="alert alert-warning" role="alert" style="max-width:760px">
+    <div class="alert alert-warning tk-alert-narrow" role="alert">
         No admin roles detected. You can still save, but please verify roles exist under WHMCS &raquo; Setup &raquo; Admin Roles.
     </div>
 <?php endif; ?>
@@ -80,7 +80,7 @@ $noRoles = empty($roles);
 <hr>
 
 <h4>Assign Admin Roles that can approve / unapprove Pending Timesheets</h4>
-<p class="text-muted" style="margin-bottom:16px;">
+<p class="text-muted mb-3">
     Use the boxes below to assign or unassign <strong>Admin Roles</strong> that can approve and unapprove pending timesheets.<br>
     ➤ Only roles in the <strong>“Assigned Admin Roles”</strong> box will be saved.
 </p>
@@ -129,22 +129,22 @@ $noRoles = empty($roles);
         </div>
     </div>
 
-    <h4 class="mt-3">Validate Time Spent</h4>
-    <p class="text-muted" style="margin-bottom:16px;">
-        <label for="unbilled_time_validate_min">
-            Set the minimum time (in hours) to validate a task that is not marked as Billable or SLA:
+    <div class="mt-3">
+        <label for="unbilled_time_validate_min" class="user-select-label">Validate Time Spent</label>
+        <div class="d-flex align-items-center gap-2 tk-validate-row">
             <input
                 type="number"
                 step="0.1"
                 min="0"
                 name="unbilled_time_validate_min"
                 id="unbilled_time_validate_min"
+                class="form-control d-inline-block tk-input-w-80"
                 value="<?= htmlspecialchars((string)$unbilledTimeValidateMin, ENT_QUOTES, 'UTF-8') ?>"
-                style="width:80px;"
+                aria-describedby="unbilledHelp"
             >
-        </label>
-        <small>Example: Enter 0.5 for 30 minutes.</small>
-    </p>
+            <small id="unbilledHelp" class="text-muted">Enter minimum hours for tasks not marked Billable or SLA (e.g., <strong>0.5</strong> for 30 minutes).</small>
+        </div>
+    </div>
 
     <div class="mt-3">
         <button type="submit" class="btn btn-primary">Save Approval Permissions</button>
