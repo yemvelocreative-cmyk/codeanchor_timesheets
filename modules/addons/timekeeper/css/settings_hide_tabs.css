@@ -71,3 +71,99 @@
   justify-content: flex-end;
   margin-top: 12px;
 }
+
+/* ============================
+   Role-Centric Toggle Lists
+   ============================ */
+
+.timekeeper-root .timekeeper-hide-tabs-settings .tk-roles-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.timekeeper-root .timekeeper-hide-tabs-settings .tk-role-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: .9rem;
+}
+
+.timekeeper-root .timekeeper-hide-tabs-settings .tk-role-head {
+  padding: .9rem 1rem .5rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timekeeper-root .timekeeper-hide-tabs-settings .tk-role-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.timekeeper-root .timekeeper-hide-tabs-settings .tk-role-sub {
+  color: #64748b;
+  font-size: .85rem;
+}
+
+.timekeeper-root .timekeeper-hide-tabs-settings .tk-role-toggle-all {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  font-weight: 500;
+}
+
+.timekeeper-root .timekeeper-hide-tabs-settings .tk-role-count {
+  color: #475569;
+  font-size: .85rem;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: .2rem .5rem;
+  border-radius: .5rem;
+}
+
+.timekeeper-root .timekeeper-hide-tabs-settings .tk-role-search {
+  padding: 0 1rem .5rem 1rem;
+}
+
+.timekeeper-root .timekeeper-hide-tabs-settings .tk-role-search input {
+  max-width: 320px;
+}
+
+.timekeeper-root .timekeeper-hide-tabs-settings .tk-tabs-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: .5rem;
+  padding: .5rem 1rem 1rem 1rem;
+}
+
+.timekeeper-root .timekeeper-hide-tabs-settings .tk-tab-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .55rem .65rem;
+  border: 1px solid #eef2f7;
+  border-radius: .5rem;
+  background: #fff;
+}
+
+.timekeeper-root .timekeeper-hide-tabs-settings .tk-tab-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timekeeper-root .timekeeper-hide-tabs-settings .tk-tab-toggle input {
+  width: 18px;
+  height: 18px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .timekeeper-root .timekeeper-hide-tabs-settings .tk-tabs-list {
+    grid-template-columns: 1fr;
+  }
+}
