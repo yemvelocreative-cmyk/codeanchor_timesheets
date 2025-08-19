@@ -28,6 +28,5 @@
     c.addEventListener('change', updateCount);
   });
 
-  // initial state
   updateCount();
 })();

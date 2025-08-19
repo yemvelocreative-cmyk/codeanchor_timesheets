@@ -29,7 +29,7 @@
 .timekeeper-root .tk-card--padded { padding: 16px; }
 .timekeeper-root .tk-mt { margin-top: 12px; }
 
-/* Make the Bootstrap container inside Timekeeper full-width & left-aligned */
+/* Full-width container inside Timekeeper */
 .timekeeper-root > .container.mt-4 {
   max-width: 100% !important;
   width: 100% !important;
@@ -50,9 +50,7 @@
   border-bottom: 1px solid #e5e7eb;
   justify-content: flex-start !important;
 }
-.timekeeper-root .timekeeper-settings-tabs li {
-  margin: 0;
-}
+.timekeeper-root .timekeeper-settings-tabs li { margin: 0; }
 .timekeeper-root .timekeeper-settings-tabs a {
   display: inline-block;
   padding: 10px 12px;
@@ -69,7 +67,7 @@
   color: #111827;
 }
 
-/* Cron section niceties */
+/* Cron section niceties (generic) */
 .timekeeper-root .timekeeper-settings-cron code {
   background-color: #f8f9fa;
   padding: 2px 6px;
@@ -77,104 +75,23 @@
   font-size: 90%;
   display: inline-block;
 }
-.timekeeper-root .timekeeper-settings-cron h4 {
-  margin-bottom: 0.5rem;
-  font-size: 18px;
-}
-.timekeeper-root .timekeeper-settings-cron p.text-muted {
-  margin-bottom: 1rem;
-  font-size: 14px;
-  color: #6c757d;
-}
+.timekeeper-root .timekeeper-settings-cron h4 { margin-bottom: .5rem; font-size: 18px; }
+.timekeeper-root .timekeeper-settings-cron p.text-muted { margin-bottom: 1rem; font-size: 14px; color: #6c757d; }
 .timekeeper-root .alert { margin-top: 8px; }
 
-/* Dual Select (users & roles) - consistent with timesheet layout */
-.timekeeper-root .dual-select-controls-wrapper {
+/* Shared actions row */
+.timekeeper-root .tk-actions {
   display: flex;
-  align-items: center !important; /* center arrows */
-  gap: 16px;
-  justify-content: flex-start !important;
-  text-align: left !important;
-}
-.timekeeper-root .dual-select-controls {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-.timekeeper-root .dual-select-controls .btn {
-  min-width: 36px;
-  height: 36px;
-  line-height: 1;
-  padding: 0 8px;
-}
-.timekeeper-root .dual-select-controls .btn:focus {
-  outline: 2px solid #1a73e8;
-  outline-offset: 2px;
+  gap: .5rem;
+  justify-content: flex-end;
+  padding: 1rem; /* replaces inline padding in approvals */
 }
 
-.timekeeper-root .user-select-block {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 0 0 auto;
-  width: 220px;
+/* Approvals validate row (moves inline margin/max-width to CSS) */
+.timekeeper-root .tk-validate-row {
+  margin-top: .4rem;
+  max-width: 280px;
 }
-.timekeeper-root .user-select-block:last-of-type { margin-left: 16px; }
-.timekeeper-root .user-select-label { font-size: 14px; font-weight: 500; }
-
-/* Standard size for the multi-select boxes */
-.timekeeper-root .user-select-box,
-.timekeeper-root select[multiple].user-select-box {
-  width: 200px;
-  height: 180px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 6px;
-}
-
-/* Improve keyboard focus visibility on selects */
-.timekeeper-root select[multiple].user-select-box:focus {
-  outline: 2px solid #1a73e8;
-  outline-offset: 2px;
-}
-
-/* Submit button spacing */
-.timekeeper-root #saveSettingsButton { margin-top: 16px; }
-
-/* Responsive tweaks */
-@media (max-width: 768px) {
-  .timekeeper-root .dual-select-controls-wrapper {
-    flex-wrap: wrap;
-    align-items: stretch !important; /* mobile row layout */
-    gap: 12px;
-  }
-  .timekeeper-root .dual-select-controls {
-    flex-direction: row;
-    gap: 8px;
-    order: 2; /* keeps buttons between the two lists when wrapping */
-  }
-  .timekeeper-root .user-select-block {
-    width: 100%;
-    max-width: 320px;
-  }
-  .timekeeper-root .user-select-box,
-  .timekeeper-root select[multiple].user-select-box {
-    width: 100%;
-    height: 180px; /* consistent height; width flexes */
-  }
-}
-
-/* Narrow alert container used on empty-roles warning */
-.timekeeper-root .tk-alert-narrow { max-width: 760px; }
-
-/* Small fixed-width numeric input for validation threshold */
-.timekeeper-root .tk-input-w-80 { width: 80px; }
-
-/* Optional alignment row for the validate input + help text */
-.timekeeper-root .tk-validate-row { gap: 8px; }
 
 /* Sidebar Rail */
 .timekeeper-root .tk-rail{ display:grid; grid-template-columns:220px 1fr; gap:16px; margin-top:12px; }
@@ -186,5 +103,12 @@
 }
 .timekeeper-root .tk-rail__link:hover{ background:#f9fafb; }
 .timekeeper-root .tk-rail__link.is-active{ background:#eef4ff; color:#0b57d0; font-weight:600; }
-.timekeeper-root .tk-rail__content{ min-width:0; } /* prevent overflow */
+.timekeeper-root .tk-rail__content{ min-width:0; }
 @media (max-width:992px){ .timekeeper-root .tk-rail{ grid-template-columns:1fr; } }
+
+/* ===== Removed legacy dual-select styles (no longer used) =====
+.timekeeper-root .dual-select-controls-wrapper { ... }
+.timekeeper-root .dual-select-controls { ... }
+.timekeeper-root .user-select-block { ... }
+.timekeeper-root .user-select-box { ... }
+*/
