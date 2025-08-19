@@ -54,11 +54,13 @@ $tab_visibility   = (isset($_GET['tab_visibility']) && $_GET['tab_visibility'] =
 /* -------------------------------
    Render tab menu
 -------------------------------- */
+<?php
 $settingsTabs = [
   'cron'      => 'Daily Cron Setup',
   'approval'  => 'Timesheet Settings',
   'hide_tabs' => 'Hide Menu Tabs',
 ];
+?>
 <nav class="tk-subnav tk-subnav--segmented" role="tablist" aria-label="Settings sub-navigation">
   <?php foreach ($settingsTabs as $tabKey => $tabLabel): ?>
     <a
