@@ -8,14 +8,6 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
   <input type="hidden" name="tk_csrf" value="<?= $h($tkCsrf) ?>">
 
   <div class="timekeeper-root tk-page">
-    <!-- Page Header -->
-    <div class="tk-page-header">
-      <div class="tk-page-title">
-        <h2 class="tk-h2">Cron: Daily Timesheet Setup</h2>
-        <p class="tk-subtitle">Choose workdays and which admin users receive an automatic timesheet each day.</p>
-      </div>
-    </div>
-
     <!-- Dual Cards -->
     <div class="tk-block-grid-2 tk-gap-16 tk-stack-sm">
       <!-- Card 1: Cron Days -->

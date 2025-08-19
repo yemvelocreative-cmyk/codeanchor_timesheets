@@ -57,6 +57,12 @@
 .timekeeper-root .tk-checkbox { display: inline-flex; align-items: center; gap: 8px; }
 
 /* User chips (mirrors approvals style) */
+.timekeeper-root .tk-usergrid,
+.timekeeper-root .tk-usergrid * {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
 .timekeeper-root .tk-usergrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
