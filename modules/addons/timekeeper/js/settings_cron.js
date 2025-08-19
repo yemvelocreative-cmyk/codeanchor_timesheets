@@ -6,7 +6,6 @@
   var assigned  = document.getElementById('assignedUsers');
   var addBtn    = document.getElementById('addUser');
   var remBtn    = document.getElementById('removeUser');
-  var form      = (function (el) { while (el && el.tagName !== 'FORM') el = el.parentElement; return el; })(assigned);
 
   if (!available || !assigned || !addBtn || !remBtn) return;
 
@@ -15,8 +14,9 @@
     if (!opts.length) return;
     opts.forEach(function (o) {
       // avoid duplicates
-      if (![...to.options].some(function (t) { return t.value === o.value; })) {
-        to.add(o); // this also removes from 'from'
+      var exists = Array.prototype.some.call(to.options, function (t) { return t.value === o.value; });
+      if (!exists) {
+        to.add(o); // also removes from 'from'
       } else {
         from.remove(o.index);
       }
@@ -29,7 +29,6 @@
     arr.sort(function (a, b) {
       return a.text.toLowerCase().localeCompare(b.text.toLowerCase());
     });
-    // Rebuild list in sorted order
     select.innerHTML = '';
     arr.forEach(function (o) { select.add(o); });
   }
@@ -51,6 +50,8 @@
   assigned .addEventListener('keydown', keyMoveHandler(assigned, available));
 
   // On submit: ensure all assigned are selected so PHP receives full list
+  var form = assigned;
+  while (form && form.tagName !== 'FORM') form = form.parentElement;
   if (form) {
     form.addEventListener('submit', function () {
       for (var i = 0; i < assigned.options.length; i++) {

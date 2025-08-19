@@ -63,7 +63,7 @@ $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday
 
                 <!-- Button Controls -->
                 <div class="dual-select-controls">
-                    <!-- no inline JS; settings.js binds these -->
+                    <!-- JS binds in settings_cron.js -->
                     <button type="button" id="addUser" class="btn btn-secondary" aria-label="Add selected user(s)">➡️</button>
                     <button type="button" id="removeUser" class="btn btn-secondary" aria-label="Remove selected user(s)">⬅️</button>
                 </div>
@@ -71,7 +71,7 @@ $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday
                 <!-- Assigned Users -->
                 <div class="user-select-block">
                     <label for="assignedUsers" class="user-select-label">Assigned Users</label>
-                    <select multiple class="form-control" name="cron_users[]" id="assignedUsers" class="user-select-box">
+                    <select multiple class="form-control user-select-box" name="cron_users[]" id="assignedUsers">
                         <?php foreach ($allAdmins as $admin): ?>
                             <?php if (in_array($admin->id, $cronUsers, true)): ?>
                                 <option value="<?= (int)$admin->id ?>">
