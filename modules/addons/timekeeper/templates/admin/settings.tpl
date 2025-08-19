@@ -2,14 +2,6 @@
 <div class="timekeeper-root">
   <div class="container mt-4">
 
-    <!-- Page Header -->
-    <div class="tk-page-header">
-      <div class="tk-page-title">
-        <h2 class="tk-h2">Timekeeper Settings</h2>
-        <p class="tk-subtitle">Configure cron, permissions, and menu visibility.</p>
-      </div>
-    </div>
-
     <!-- Flash messages -->
     <?php if (!empty($success)): ?>
       <div class="alert alert-success">Settings saved successfully.</div>
@@ -28,8 +20,8 @@
       $settingsTabs = isset($settingsTabs) && is_array($settingsTabs)
         ? $settingsTabs
         : [
-            'cron'      => 'Daily Cron Setup',
-            'approval'  => 'Timesheet Settings',
+            'cron'      => 'Cron Setup',
+            'approval'  => 'Approval Settings',
             'hide_tabs' => 'Hide Menu Tabs',
           ];
       $validTabs = array_keys($settingsTabs);

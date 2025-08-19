@@ -79,10 +79,11 @@ $noRoles = empty($roles);
 
 <hr>
 
-<h4>Assign Admin Roles that can approve / unapprove Pending Timesheets</h4>
+<h4>Assign Admin Roles that can approve / unapprove Timesheets</h4>
 <p class="text-muted mb-3">
     Use the boxes below to assign or unassign <strong>Admin Roles</strong> that can approve and unapprove pending timesheets.<br>
     ➤ Only roles in the <strong>“Assigned Admin Roles”</strong> box will be saved.
+    ➤ To select multiple admin roles, hold down <kbd>Ctrl</kbd> (or <kbd>Cmd</kbd> on Mac) while clicking.
 </p>
 
 <form method="post" data-tk>
@@ -130,7 +131,8 @@ $noRoles = empty($roles);
     </div>
 
     <div class="mt-3">
-        <label for="unbilled_time_validate_min" class="user-select-label">Validate Time Spent</label>
+        <h4>Validate Minimum Task Time</h4>
+        <small id="unbilledHelp" class="text-muted">Set the minimum hours for tasks marked as Not Billable. If the time entered meets or exceeds this value, the approver must confirm whether the task should be Billable or assigned to SLA (e.g., 0.5 = 30 minutes).</small>
         <div class="d-flex align-items-center gap-2 tk-validate-row">
             <input
                 type="number"
@@ -141,8 +143,7 @@ $noRoles = empty($roles);
                 class="form-control d-inline-block tk-input-w-80"
                 value="<?= htmlspecialchars((string)$unbilledTimeValidateMin, ENT_QUOTES, 'UTF-8') ?>"
                 aria-describedby="unbilledHelp"
-            >
-            <small id="unbilledHelp" class="text-muted">Enter minimum hours for tasks not marked Billable or SLA (e.g., <strong>0.5</strong> for 30 minutes).</small>
+            >            
         </div>
     </div>
 
