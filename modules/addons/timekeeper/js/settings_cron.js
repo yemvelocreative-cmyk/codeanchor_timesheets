@@ -1,40 +1,33 @@
-// Cron Settings — Dual Select logic (minimal)
+// Cron Settings — Checkbox model (no dual-select)
 (function () {
   'use strict';
 
-  var available = document.getElementById('availableUsers');
-  var assigned  = document.getElementById('assignedUsers');
-  var addBtn    = document.getElementById('addUser');
-  var remBtn    = document.getElementById('removeUser');
-  var form      = (function (el) { while (el && el.tagName !== 'FORM') el = el.parentElement; return el; })(assigned);
+  var scope = document.querySelector('.tk-card[data-scope="cron-users"]');
+  if (!scope) return;
 
-  if (!available || !assigned || !addBtn || !remBtn) return;
+  var toggler = scope.querySelector('.js-cronusers-toggleall');
+  var chips   = Array.prototype.slice.call(scope.querySelectorAll('.js-cronuser'));
+  var countEl = scope.querySelector('.js-cronusers-count');
 
-  function sortOptions(select) {
-    var arr = Array.prototype.slice.call(select.options);
-    arr.sort(function (a, b) { return a.text.toLowerCase().localeCompare(b.text.toLowerCase()); });
-    select.innerHTML = '';
-    arr.forEach(function (o) { select.add(o); });
+  function updateCount() {
+    var selected = chips.filter(function (c) { return c.checked; }).length;
+    if (countEl) countEl.textContent = 'Selected: ' + selected;
+    if (toggler) toggler.checked = (selected === chips.length && chips.length > 0);
+    if (toggler) toggler.indeterminate = (selected > 0 && selected < chips.length);
   }
 
-  function moveSelected(from, to) {
-    var opts = Array.prototype.slice.call(from.selectedOptions || []);
-    if (!opts.length) return;
-    opts.forEach(function (o) {
-      // avoid duplicates
-      var exists = Array.prototype.some.call(to.options, function (t) { return t.value === o.value; });
-      if (!exists) {
-        to.add(o); // also removes from 'from'
-      } else {
-        from.remove(o.index);
-      }
+  if (toggler) {
+    toggler.addEventListener('change', function () {
+      var checked = !!toggler.checked;
+      chips.forEach(function (c) { c.checked = checked; });
+      updateCount();
     });
-    sortOptions(to);
   }
 
-  // Click controls
-  addBtn.addEventListener('click', function () { moveSelected(available, assigned); });
-  remBtn.addEventListener('click', function () { moveSelected(assigned, available); });
+  chips.forEach(function (c) {
+    c.addEventListener('change', updateCount);
+  });
 
-  // Double‑click to move quickly
-  available.addEventListener('dblcli
+  // initial state
+  updateCount();
+})();
