@@ -124,14 +124,6 @@
   border-radius: .5rem;
 }
 
-.timekeeper-root .timekeeper-hide-tabs-settings .tk-role-search {
-  padding: 0 1rem .5rem 1rem;
-}
-
-.timekeeper-root .timekeeper-hide-tabs-settings .tk-role-search input {
-  max-width: 320px;
-}
-
 .timekeeper-root .timekeeper-hide-tabs-settings .tk-tabs-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -166,4 +158,14 @@
   .timekeeper-root .timekeeper-hide-tabs-settings .tk-tabs-list {
     grid-template-columns: 1fr;
   }
+}
+
+/* Match admin role header size to tab labels */
+.timekeeper-root .timekeeper-hide-tabs-settings {
+  --tk-tab-font-size: 1rem; /* tweak here if you want larger/smaller */
+}
+
+.timekeeper-root .timekeeper-hide-tabs-settings .tk-role-title,
+.timekeeper-root .timekeeper-hide-tabs-settings .tk-tab-name {
+  font-size: var(--tk-tab-font-size);
 }

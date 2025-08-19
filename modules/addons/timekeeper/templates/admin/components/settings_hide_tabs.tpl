@@ -48,10 +48,6 @@ if (!isset($hiddenTabsByRole) || !is_array($hiddenTabsByRole)) {
 ?>
 <div class="timekeeper-hide-tabs-settings">
     <h4 class="tk-section-title">Hide Menu Tabs by Admin Role</h4>
-    <p class="text-muted tk-section-subtitle">
-        Tick a box to <strong>hide</strong> a tab for that admin role. By default, all tabs are visible.
-    </p>
-
     <form method="post" data-tk>
         <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf, ENT_QUOTES, 'UTF-8'); ?>">
         <input type="hidden" name="hidemenutabs_save" value="1">
@@ -73,11 +69,6 @@ if (!isset($hiddenTabsByRole) || !is_array($hiddenTabsByRole)) {
                 </label>
                 <span class="tk-role-count" data-role-id="<?= $rid ?>">Hidden: 0 / 0</span>
                 </div>
-            </div>
-
-            <!-- Per-role search -->
-            <div class="tk-role-search">
-                <input type="text" class="form-control tk-role-search-input" placeholder="Search tabs…">
             </div>
 
             <div class="tk-tabs-list">

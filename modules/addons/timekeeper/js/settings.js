@@ -180,7 +180,6 @@
     const badge = card.querySelector('.tk-role-count');
     if (badge) badge.textContent = `Hidden: ${hiddenCount} / ${total}`;
 
-    // Tri-state feel for "Hide all"
     const toggleAll = card.querySelector('.js-role-toggle-all');
     if (toggleAll) {
       toggleAll.indeterminate = hiddenCount > 0 && hiddenCount < total;
@@ -188,39 +187,24 @@
     }
   }
 
-  // Init counts on load
+  // Init counts
   roleCards.forEach(card => updateRoleCount(card));
 
-  // Change handlers (delegate to root)
+  // Toggle-all + individual toggles
   root.addEventListener('change', (e) => {
     const t = e.target;
-    // Per-role: toggle all
+
     if (t.classList.contains('js-role-toggle-all')) {
       const card = t.closest('.tk-role-card');
       if (!card) return;
-      const checks = card.querySelectorAll('.js-role-tab');
-      checks.forEach(c => { c.checked = t.checked; });
+      card.querySelectorAll('.js-role-tab').forEach(c => { c.checked = t.checked; });
       updateRoleCount(card);
       return;
     }
-    // Single toggle changed
+
     if (t.classList.contains('js-role-tab')) {
       const card = t.closest('.tk-role-card');
       if (card) updateRoleCount(card);
     }
-  });
-
-  // Per-role search
-  roleCards.forEach(card => {
-    const input = card.querySelector('.tk-role-search-input');
-    if (!input) return;
-    const rows = card.querySelectorAll('.tk-tab-toggle');
-    input.addEventListener('input', function () {
-      const q = this.value.trim().toLowerCase();
-      rows.forEach(row => {
-        const label = row.getAttribute('data-label') || '';
-        row.style.display = label.includes(q) ? '' : 'none';
-      });
-    });
   });
 })();
