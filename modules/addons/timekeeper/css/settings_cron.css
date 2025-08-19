@@ -75,3 +75,53 @@
   justify-content: flex-end;
   margin-top: 16px;
 }
+
+/* Settings → Cron (dual list) */
+.timekeeper-root .dual-select-controls-wrapper {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .timekeeper-root .dual-select-controls-wrapper {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+  .timekeeper-root .dual-select-controls {
+    justify-self: start;
+  }
+}
+
+.timekeeper-root .user-select-block {
+  display: grid;
+  gap: 6px;
+}
+
+.timekeeper-root .user-select-label {
+  font-weight: 600;
+}
+
+.timekeeper-root .user-select-box,
+.timekeeper-root #assignedUsers.user-select-box {
+  width: 200px;
+  height: 180px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 6px;
+}
+
+/* If you prefer full-width on larger screens, comment the width above and use: */
+/* .timekeeper-root .user-select-box { width: 100%; max-width: 320px; } */
+
+.timekeeper-root .dual-select-controls {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+
+.timekeeper-root .dual-select-controls .btn {
+  min-width: 48px;
+}
