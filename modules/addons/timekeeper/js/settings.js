@@ -210,60 +210,61 @@
 })();
 
 /* ============================
-   Approvals – Comparison Matrix
+   Approvals – Dual Cards (robust init)
    ============================ */
 (function () {
-  const root = document.querySelector('.timekeeper-root .timekeeper-approvals-settings');
-  if (!root) return;
+  function run() {
+    // Be tolerant: don't require .timekeeper-root wrapper
+    const root = document.querySelector('.timekeeper-approvals-settings');
+    if (!root) return;
 
-  function updateCounts() {
-    const viewChecks = root.querySelectorAll('.js-mx-view');
-    const approveChecks = root.querySelectorAll('.js-mx-approve');
+    function update(scope) {
+      const card = root.querySelector(`.tk-approvals-card[data-scope="${scope}"]`);
+      if (!card) return;
 
-    const viewSelected = Array.from(viewChecks).filter(c => c.checked).length;
-    const approveSelected = Array.from(approveChecks).filter(c => c.checked).length;
+      const checks = card.querySelectorAll(`.js-approvals-${scope}`);
+      const selected = Array.from(checks).filter(c => c.checked).length;
 
-    const viewCount = root.querySelector('.js-mx-view-count');
-    const approveCount = root.querySelector('.js-mx-approve-count');
-    if (viewCount) viewCount.textContent = `Selected: ${viewSelected}`;
-    if (approveCount) approveCount.textContent = `Selected: ${approveSelected}`;
+      const counter = card.querySelector(`.js-approvals-${scope}-count`);
+      if (counter) counter.textContent = `Selected: ${selected}`;
 
-    const viewAll = root.querySelector('.js-mx-view-toggle-all');
-    const approveAll = root.querySelector('.js-mx-approve-toggle-all');
-    if (viewAll) {
-      viewAll.indeterminate = viewSelected > 0 && viewSelected < viewChecks.length;
-      viewAll.checked = viewChecks.length > 0 && viewSelected === viewChecks.length;
+      const allToggle = card.querySelector(`.js-approvals-${scope}-toggleall`);
+      if (allToggle) {
+        allToggle.indeterminate = selected > 0 && selected < checks.length;
+        allToggle.checked = checks.length > 0 && selected === checks.length;
+      }
     }
-    if (approveAll) {
-      approveAll.indeterminate = approveSelected > 0 && approveSelected < approveChecks.length;
-      approveAll.checked = approveChecks.length > 0 && approveSelected === approveChecks.length;
-    }
-  }
 
-  // Init
-  updateCounts();
+    // Initial state for both cards
+    ['viewall', 'approve'].forEach(update);
 
-  // Header toggle-all
-  const viewAll = root.querySelector('.js-mx-view-toggle-all');
-  const approveAll = root.querySelector('.js-mx-approve-toggle-all');
+    // Delegate change events (toggle-all + individual checkboxes)
+    root.addEventListener('change', (e) => {
+      const t = e.target;
 
-  if (viewAll) {
-    viewAll.addEventListener('change', function () {
-      root.querySelectorAll('.js-mx-view').forEach(cb => cb.checked = viewAll.checked);
-      updateCounts();
+      if (t.classList.contains('js-approvals-viewall-toggleall')) {
+        const card = t.closest('.tk-approvals-card[data-scope="viewall"]`);
+        card?.querySelectorAll('.js-approvals-viewall').forEach(cb => cb.checked = t.checked);
+        update('viewall');
+        return;
+      }
+
+      if (t.classList.contains('js-approvals-approve-toggleall')) {
+        const card = t.closest('.tk-approvals-card[data-scope="approve"]`);
+        card?.querySelectorAll('.js-approvals-approve').forEach(cb => cb.checked = t.checked);
+        update('approve');
+        return;
+      }
+
+      if (t.classList.contains('js-approvals-viewall')) { update('viewall'); }
+      if (t.classList.contains('js-approvals-approve')) { update('approve'); }
     });
   }
-  if (approveAll) {
-    approveAll.addEventListener('change', function () {
-      root.querySelectorAll('.js-mx-approve').forEach(cb => cb.checked = approveAll.checked);
-      updateCounts();
-    });
-  }
 
-  // Individual changes
-  root.addEventListener('change', function (e) {
-    if (e.target.classList.contains('js-mx-view') || e.target.classList.contains('js-mx-approve')) {
-      updateCounts();
-    }
-  });
+  // Ensure we bind after DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    run();
+  }
 })();
