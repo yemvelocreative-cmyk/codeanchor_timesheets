@@ -1,56 +1,51 @@
 /* ============================
-   Approvals – Dual Cards
+   Approvals – Comparison Matrix
    ============================ */
-.timekeeper-root .timekeeper-approvals-settings .tk-approvals-grid {
+.timekeeper-root .timekeeper-approvals-settings .tk-matrix {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: .5rem;
 }
 
-@media (max-width: 900px) {
-  .timekeeper-root .timekeeper-approvals-settings .tk-approvals-grid {
-    grid-template-columns: 1fr;
-  }
+.timekeeper-root .timekeeper-approvals-settings .tk-mx-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr;
+  align-items: center;
 }
 
-.timekeeper-root .timekeeper-approvals-settings .tk-approvals-card {
+.timekeeper-root .timekeeper-approvals-settings .tk-mx-cell {
+  padding: .6rem .75rem;
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: .9rem;
-  display: flex;
-  flex-direction: column;
 }
 
-.timekeeper-root .timekeeper-approvals-settings .tk-approvals-head {
-  padding: .9rem 1rem .5rem 1rem;
-  display: flex;
-  justify-content: space-between;
-  gap: .75rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.timekeeper-root .timekeeper-approvals-settings .tk-approvals-title {
-  margin: 0;
-  font-size: 1.125rem; /* ~18px to match your larger labels */
-  font-weight: 700;
+.timekeeper-root .timekeeper-approvals-settings .tk-mx-header .tk-mx-cell {
+  font-weight: 600;
   color: #0f172a;
 }
 
-.timekeeper-root .timekeeper-approvals-settings .tk-approvals-actions {
-  display: flex;
-  align-items: center;
-  gap: .75rem;
+.timekeeper-root .timekeeper-approvals-settings .tk-mx-rolecol {
+  border-radius: .6rem 0 0 .6rem;
 }
 
-.timekeeper-root .timekeeper-approvals-settings .tk-approvals-toggleall {
+.timekeeper-root .timekeeper-approvals-settings .tk-mx-row > .tk-mx-cell:last-child {
+  border-radius: 0 .6rem .6rem 0;
+}
+
+.timekeeper-root .timekeeper-approvals-settings .tk-mx-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+}
+
+.timekeeper-root .timekeeper-approvals-settings .tk-mx-toggleall {
   display: flex;
   align-items: center;
   gap: .35rem;
   font-weight: 500;
 }
 
-.timekeeper-root .timekeeper-approvals-settings .tk-approvals-count {
+.timekeeper-root .timekeeper-approvals-settings .tk-mx-count {
   color: #475569;
   font-size: .85rem;
   background: #f1f5f9;
@@ -59,33 +54,35 @@
   border-radius: .5rem;
 }
 
-.timekeeper-root .timekeeper-approvals-settings .tk-approvals-body {
-  padding: .75rem 1rem 1rem 1rem;
+.timekeeper-root .timekeeper-approvals-settings .tk-role-name {
+  font-size: 1.125rem;  /* match your larger labels */
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.timekeeper-root .timekeeper-approvals-settings .tk-approvals-rolegrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: .5rem;
-}
-
-.timekeeper-root .timekeeper-approvals-settings .tk-approvals-chip {
+/* Toggle visuals kept minimal; you can swap to switches later */
+.timekeeper-root .timekeeper-approvals-settings .tk-mx-toggle {
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: .5rem;
-  padding: .55rem .65rem;
-  border: 1px solid #eef2f7;
-  border-radius: .5rem;
-  background: #fff;
+  width: 100%;
 }
-
-.timekeeper-root .timekeeper-approvals-settings .tk-approvals-chip input {
+.timekeeper-root .timekeeper-approvals-settings .tk-mx-toggle input {
   width: 18px;
   height: 18px;
 }
 
-.timekeeper-root .timekeeper-approvals-settings .tk-approvals-note {
-  margin-top: .6rem;
-  color: #64748b;
-  font-size: .9rem;
+/* Responsive */
+@media (max-width: 900px) {
+  .timekeeper-root .timekeeper-approvals-settings .tk-mx-row {
+    grid-template-columns: 1fr;
+  }
+  .timekeeper-root .timekeeper-approvals-settings .tk-mx-header {
+    display: none;
+  }
+  .timekeeper-root .timekeeper-approvals-settings .tk-mx-cell {
+    border-radius: .6rem;
+  }
 }

@@ -13,6 +13,7 @@ if (isset($roles) && $roles instanceof \Illuminate\Support\Collection) {
 }
 $roles   = is_array($roles) ? $roles : [];
 $noRoles = empty($roles);
+
 $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 ?>
 
@@ -26,8 +27,38 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
   <form method="post" data-tk>
     <input type="hidden" name="tk_csrf" value="<?= $h($tkCsrf) ?>">
 
-    <!-- Role-centric cards -->
-    <div class="tk-roles-stack">
+    <!-- =========================
+         Comparison Matrix
+         ========================= -->
+    <div class="tk-matrix">
+      <!-- Header -->
+      <div class="tk-mx-row tk-mx-header">
+        <div class="tk-mx-cell tk-mx-rolecol">Role</div>
+
+        <div class="tk-mx-cell">
+          <div class="tk-mx-head">
+            <span class="tk-mx-head-label">View All</span>
+            <label class="tk-mx-toggleall">
+              <input type="checkbox" class="js-mx-view-toggle-all">
+              <span>All</span>
+            </label>
+            <span class="tk-mx-count js-mx-view-count">Selected: 0</span>
+          </div>
+        </div>
+
+        <div class="tk-mx-cell">
+          <div class="tk-mx-head">
+            <span class="tk-mx-head-label">Approve / Unapprove</span>
+            <label class="tk-mx-toggleall">
+              <input type="checkbox" class="js-mx-approve-toggle-all">
+              <span>All</span>
+            </label>
+            <span class="tk-mx-count js-mx-approve-count">Selected: 0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rows -->
       <?php foreach ($roles as $r): ?>
         <?php
           $rid   = (int)($r->id ?? $r['id'] ?? 0);
@@ -35,33 +66,37 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
           $canViewAll = in_array($rid, $allowedRoles, true);
           $canApprove = in_array($rid, $allowedApprovalRoles, true);
         ?>
-        <div class="tk-role-card" data-role-id="<?= $rid ?>">
-          <div class="tk-role-head">
-            <h5 class="tk-role-title"><?= $h($rname) ?></h5>
+        <div class="tk-mx-row">
+          <div class="tk-mx-cell tk-mx-rolecol">
+            <span class="tk-role-name"><?= $h($rname) ?></span>
           </div>
 
-          <div class="tk-role-perms" style="display:flex; gap:1rem; flex-wrap:wrap; padding: .5rem 1rem 1rem 1rem;">
-            <label class="tk-perm" style="display:flex; align-items:center; gap:.5rem;">
+          <div class="tk-mx-cell">
+            <label class="tk-mx-toggle">
               <input type="checkbox"
                      name="pending_timesheets_roles[]"
                      value="<?= $rid ?>"
-                     <?= $canViewAll ? 'checked' : '' ?>>
-              <span>View All</span>
+                     <?= $canViewAll ? 'checked' : '' ?>
+                     class="js-mx-view">
+              <span class="tk-mx-toggle-fx" aria-hidden="true"></span>
             </label>
+          </div>
 
-            <label class="tk-perm" style="display:flex; align-items:center; gap:.5rem;">
+          <div class="tk-mx-cell">
+            <label class="tk-mx-toggle">
               <input type="checkbox"
                      name="pending_timesheets_approval_roles[]"
                      value="<?= $rid ?>"
-                     <?= $canApprove ? 'checked' : '' ?>>
-              <span>Approve / Unapprove</span>
+                     <?= $canApprove ? 'checked' : '' ?>
+                     class="js-mx-approve">
+              <span class="tk-mx-toggle-fx" aria-hidden="true"></span>
             </label>
           </div>
         </div>
       <?php endforeach; ?>
     </div>
 
-    <!-- Validate Minimum Task Time (applies to approval workflow) -->
+    <!-- Validate Minimum Task Time (applies to approval review) -->
     <div class="mt-3" style="padding: 0 1rem;">
       <h6 class="mb-1" style="font-weight:600;">Validate Minimum Task Time</h6>
       <small id="unbilledHelp" class="text-muted">
@@ -82,7 +117,7 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
       </div>
     </div>
 
-    <!-- Actions: submit either view or approval (controller branches on tk_action) -->
+    <!-- Actions -->
     <div class="tk-actions" style="display:flex; gap:.5rem; justify-content:flex-end; padding: 1rem;">
       <button type="submit" class="btn btn-secondary" name="tk_action" value="save_view_permissions">
         Save View Permissions

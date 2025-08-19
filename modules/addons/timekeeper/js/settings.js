@@ -210,48 +210,60 @@
 })();
 
 /* ============================
-   Approvals – Dual Cards
+   Approvals – Comparison Matrix
    ============================ */
 (function () {
   const root = document.querySelector('.timekeeper-root .timekeeper-approvals-settings');
   if (!root) return;
 
-  function updateCount(scope) {
-    const card = root.querySelector(`.tk-approvals-card[data-scope="${scope}"]`);
-    if (!card) return;
-    const checks = card.querySelectorAll(`.js-approvals-${scope}`);
-    const selected = Array.from(checks).filter(c => c.checked).length;
-    const counter = card.querySelector(`.js-approvals-${scope}-count`);
-    if (counter) counter.textContent = `Selected: ${selected}`;
+  function updateCounts() {
+    const viewChecks = root.querySelectorAll('.js-mx-view');
+    const approveChecks = root.querySelectorAll('.js-mx-approve');
 
-    // reflect tri-state on toggle-all
-    const allToggle = card.querySelector(`.js-approvals-${scope}-toggleall`);
-    if (allToggle) {
-      allToggle.indeterminate = selected > 0 && selected < checks.length;
-      allToggle.checked = checks.length > 0 && selected === checks.length;
+    const viewSelected = Array.from(viewChecks).filter(c => c.checked).length;
+    const approveSelected = Array.from(approveChecks).filter(c => c.checked).length;
+
+    const viewCount = root.querySelector('.js-mx-view-count');
+    const approveCount = root.querySelector('.js-mx-approve-count');
+    if (viewCount) viewCount.textContent = `Selected: ${viewSelected}`;
+    if (approveCount) approveCount.textContent = `Selected: ${approveSelected}`;
+
+    const viewAll = root.querySelector('.js-mx-view-toggle-all');
+    const approveAll = root.querySelector('.js-mx-approve-toggle-all');
+    if (viewAll) {
+      viewAll.indeterminate = viewSelected > 0 && viewSelected < viewChecks.length;
+      viewAll.checked = viewChecks.length > 0 && viewSelected === viewChecks.length;
+    }
+    if (approveAll) {
+      approveAll.indeterminate = approveSelected > 0 && approveSelected < approveChecks.length;
+      approveAll.checked = approveChecks.length > 0 && approveSelected === approveChecks.length;
     }
   }
 
-  // Init both cards
-  ['viewall', 'approve'].forEach(scope => updateCount(scope));
+  // Init
+  updateCounts();
 
-  // Toggle-all per card
-  root.addEventListener('change', (e) => {
-    const t = e.target;
+  // Header toggle-all
+  const viewAll = root.querySelector('.js-mx-view-toggle-all');
+  const approveAll = root.querySelector('.js-mx-approve-toggle-all');
 
-    if (t.classList.contains('js-approvals-viewall-toggleall')) {
-      const card = t.closest('.tk-approvals-card');
-      card.querySelectorAll('.js-approvals-viewall').forEach(cb => cb.checked = t.checked);
-      updateCount('viewall');
+  if (viewAll) {
+    viewAll.addEventListener('change', function () {
+      root.querySelectorAll('.js-mx-view').forEach(cb => cb.checked = viewAll.checked);
+      updateCounts();
+    });
+  }
+  if (approveAll) {
+    approveAll.addEventListener('change', function () {
+      root.querySelectorAll('.js-mx-approve').forEach(cb => cb.checked = approveAll.checked);
+      updateCounts();
+    });
+  }
+
+  // Individual changes
+  root.addEventListener('change', function (e) {
+    if (e.target.classList.contains('js-mx-view') || e.target.classList.contains('js-mx-approve')) {
+      updateCounts();
     }
-
-    if (t.classList.contains('js-approvals-approve-toggleall')) {
-      const card = t.closest('.tk-approvals-card');
-      card.querySelectorAll('.js-approvals-approve').forEach(cb => cb.checked = t.checked);
-      updateCount('approve');
-    }
-
-    if (t.classList.contains('js-approvals-viewall')) updateCount('viewall');
-    if (t.classList.contains('js-approvals-approve')) updateCount('approve');
   });
 })();
