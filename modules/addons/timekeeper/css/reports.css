@@ -171,3 +171,116 @@
 .timekeeper-root .timekeeper-report-totals {
   border-radius: 8px;
 }
+
+/* ===== Soft shadow for card-like appearance ===== */
+.timekeeper-root .timekeeper-report-menu,
+.timekeeper-root .timekeeper-report-content,
+.timekeeper-root .timekeeper-report-table,
+.timekeeper-root .tk-alert,
+.timekeeper-root .timekeeper-report-noresults,
+.timekeeper-root .timekeeper-report-totals {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* ===== Report Headers (match Settings style) ===== */
+.timekeeper-root .timekeeper-report h3,
+.timekeeper-root .timekeeper-report-header h3 {
+  font-size: 1.25rem;         /* ~20px */
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb; /* subtle divider */
+}
+
+.timekeeper-root .timekeeper-report .tk-group-header,
+.timekeeper-root .timekeeper-report h4 {
+  font-size: 1rem;            /* ~16px */
+  font-weight: 600;
+  color: #374151;
+  margin: 16px 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* ===== Reports Buttons (match Settings) ===== */
+.timekeeper-root .timekeeper-report-content .btn,
+.timekeeper-root .timekeeper-report .btn {
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 8px 14px;
+  line-height: 1.2;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.03);
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease, box-shadow 120ms ease, transform 60ms ease;
+}
+
+/* Primary */
+.timekeeper-root .timekeeper-report-content .btn.btn-primary,
+.timekeeper-root .timekeeper-report .btn.btn-primary {
+  background: #0b63ce;
+  border-color: #0b63ce;
+  color: #fff;
+}
+.timekeeper-root .timekeeper-report-content .btn.btn-primary:hover,
+.timekeeper-root .timekeeper-report .btn.btn-primary:hover {
+  background: #0a56b4;
+  border-color: #0a56b4;
+}
+.timekeeper-root .timekeeper-report-content .btn.btn-primary:active,
+.timekeeper-root .timekeeper-report .btn.btn-primary:active {
+  transform: translateY(1px);
+}
+
+/* Secondary (neutral) */
+.timekeeper-root .timekeeper-report-content .btn.btn-secondary,
+.timekeeper-root .timekeeper-report .btn.btn-secondary {
+  background: #f9fafb;
+  border-color: #e5e7eb;
+  color: #374151;
+}
+.timekeeper-root .timekeeper-report-content .btn.btn-secondary:hover,
+.timekeeper-root .timekeeper-report .btn.btn-secondary:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+/* Success (export) */
+.timekeeper-root .timekeeper-report-content .btn.btn-success,
+.timekeeper-root .timekeeper-report .btn.btn-success {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fff;
+}
+.timekeeper-root .timekeeper-report-content .btn.btn-success:hover,
+.timekeeper-root .timekeeper-report .btn.btn-success:hover {
+  background: #15803d;
+  border-color: #15803d;
+}
+
+/* Focus ring (keyboard & a11y) */
+.timekeeper-root .timekeeper-report-content .btn:focus,
+.timekeeper-root .timekeeper-report .btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+}
+
+/* Disabled */
+.timekeeper-root .timekeeper-report-content .btn:disabled,
+.timekeeper-root .timekeeper-report .btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Spacing between buttons in filter actions */
+.timekeeper-root .timekeeper-report-filters .filter-actions .btn + .btn {
+  margin-left: 8px;
+}
+
+/* Optional: make action buttons a consistent width on wide screens */
+@media (min-width: 768px) {
+  .timekeeper-root .timekeeper-report-filters .filter-actions .btn {
+    min-width: 120px;
+  }
+}
