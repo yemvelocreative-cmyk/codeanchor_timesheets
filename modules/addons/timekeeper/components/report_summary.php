@@ -25,7 +25,6 @@ if (!defined('WHMCS')) {
  * ---------------------------- */
 $sanitizeDate = function ($s) {
     $s = preg_replace('/[^0-9\-]/', '', (string)$s);
-    // Basic YYYY-MM-DD sanity
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $s)) {
         return null;
     }
@@ -42,7 +41,6 @@ if (strtotime($from) > strtotime($to)) {
 $groupBy = (isset($_GET['group_by']) && $_GET['group_by'] === 'task') ? 'task' : 'department';
 
 // Only include admins who have a "completed" timesheet in range
-// Adjust as needed (e.g., ['approved'] only)
 $completedStatuses = ['pending', 'approved'];
 if (!is_array($completedStatuses) || empty($completedStatuses)) {
     $completedStatuses = ['approved'];
@@ -79,7 +77,7 @@ if ($columnExists($entriesTable, 'task_category_id')) {
 }
 
 if (!$taskLinkCol) {
-    echo '<div style="background:#ffecec;border:1px solid #f5c2c2;padding:10px;">
+    echo '<div class="tk-alert tk-alert--error">
             Summary Report error: No suitable task link column found on <code>' . htmlspecialchars($entriesTable, ENT_QUOTES, 'UTF-8') . '</code>.
           </div>';
     return;
@@ -100,7 +98,7 @@ if ($schema->hasTable('mod_timekeeper_task_categories')) {
 }
 
 if (!$taskTable) {
-    echo '<div style="background:#ffecec;border:1px solid #f5c2c2;padding:10px;">
+    echo '<div class="tk-alert tk-alert--error">
             Summary Report error: No task lookup table found (<code>mod_timekeeper_task_categories</code>, <code>mod_timekeeper_tasks</code> or <code>mod_timekeeper_subtasks</code>).
           </div>';
     return;
@@ -121,11 +119,9 @@ $query = Capsule::table('mod_timekeeper_timesheet_entries AS e')
         Capsule::raw('tc.' . $taskNameCol . ' AS task_category'),
         'a.id AS admin_id',
         Capsule::raw("TRIM(CONCAT(COALESCE(a.firstname,''),' ',COALESCE(a.lastname,''))) AS admin_name"),
-        // Assumes time fields are numeric minutes/decimal; if stored as text HH:MM, aggregate in PHP instead.
         Capsule::raw('ROUND(SUM(COALESCE(e.time_spent,0)), 2) AS total_time'),
         Capsule::raw('ROUND(SUM(COALESCE(e.billable_time,0)), 2) AS billable_time'),
         Capsule::raw('ROUND(SUM(COALESCE(e.sla_time,0)), 2) AS sla_time')
-
     )
     ->whereBetween('t.timesheet_date', [$from, $to]);
 
@@ -164,7 +160,7 @@ usort($admins, function ($a, $b) {
 });
 
 /* ----------------------------
- * Pivot results into 3D array: [$department][$task][$adminId] = [totals...]
+ * Pivot
  * ---------------------------- */
 $data = [];
 foreach ($rows as $row) {
@@ -217,7 +213,6 @@ foreach ($data as $dept => $tasks) {
  * ---------------------------- */
 $baseUrl = 'addonmodules.php?module=timekeeper&timekeeperpage=reports';
 
-// CSV cell sanitizer to prevent Excel formula injection
 $csvSanitize = function ($v) {
     $s = (string)$v;
     if ($s !== '' && in_array($s[0], ['=', '+', '-', '@'], true)) {
@@ -227,20 +222,17 @@ $csvSanitize = function ($v) {
 };
 
 if (isset($_GET['export']) && $_GET['export'] === '1') {
-    // Clear any buffered output
     if (function_exists('ob_get_level')) {
         while (ob_get_level() > 0) { @ob_end_clean(); }
     }
     header('Content-Type: text/csv; charset=UTF-8');
     header('Content-Disposition: attachment; filename=summary_report.csv');
-    // Add BOM for Excel UTF-8
     echo "\xEF\xBB\xBF";
     $out = fopen('php://output', 'w');
 
     $firstCol  = ($groupBy === 'task') ? 'Task Category' : 'Department';
     $secondCol = ($groupBy === 'task') ? 'Department'    : 'Task Category';
 
-    // Row 1: Admin name spanning groups (CSV has no real colspan; we still write labels)
     $header1 = [$csvSanitize($firstCol), $csvSanitize($secondCol)];
     foreach ($admins as $admin) {
         $header1[] = $csvSanitize($admin->name);
@@ -252,7 +244,6 @@ if (isset($_GET['export']) && $_GET['export'] === '1') {
     $header1[] = '';
     fputcsv($out, $header1);
 
-    // Row 2: Metric labels under each admin (and under Row Totals)
     $header2 = ['', ''];
     foreach ($admins as $admin) {
         $header2[] = 'Total';
@@ -264,7 +255,6 @@ if (isset($_GET['export']) && $_GET['export'] === '1') {
     $header2[] = 'SLA';
     fputcsv($out, $header2);
 
-    // Body
     foreach ($data as $dept => $tasks) {
         foreach ($tasks as $task => $adminData) {
             $rowArr = ($groupBy === 'task') ? [$csvSanitize($task), $csvSanitize($dept)] : [$csvSanitize($dept), $csvSanitize($task)];
@@ -292,7 +282,6 @@ if (isset($_GET['export']) && $_GET['export'] === '1') {
                 }
             }
 
-            // Append row totals
             $rowArr[] = number_format($rowTotalSum, 2);
             $rowArr[] = number_format($rowBillableSum, 2);
             $rowArr[] = number_format($rowSlaSum, 2);
@@ -301,7 +290,6 @@ if (isset($_GET['export']) && $_GET['export'] === '1') {
         }
     }
 
-    // Final Column Totals row
     $footer = ['Column Totals', ''];
     foreach ($admins as $admin) {
         $footer[] = number_format($adminColTotals[$admin->id]['total'], 2);
@@ -326,16 +314,16 @@ if (isset($_GET['export']) && $_GET['export'] === '1') {
     <input type="hidden" name="timekeeperpage" value="reports">
     <input type="hidden" name="r" value="summary">
 
-    <div class="filter-row" style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 18px;">
-        <div class="filter-item" style="display:flex;flex-direction:column;min-width:180px;">
+    <div class="filter-row">
+        <div class="filter-item tk-min-180">
             <label>From</label>
             <input type="date" name="from" value="<?= htmlspecialchars($from, ENT_QUOTES, 'UTF-8') ?>">
         </div>
-        <div class="filter-item" style="display:flex;flex-direction:column;min-width:180px;">
+        <div class="filter-item tk-min-180">
             <label>To</label>
             <input type="date" name="to" value="<?= htmlspecialchars($to, ENT_QUOTES, 'UTF-8') ?>">
         </div>
-        <div class="filter-item" style="display:flex;flex-direction:column;min-width:180px;">
+        <div class="filter-item tk-min-180">
             <label>Group By</label>
             <select name="group_by">
                 <option value="department" <?= $groupBy === 'department' ? 'selected' : '' ?>>Department</option>
@@ -343,7 +331,7 @@ if (isset($_GET['export']) && $_GET['export'] === '1') {
             </select>
         </div>
 
-        <div class="filter-actions" style="display:flex;gap:10px;margin-left:auto;padding-bottom:2px;">
+        <div class="filter-actions">
             <button type="submit" class="btn btn-primary">Filter</button>
             <a class="btn btn-success"
                href="<?= htmlspecialchars(
@@ -392,7 +380,7 @@ if (isset($_GET['export']) && $_GET['export'] === '1') {
         <?php if (empty($data)): ?>
             <tr>
                 <td colspan="<?= 2 + (count($admins) * 3) + 3 ?>">
-                    <div style="background:#e2f0d9;border:1px solid #a2d28f;padding:8px;">
+                    <div class="timekeeper-report-noresults">
                         No data for the selected filters.
                     </div>
                 </td>
@@ -443,7 +431,7 @@ if (isset($_GET['export']) && $_GET['export'] === '1') {
 
     <tfoot>
         <tr>
-            <th colspan="2" style="text-align:right;">Column Totals</th>
+            <th colspan="2" class="tk-text-right">Column Totals</th>
             <?php foreach ($admins as $admin): ?>
                 <th class="num"><?= number_format($adminColTotals[$admin->id]['total'], 2) ?></th>
                 <th class="num"><?= number_format($adminColTotals[$admin->id]['billable'], 2) ?></th>

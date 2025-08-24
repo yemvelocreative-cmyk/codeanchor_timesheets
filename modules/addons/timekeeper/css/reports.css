@@ -1,139 +1,55 @@
-/* =========================================
-Timekeeper Reports Styles
-Path: /modules/addons/timekeeper/css/reports.css
-========================================= */
+/* ===== Inline-style extractions for Reports ===== */
 
-/* Container Layout */
-.timekeeper-root .timekeeper-report-container {
+/* Filter rows and items (shared) */
+.timekeeper-root .timekeeper-report-filters .filter-row {
   display: flex;
-  gap: 16px;
-  align-items: flex-start;
-}
-
-/* Left Menu */
-.timekeeper-root .timekeeper-report-menu {
-  min-width: 240px;
-  border: 1px solid #e1e5ea;
-  background: #fafbfc;
-}
-.timekeeper-root .timekeeper-report-menu-header {
-  font-weight: bold;
-  padding: 10px;
-  border-bottom: 1px solid #e1e5ea;
-}
-.timekeeper-root .timekeeper-report-menu ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.timekeeper-root .timekeeper-report-menu li a {
-  display: block;
-  padding: 10px 12px;
-  text-decoration: none;
-  color: #333;
-}
-.timekeeper-root .timekeeper-report-menu li a.active {
-  background: #eef5ff;
-  font-weight: 600;
-}
-
-/* Right Content Panel */
-.timekeeper-root .timekeeper-report-content {
-  flex: 1;
-  min-width: 0;
-  border: 1px solid #e1e5ea;
-  background: #fff;
-  padding: 14px;
-}
-
-/* Filters */
-.timekeeper-root .timekeeper-report-filters {
-  display: flex !important;      /* override WHMCS admin CSS */
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 12px 18px;
   align-items: flex-end;
-  margin: 8px 0 18px;
 }
+
+.timekeeper-root .timekeeper-report-filters .filter-item,
 .timekeeper-root .timekeeper-report-filters .timekeeper-filter {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 180px;
-}
-.timekeeper-root .timekeeper-report-filters .timekeeper-filter.action {
-  align-self: flex-end;
-}
-.timekeeper-root .timekeeper-report-filters label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-.timekeeper-root .timekeeper-report-filters input[type="date"],
-.timekeeper-root .timekeeper-report-filters select {
-  min-width: 200px;
-  padding: 6px;
 }
 
-/* Select2 (scoped) */
-.timekeeper-root .timekeeper-report-content .select2-container {
-  min-width: 260px;
-}
-.timekeeper-root .timekeeper-report-content .select2-selection--single {
-  height: auto;
-}
-
-/* Tables */
-.timekeeper-root .timekeeper-report-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.timekeeper-root .timekeeper-report-table th,
-.timekeeper-root .timekeeper-report-table td {
-  padding: 8px;
-  border-bottom: 1px solid #eee;
-  text-align: left;                 /* default left */
-  vertical-align: middle;
-}
-.timekeeper-root .timekeeper-report-table thead th {
-  border-bottom: 1px solid #ddd;
-  font-weight: 600;
-  background: #f9fafb;
-  white-space: nowrap;
-}
-.timekeeper-root .timekeeper-report-table thead th.admin-group {
-  text-align: center;
-}
-.timekeeper-root .timekeeper-report-table td.description {
-  max-width: 480px;
-}
-.timekeeper-root .timekeeper-report-table th.num,
-.timekeeper-root .timekeeper-report-table td.num {
-  text-align: right;                /* numeric columns */
+.timekeeper-root .timekeeper-report-filters .filter-actions {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+  padding-bottom: 2px;
 }
 
-/* No Results Box */
-.timekeeper-root .timekeeper-report-noresults {
+/* Min-width utilities for filter controls */
+.timekeeper-root .tk-min-160 { min-width: 160px; }
+.timekeeper-root .tk-min-180 { min-width: 180px; }
+.timekeeper-root .tk-min-200 { min-width: 200px; }
+.timekeeper-root .tk-min-220 { min-width: 220px; }
+
+/* Text utilities */
+.timekeeper-root .tk-text-right { text-align: right; }
+
+/* Alert boxes extracted from inline styles */
+.timekeeper-root .tk-alert {
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  margin: 8px 0;
+}
+.timekeeper-root .tk-alert--error {
+  background: #ffecec;
+  border-color: #f5c2c2;
+}
+.timekeeper-root .tk-alert--info {
   background: #f7f9fb;
-  border: 1px solid #e1e5ea;
-  padding: 10px;
+  border-color: #e1e5ea;
 }
 
-/* Totals Box */
-.timekeeper-root .timekeeper-report-totals {
-  margin-top: 12px;
-  padding: 10px;
-  border: 1px solid #e1e5ea;
-  background: #fafbfc;
-}
-.timekeeper-root .timekeeper-report-totals strong { margin-right: 10px; }
-.timekeeper-root .timekeeper-report-totals span   { margin-left: 16px; }
-
-/* Responsive */
-@media (max-width: 992px) {
-  .timekeeper-root .timekeeper-report-container {
-    flex-direction: column;
-  }
-  .timekeeper-root .timekeeper-report-menu {
-    width: 100%;
-  }
+/* Group header (optional emphasis) */
+.timekeeper-root .tk-group-header {
+  margin-top: 18px;
+  margin-bottom: 8px;
+  font-weight: 600;
 }
