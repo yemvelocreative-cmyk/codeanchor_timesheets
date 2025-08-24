@@ -145,3 +145,29 @@
     width: 100%;
   }
 }
+
+/* ===== Rounded corners for consistent design ===== */
+
+/* Left menu and content wrapper */
+.timekeeper-root .timekeeper-report-menu,
+.timekeeper-root .timekeeper-report-content {
+  border-radius: 8px;
+  overflow: hidden; /* ensure child borders respect radius */
+}
+
+/* Tables */
+.timekeeper-root .timekeeper-report-table {
+  border-radius: 8px;
+  overflow: hidden; /* prevents table borders from poking out */
+}
+
+/* Alerts (error/info boxes) */
+.timekeeper-root .tk-alert,
+.timekeeper-root .timekeeper-report-noresults {
+  border-radius: 8px;
+}
+
+/* Totals box */
+.timekeeper-root .timekeeper-report-totals {
+  border-radius: 8px;
+}
