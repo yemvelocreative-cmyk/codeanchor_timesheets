@@ -31,11 +31,11 @@
 /* Text utilities */
 .timekeeper-root .tk-text-right { text-align: right; }
 
-/* Alert boxes extracted from inline styles */
+/* Alert boxes (standardized to 8px radius) */
 .timekeeper-root .tk-alert {
   padding: 10px;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: 8px;
   margin: 8px 0;
 }
 .timekeeper-root .tk-alert--error {
@@ -47,31 +47,24 @@
   border-color: #e1e5ea;
 }
 
-/* Group header (optional emphasis) */
+/* Group header */
 .timekeeper-root .tk-group-header {
   margin-top: 18px;
   margin-bottom: 8px;
   font-weight: 600;
 }
 
-/* Consistent no-results box (used in all reports) */
+/* Consistent no-results box (standardized to 8px radius) */
 .timekeeper-root .timekeeper-report-noresults {
   background: #f7f9fb;
   border: 1px solid #e1e5ea;
   padding: 10px;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 /* Space above tables where inline margin was used */
 .timekeeper-root .timekeeper-report-table {
   margin-top: 16px;
-}
-
-/* Tighten group header spacing for grouped audit view */
-.timekeeper-root .tk-group-header {
-  margin-top: 18px;
-  margin-bottom: 8px;
-  font-weight: 600;
 }
 
 /* ===== Reports Left Menu — match Settings side menu ===== */
@@ -101,9 +94,7 @@
   padding: 6px 0;
 }
 
-.timekeeper-root .timekeeper-report-menu li {
-  margin: 0;
-}
+.timekeeper-root .timekeeper-report-menu li { margin: 0; }
 
 .timekeeper-root .timekeeper-report-menu li a {
   display: flex;
@@ -128,7 +119,7 @@
   border-left-color: #0b63ce;
 }
 
-/* Optional small icon placeholder (if you ever add icons later) */
+/* Optional small icon placeholder */
 .timekeeper-root .timekeeper-report-menu li a .tk-menu-icon {
   width: 16px;
   height: 16px;
@@ -159,12 +150,6 @@
 .timekeeper-root .timekeeper-report-table {
   border-radius: 8px;
   overflow: hidden; /* prevents table borders from poking out */
-}
-
-/* Alerts (error/info boxes) */
-.timekeeper-root .tk-alert,
-.timekeeper-root .timekeeper-report-noresults {
-  border-radius: 8px;
 }
 
 /* Totals box */
@@ -278,7 +263,7 @@
   margin-left: 8px;
 }
 
-/* Optional: make action buttons a consistent width on wide screens */
+/* Optional: consistent action button width on wide screens */
 @media (min-width: 768px) {
   .timekeeper-root .timekeeper-report-filters .filter-actions .btn {
     min-width: 120px;
