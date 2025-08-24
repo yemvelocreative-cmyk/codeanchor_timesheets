@@ -73,3 +73,75 @@
   margin-bottom: 8px;
   font-weight: 600;
 }
+
+/* ===== Reports Left Menu — match Settings side menu ===== */
+.timekeeper-root .timekeeper-report-menu {
+  position: sticky;     /* stays visible while scrolling content */
+  top: 12px;
+  min-width: 240px;
+  background: #fff;
+  border: 1px solid #e1e5ea;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 0 rgba(16, 24, 40, 0.02);
+}
+
+.timekeeper-root .timekeeper-report-menu-header {
+  padding: 12px 14px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #111827;
+  background: #f9fafb;
+  border-bottom: 1px solid #e1e5ea;
+}
+
+.timekeeper-root .timekeeper-report-menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+}
+
+.timekeeper-root .timekeeper-report-menu li {
+  margin: 0;
+}
+
+.timekeeper-root .timekeeper-report-menu li a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  color: #374151;
+  text-decoration: none;
+  border-left: 3px solid transparent;     /* active indicator strip */
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.timekeeper-root .timekeeper-report-menu li a:hover {
+  background: #f5f7fb;
+  color: #111827;
+}
+
+.timekeeper-root .timekeeper-report-menu li a.active {
+  background: #eef5ff;
+  color: #0b63ce;                             /* align with primary tone */
+  font-weight: 600;
+  border-left-color: #0b63ce;
+}
+
+/* Optional small icon placeholder (if you ever add icons later) */
+.timekeeper-root .timekeeper-report-menu li a .tk-menu-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+}
+
+/* Mobile: make menu full width above content */
+@media (max-width: 992px) {
+  .timekeeper-root .timekeeper-report-container {
+    flex-direction: column;
+  }
+  .timekeeper-root .timekeeper-report-menu {
+    position: static;
+    width: 100%;
+  }
+}
