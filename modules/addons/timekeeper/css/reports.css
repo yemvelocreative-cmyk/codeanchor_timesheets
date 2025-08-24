@@ -53,3 +53,23 @@
   margin-bottom: 8px;
   font-weight: 600;
 }
+
+/* Consistent no-results box (used in all reports) */
+.timekeeper-root .timekeeper-report-noresults {
+  background: #f7f9fb;
+  border: 1px solid #e1e5ea;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+/* Space above tables where inline margin was used */
+.timekeeper-root .timekeeper-report-table {
+  margin-top: 16px;
+}
+
+/* Tighten group header spacing for grouped audit view */
+.timekeeper-root .tk-group-header {
+  margin-top: 18px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}

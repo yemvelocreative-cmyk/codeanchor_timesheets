@@ -54,7 +54,7 @@ $reportMeta = $availableReports[$reportKey];
     <div class="timekeeper-report-content">
       <?php
       if (empty($reportMeta['php']) || !file_exists($reportMeta['php'])) {
-          echo '<div style="background:#ffecec;border:1px solid #f5c2c2;padding:10px;">
+          echo '<div class="tk-alert tk-alert--error">
                   Report component not found: <code>' . htmlspecialchars((string)($reportMeta['php'] ?? ''), ENT_QUOTES, 'UTF-8') . '</code>
                 </div>';
       } else {

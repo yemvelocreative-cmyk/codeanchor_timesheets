@@ -430,9 +430,9 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
 $tplPath = __DIR__ . '/../templates/admin/components/report_timesheet_audit.tpl';
 
 if (!file_exists($tplPath)) {
-    echo '<div style="background:#ffecec;border:1px solid #f5c2c2;padding:10px;">
-            Template not found: <code>' . htmlspecialchars($tplPath, ENT_QUOTES, 'UTF-8') . '</code>
-          </div>';
+    echo '<div class="tk-alert tk-alert--error">
+        Template not found: <code>' . htmlspecialchars($tplPath, ENT_QUOTES, 'UTF-8') . '</code>
+      </div>';
     return;
 }
 include $tplPath;
