@@ -127,7 +127,7 @@
 }
 
 /* Mobile: make menu full width above content */
-@media (max-width: 992px) {
+@media (max-width: 768px) {
   .timekeeper-root .timekeeper-report-container {
     flex-direction: column;
   }
