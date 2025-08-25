@@ -1,20 +1,75 @@
-/* ===== Inline-style extractions for Reports ===== */
+/* ===== Timekeeper Reports (scoped to .timekeeper-root) ===== */
 
-/* Filter rows and items (shared) */
+/* --- Rail layout (match Settings .tk-rail) --- */
+.timekeeper-root .timekeeper-report-container {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 16px;
+  margin-top: 12px;
+}
+.timekeeper-root .timekeeper-report-content { min-width: 0; }
+
+/* Mobile: stack menu above content */
+@media (max-width: 992px) {
+  .timekeeper-root .timekeeper-report-container { grid-template-columns: 1fr; }
+}
+
+/* --- Left menu (mirror Settings tk-rail__nav) --- */
+.timekeeper-root .timekeeper-report-menu {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 220px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+.timekeeper-root .timekeeper-report-menu-header { display: none; }
+.timekeeper-root .timekeeper-report-menu ul { list-style: none; margin: 0; padding: 0; }
+.timekeeper-root .timekeeper-report-menu li { margin: 0; }
+.timekeeper-root .timekeeper-report-menu li a {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #374151;
+  font-weight: 500;
+}
+.timekeeper-root .timekeeper-report-menu li a:hover { background: #f9fafb; }
+.timekeeper-root .timekeeper-report-menu li a.active {
+  background: #eef4ff;
+  color: #0b57d0;
+  font-weight: 600;
+}
+/* Optional icon slot (future-proofing) */
+.timekeeper-root .timekeeper-report-menu li a .tk-menu-icon {
+  width: 16px; height: 16px; display: inline-block;
+}
+
+/* --- Content card (align with Settings tk-card) --- */
+.timekeeper-root .timekeeper-report-content {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  padding: 14px;
+}
+
+/* ===== Filters ===== */
 .timekeeper-root .timekeeper-report-filters .filter-row {
   display: flex;
   flex-wrap: wrap;
   gap: 12px 18px;
   align-items: flex-end;
 }
-
 .timekeeper-root .timekeeper-report-filters .filter-item,
 .timekeeper-root .timekeeper-report-filters .timekeeper-filter {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-
 .timekeeper-root .timekeeper-report-filters .filter-actions {
   display: flex;
   gap: 10px;
@@ -31,156 +86,77 @@
 /* Text utilities */
 .timekeeper-root .tk-text-right { text-align: right; }
 
-/* Alert boxes (standardized to 8px radius) */
+/* ===== Tables ===== */
+.timekeeper-root .timekeeper-report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  border-radius: 8px;            /* rounded table */
+  overflow: hidden;              /* clip borders to radius */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.timekeeper-root .timekeeper-report-table th,
+.timekeeper-root .timekeeper-report-table td {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  vertical-align: middle;
+}
+.timekeeper-root .timekeeper-report-table thead th {
+  border-bottom: 1px solid #ddd;
+  font-weight: 600;
+  background: #f9fafb;
+  white-space: nowrap;
+}
+.timekeeper-root .timekeeper-report-table thead th.admin-group { text-align: center; }
+.timekeeper-root .timekeeper-report-table td.description { max-width: 480px; }
+.timekeeper-root .timekeeper-report-table th.num,
+.timekeeper-root .timekeeper-report-table td.num { text-align: right; }
+
+/* ===== Alerts & No-results ===== */
 .timekeeper-root .tk-alert {
   padding: 10px;
   border: 1px solid transparent;
   border-radius: 8px;
   margin: 8px 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
-.timekeeper-root .tk-alert--error {
-  background: #ffecec;
-  border-color: #f5c2c2;
-}
-.timekeeper-root .tk-alert--info {
-  background: #f7f9fb;
-  border-color: #e1e5ea;
-}
+.timekeeper-root .tk-alert--error { background: #ffecec; border-color: #f5c2c2; }
+.timekeeper-root .tk-alert--info  { background: #f7f9fb; border-color: #e1e5ea; }
 
-/* Group header */
-.timekeeper-root .tk-group-header {
-  margin-top: 18px;
-  margin-bottom: 8px;
-  font-weight: 600;
-}
-
-/* Consistent no-results box (standardized to 8px radius) */
 .timekeeper-root .timekeeper-report-noresults {
   background: #f7f9fb;
   border: 1px solid #e1e5ea;
   padding: 10px;
   border-radius: 8px;
-}
-
-/* Space above tables where inline margin was used */
-.timekeeper-root .timekeeper-report-table {
-  margin-top: 16px;
-}
-
-/* ===== Reports Left Menu — match Settings side menu ===== */
-.timekeeper-root .timekeeper-report-menu {
-  position: sticky;     /* stays visible while scrolling content */
-  top: 12px;
-  min-width: 240px;
-  background: #fff;
-  border: 1px solid #e1e5ea;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 1px 0 rgba(16, 24, 40, 0.02);
-}
-
-.timekeeper-root .timekeeper-report-menu-header {
-  padding: 12px 14px;
-  font-weight: 700;
-  font-size: 14px;
-  color: #111827;
-  background: #f9fafb;
-  border-bottom: 1px solid #e1e5ea;
-}
-
-.timekeeper-root .timekeeper-report-menu ul {
-  list-style: none;
-  margin: 0;
-  padding: 6px 0;
-}
-
-.timekeeper-root .timekeeper-report-menu li { margin: 0; }
-
-.timekeeper-root .timekeeper-report-menu li a {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  color: #374151;
-  text-decoration: none;
-  border-left: 3px solid transparent;     /* active indicator strip */
-  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
-}
-
-.timekeeper-root .timekeeper-report-menu li a:hover {
-  background: #f5f7fb;
-  color: #111827;
-}
-
-.timekeeper-root .timekeeper-report-menu li a.active {
-  background: #eef5ff;
-  color: #0b63ce;                             /* align with primary tone */
-  font-weight: 600;
-  border-left-color: #0b63ce;
-}
-
-/* Optional small icon placeholder */
-.timekeeper-root .timekeeper-report-menu li a .tk-menu-icon {
-  width: 16px;
-  height: 16px;
-  display: inline-block;
-}
-
-/* Mobile: make menu full width above content */
-@media (max-width: 768px) {
-  .timekeeper-root .timekeeper-report-container {
-    flex-direction: column;
-  }
-  .timekeeper-root .timekeeper-report-menu {
-    position: static;
-    width: 100%;
-  }
-}
-
-/* ===== Rounded corners for consistent design ===== */
-
-/* Left menu and content wrapper */
-.timekeeper-root .timekeeper-report-menu,
-.timekeeper-root .timekeeper-report-content {
-  border-radius: 8px;
-  overflow: hidden; /* ensure child borders respect radius */
-}
-
-/* Tables */
-.timekeeper-root .timekeeper-report-table {
-  border-radius: 8px;
-  overflow: hidden; /* prevents table borders from poking out */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* Totals box */
 .timekeeper-root .timekeeper-report-totals {
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid #e1e5ea;
+  background: #fafbfc;
   border-radius: 8px;
-}
-
-/* ===== Soft shadow for card-like appearance ===== */
-.timekeeper-root .timekeeper-report-menu,
-.timekeeper-root .timekeeper-report-content,
-.timekeeper-root .timekeeper-report-table,
-.timekeeper-root .tk-alert,
-.timekeeper-root .timekeeper-report-noresults,
-.timekeeper-root .timekeeper-report-totals {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
+.timekeeper-root .timekeeper-report-totals strong { margin-right: 10px; }
+.timekeeper-root .timekeeper-report-totals span   { margin-left: 16px; }
 
-/* ===== Report Headers (match Settings style) ===== */
+/* ===== Headers (match Settings look) ===== */
 .timekeeper-root .timekeeper-report h3,
 .timekeeper-root .timekeeper-report-header h3 {
-  font-size: 1.25rem;         /* ~20px */
+  font-size: 1.25rem;   /* ~20px */
   font-weight: 600;
   color: #111827;
   margin: 0 0 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #e5e7eb; /* subtle divider */
+  border-bottom: 1px solid #e5e7eb;
 }
-
 .timekeeper-root .timekeeper-report .tk-group-header,
 .timekeeper-root .timekeeper-report h4 {
-  font-size: 1rem;            /* ~16px */
+  font-size: 1rem;      /* ~16px */
   font-weight: 600;
   color: #374151;
   margin: 16px 0 8px;
@@ -188,7 +164,7 @@
   border-bottom: 1px solid #f0f0f0;
 }
 
-/* ===== Reports Buttons (match Settings) ===== */
+/* ===== Buttons (match Settings style) ===== */
 .timekeeper-root .timekeeper-report-content .btn,
 .timekeeper-root .timekeeper-report .btn {
   border-radius: 8px;
@@ -259,13 +235,9 @@
 }
 
 /* Spacing between buttons in filter actions */
-.timekeeper-root .timekeeper-report-filters .filter-actions .btn + .btn {
-  margin-left: 8px;
-}
+.timekeeper-root .timekeeper-report-filters .filter-actions .btn + .btn { margin-left: 8px; }
 
 /* Optional: consistent action button width on wide screens */
 @media (min-width: 768px) {
-  .timekeeper-root .timekeeper-report-filters .filter-actions .btn {
-    min-width: 120px;
-  }
+  .timekeeper-root .timekeeper-report-filters .filter-actions .btn { min-width: 120px; }
 }
