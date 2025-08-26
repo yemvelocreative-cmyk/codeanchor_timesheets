@@ -279,37 +279,48 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
                     <span><strong><?= number_format((float)$task->time_spent, 2) ?></strong> hrs</span>
                   </div>
 
-                  <div class="cell cell-flags">
-                    <!-- Editable Ticket -->
-                    <input type="text"
-                           name="ticket_id"
-                           class="tk-row-input tk-ticket-input"
-                           placeholder="Ticket #"
-                           value="<?= htmlspecialchars($task->ticket_id ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                  <div class="cell cell-flags cell-flags--grid">
+                    <!-- Ticket -->
+                    <div class="flag-item">
+                      <label class="tk-flag-label">Ticket</label>
+                      <input type="text"
+                            name="ticket_id"
+                            class="tk-row-input tk-ticket-input"
+                            placeholder="Ticket #"
+                            value="<?= htmlspecialchars($task->ticket_id ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                    </div>
 
                     <!-- Billable -->
-                    <label class="checkbox-inline tk-inline-check">
-                      <input type="checkbox" name="billable" value="1" <?= $task->billable ? 'checked' : '' ?>><span>Billable</span>
-                    </label>
-                    <input type="text" name="billable_time"
-                           class="tk-inline-time-input <?= $task->billable ? 'col-show' : 'col-hidden' ?>"
-                           placeholder="0.00" value="<?= number_format((float)$task->billable_time, 2) ?>">
+                    <div class="flag-item">
+                      <label class="tk-flag-label">
+                        <span class="checkbox-inline tk-inline-check">
+                          <input type="checkbox" name="billable" value="1" <?= $task->billable ? 'checked' : '' ?>>
+                          <span>Billable</span>
+                        </span>
+                      </label>
+                      <input type="text" name="billable_time"
+                            class="tk-inline-time-input <?= $task->billable ? 'col-show' : 'col-hidden' ?>"
+                            placeholder="0.00"
+                            value="<?= number_format((float)$task->billable_time, 2) ?>">
+                    </div>
 
                     <!-- SLA -->
-                    <label class="checkbox-inline tk-inline-check">
-                      <input type="checkbox" name="sla" value="1" <?= $task->sla ? 'checked' : '' ?>><span>SLA</span>
-                    </label>
-                    <input type="text" name="sla_time"
-                           class="tk-inline-time-input <?= $task->sla ? 'col-show' : 'col-hidden' ?>"
-                           placeholder="0.00" value="<?= number_format((float)$task->sla_time, 2) ?>">
+                    <div class="flag-item">
+                      <label class="tk-flag-label">
+                        <span class="checkbox-inline tk-inline-check">
+                          <input type="checkbox" name="sla" value="1" <?= $task->sla ? 'checked' : '' ?>>
+                          <span>SLA</span>
+                        </span>
+                      </label>
+                      <input type="text" name="sla_time"
+                            class="tk-inline-time-input <?= $task->sla ? 'col-show' : 'col-hidden' ?>"
+                            placeholder="0.00"
+                            value="<?= number_format((float)$task->sla_time, 2) ?>">
+                    </div>
 
-                    <!-- Optional badges while editing -->
-                    <?php if (!empty($task->ticket_id)): ?>
-                      <span class="tk-badge tk-badge--success">Ticket #<?= htmlspecialchars($task->ticket_id, ENT_QUOTES, 'UTF-8') ?></span>
-                    <?php else: ?>
-                      <span class="tk-badge">No ticket</span>
-                    <?php endif; ?>
+                    <!-- Future flags go here as more <div class="flag-item">...</div> -->
                   </div>
+
 
                   <div class="cell cell-actions">
                     <button type="submit" class="btn btn-success">Save</button>

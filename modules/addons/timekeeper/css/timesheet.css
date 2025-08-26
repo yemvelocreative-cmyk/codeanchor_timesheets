@@ -199,6 +199,24 @@
 /* Buttons in saved entries */
 .timekeeper-root .tk-row--table .btn { border-radius: 12px; }
 
+/* Edit flags mini-grid */
+.timekeeper-root .cell-flags.cell-flags--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px 12px;
+  align-items: start;
+}
+.timekeeper-root .cell-flags .flag-item {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+.timekeeper-root .tk-flag-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
 /* Edit-state inputs inside the table grid */
 .timekeeper-root .tk-row--table .tk-row-select,
 .timekeeper-root .tk-row--table .tk-row-input,
