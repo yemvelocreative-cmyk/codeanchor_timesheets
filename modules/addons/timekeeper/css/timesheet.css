@@ -214,18 +214,69 @@
   }
 }
 
-/* Footer action bar layout */
-.timekeeper-root .tk-row--footerbar .top { display: grid; gap: 6px; }
-.timekeeper-root .tk-row--footerbar .line-1 { display: flex; flex-wrap: wrap; gap: .35rem; align-items: baseline; font-size: 14px; }
-.timekeeper-root .tk-row--footerbar .desc { font-size: 14px; color: #222; overflow-wrap: anywhere; }
-.timekeeper-root .tk-row--footerbar .meta { font-size: 12px; color: #555; display: flex; flex-wrap: wrap; gap: .35rem .5rem; align-items: center; }
-.timekeeper-root .tk-row--footerbar .footerbar {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px dashed #e5e7eb;
+/* ===== Saved Entries: Compact Table-Card ===== */
+.timekeeper-root .tk-row--table .tk-row-grid {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns:
+    1.1fr /* Client */
+    0.9fr /* Dept */
+    1fr   /* Category */
+    2fr   /* Description */
+    1.4fr /* Time window + total */
+    1.4fr /* Flags/badges */
+    auto; /* Actions */
   align-items: center;
+  gap: 12px;
 }
-.timekeeper-root .tk-row--footerbar .actions { display: flex; gap: 8px; }
+
+/* Header row for alignment (muted, non-interactive) */
+.timekeeper-root .tk-row--header {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+.timekeeper-root .tk-row--header .hdr {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+.timekeeper-root .tk-row--table .cell-desc { overflow-wrap: anywhere; }
+.timekeeper-root .tk-row--table .cell-times { font-size: 12px; color: #555; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.timekeeper-root .tk-row--table .cell-flags { display: flex; gap: .5rem; flex-wrap: wrap; }
+.timekeeper-root .tk-row--table .cell-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .timekeeper-root .inline-form { display: inline-block; margin: 0; }
+
+/* Buttons: consistent size like Departments page */
+.timekeeper-root .tk-row--table .btn { border-radius: 12px; }
+
+/* Edit-state inputs inside the table grid */
+.timekeeper-root .tk-row--table .tk-row-select,
+.timekeeper-root .tk-row--table .tk-row-input,
+.timekeeper-root .tk-row--table input[type="time"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border-radius: 10px;
+}
+
+/* Responsive stacking */
+@media (max-width: 992px) {
+  .timekeeper-root .tk-row--table .tk-row-grid {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 8px;
+  }
+  .timekeeper-root .tk-row--header .tk-row-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .timekeeper-root .tk-row--table .cell-desc { grid-column: 1 / -1; }
+  .timekeeper-root .tk-row--table .cell-actions { grid-column: 1 / -1; justify-content: flex-end; }
+}
+
+/* Very small screens: make flags and times wrap nicely */
+@media (max-width: 560px) {
+  .timekeeper-root .tk-row--table .cell-times,
+  .timekeeper-root .tk-row--table .cell-flags {
+    grid-column: 1 / -1;
+  }
+}
