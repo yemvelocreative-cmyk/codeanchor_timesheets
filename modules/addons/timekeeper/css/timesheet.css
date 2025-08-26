@@ -213,3 +213,24 @@
     gap: 16px;
   }
 }
+
+/* Table-Card layout */
+.timekeeper-root .tk-row--table .tk-row-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr 1fr 2fr 1.4fr 1.4fr auto; /* client dept cat desc times flags actions */
+  align-items: center;
+  gap: 12px;
+}
+.timekeeper-root .tk-row--table .cell-desc { overflow-wrap: anywhere; }
+.timekeeper-root .tk-row--table .cell-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.timekeeper-root .inline-form { display: inline-block; margin: 0; }
+
+/* Responsive: stack intelligently */
+@media (max-width: 992px) {
+  .timekeeper-root .tk-row--table .tk-row-grid {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 8px;
+  }
+  .timekeeper-root .tk-row--table .cell-actions { grid-column: 1 / -1; justify-content: flex-end; }
+  .timekeeper-root .tk-row--table .cell-desc { grid-column: 1 / -1; }
+}
