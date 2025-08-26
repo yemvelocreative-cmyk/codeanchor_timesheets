@@ -196,3 +196,20 @@
 /* Hide legacy saved-grid styles if present */
 .timekeeper-root .tk-saved-grid,
 .timekeeper-root .tk-saved-item { display: none; }
+
+/* Tighten card layout: 2 or 3 columns of blocks */
+@media (min-width: 1100px) {
+  .timekeeper-root .tk-block-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+}
+/* 🔧 FIX: make 2-column layout apply at ≥900px (no upper bound) */
+@media (min-width: 900px) {
+  .timekeeper-root .tk-block-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+}

@@ -160,8 +160,8 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
 
           <!-- Actions under the right block -->
           <div class="tk-actions-right">
-            <button type="submit" class="btn btn-sm btn-primary"><?= $isEditing ? 'Save Changes' : 'Add' ?></button>
-            <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet" class="btn btn-sm btn-default">Cancel</a>
+            <button type="submit" btn btn-primary"><?= $isEditing ? 'Save Changes' : 'Add' ?></button>
+            <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet" class="btn btn-default">Cancel</a>
           </div>
         </section>
       </div>
@@ -288,8 +288,8 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
                         <?php endif; ?>
                       </div>
                       <div class="tk-actions-right tk-row-actions">
-                        <button type="submit" class="btn btn-sm btn-success">Save</button>
-                        <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet" class="btn btn-sm btn-default">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet" class="btn btn-default">Cancel</a>
                       </div>
                     </div>
                   </div>
@@ -335,7 +335,7 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
                       <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet&edit_id=<?= (int) $task->id ?>" class="btn btn-sm btn-default">Edit</a>
                       <form method="post" class="ts-delete-form" style="display:inline-block;margin:0;">
                         <input type="hidden" name="delete_id" value="<?= (int) $task->id ?>">
-                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        <button type="submit" class="btn btn-primary">Delete</button>
                       </form>
                     </div>
                   </div>
