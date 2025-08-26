@@ -22,12 +22,7 @@
   color: #856404;
 }
 
-.timekeeper-root .ts-meta {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
-}
+.timekeeper-root .ts-meta { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 8px; }
 
 /* Headings / rows */
 .timekeeper-root .ts-header { font-weight: bold; padding-bottom: 6px; margin-top: 16px; }
@@ -70,7 +65,7 @@
 /* Small buttons unified width */
 .timekeeper-root .btn.w-70 { width: 70px; }
 
-/* ===== Grid alignment for classic layout ===== */
+/* ===== Grid alignment for classic layout (if used elsewhere) ===== */
 .timekeeper-root .ts-row {
   display: grid;
   grid-template-columns:
@@ -78,8 +73,6 @@
   column-gap: 8px;
   align-items: center;
 }
-
-/* Header row */
 .timekeeper-root .ts-subheader { font-weight: 600; }
 .tk-totals-wrap { margin: .25rem 0 .5rem; }
 .tk-totals-bar { display: inline-flex; align-items: center; gap: .35rem; font-size: 14px; }
@@ -116,7 +109,7 @@
   }
 }
 
-/* ===== Mobile card layout ===== */
+/* ===== Mobile card layout (classic) ===== */
 @media (max-width: 768px) {
   .timekeeper-root .ts-subheader { display: none; }
   .timekeeper-root .ts-row {
@@ -156,11 +149,11 @@
 .timekeeper-root .tk-input select,
 .timekeeper-root .tk-input textarea { width: 100%; box-sizing: border-box; padding: 6px 8px; }
 
-/* Tighten card layout on wide screens */
+/* Tighten card layout: 2 or 3 columns of blocks */
 @media (min-width: 1100px) {
   .timekeeper-root .tk-block-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
 }
-@media (min-width: 900px) and (max-width: 1099px) {
+@media (min-width: 900px) {
   .timekeeper-root .tk-block-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 }
 
@@ -173,110 +166,63 @@
 /* Right-aligned action buttons */
 .tk-actions-right { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1rem; }
 
-/* Saved entries list */
-.timekeeper-root .tk-saved-list { display: grid; grid-template-columns: 1fr; gap: .75rem; }
-.timekeeper-root .tk-row { padding: .75rem 1rem; }
-.timekeeper-root .tk-row-main { display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: center; }
-.timekeeper-root .tk-row-left { min-width: 0; }
-.timekeeper-root .tk-row-right { display: grid; gap: .5rem; justify-items: end; }
-@media (min-width: 900px) { .timekeeper-root .tk-row-right { grid-auto-flow: row; } }
-.timekeeper-root .tk-row-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem; font-size: 14px; }
-.timekeeper-root .tk-row-title .sep { opacity: .5; }
-.timekeeper-root .tk-row-title .muted { color: #666; }
-.timekeeper-root .tk-row-desc { margin-top: .15rem; font-size: 14px; color: #222; overflow-wrap: anywhere; }
-.timekeeper-root .tk-row-meta { margin-top: .25rem; font-size: 12px; color: #555; display: flex; flex-wrap: wrap; gap: .35rem .5rem; align-items: center; }
-.timekeeper-root .tk-row-meta .dot { opacity: .5; }
-.timekeeper-root .tk-badges { display: flex; gap: .5rem; align-items: center; }
-.timekeeper-root .tk-badge { font-size: 12px; padding: .15rem .5rem; border: 1px solid #E5E7EB; border-radius: 999px; background: #F9FAFB; color: #374151; white-space: nowrap; }
-.timekeeper-root .tk-badge--success { border-color: #C7F0D8; background: #ECFDF5; color: #065F46; }
-.timekeeper-root .tk-row-actions { display: flex; gap: .5rem; }
-.timekeeper-root .tk-row-select { max-width: 220px; }
-.timekeeper-root .tk-row-input { width: 100%; }
-
-/* Hide legacy saved-grid styles if present */
-.timekeeper-root .tk-saved-grid,
-.timekeeper-root .tk-saved-item { display: none; }
-
-/* Tighten card layout: 2 or 3 columns of blocks */
-@media (min-width: 1100px) {
-  .timekeeper-root .tk-block-grid-3 {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 16px;
-  }
-}
-/* 🔧 FIX: make 2-column layout apply at ≥900px (no upper bound) */
-@media (min-width: 900px) {
-  .timekeeper-root .tk-block-grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-}
-
 /* ===== Saved Entries: Compact Table-Card ===== */
 .timekeeper-root .tk-row--table .tk-row-grid {
   display: grid;
   grid-template-columns:
-    1.1fr /* Client */
-    0.9fr /* Dept */
-    1fr   /* Category */
-    2fr   /* Description */
-    1.4fr /* Time window + total */
-    1.4fr /* Flags/badges */
-    auto; /* Actions */
+    1.1fr  /* Client */
+    0.9fr  /* Dept */
+    1fr    /* Category */
+    2fr    /* Description */
+    1.4fr  /* Time window + total */
+    1.4fr  /* Flags/badges */
+    auto;  /* Actions */
   align-items: center;
   gap: 12px;
 }
 
 /* Header row for alignment (muted, non-interactive) */
-.timekeeper-root .tk-row--header {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-}
+.timekeeper-root .tk-row--header { background: #f9fafb; border: 1px solid #e5e7eb; }
 .timekeeper-root .tk-row--header .hdr {
-  font-size: 12px;
-  font-weight: 600;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: .02em;
+  font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .02em;
 }
+.timekeeper-root .tk-row--header .tk-row-grid .hdr:last-child { text-align: right; }
+
 .timekeeper-root .tk-row--table .cell-desc { overflow-wrap: anywhere; }
-.timekeeper-root .tk-row--table .cell-times { font-size: 12px; color: #555; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.timekeeper-root .tk-row--table .cell-times {
+  font-size: 12px; color: #555; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap;
+}
 .timekeeper-root .tk-row--table .cell-flags { display: flex; gap: .5rem; flex-wrap: wrap; }
 .timekeeper-root .tk-row--table .cell-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .timekeeper-root .inline-form { display: inline-block; margin: 0; }
 
-/* Buttons: consistent size like Departments page */
+/* Buttons in saved entries */
 .timekeeper-root .tk-row--table .btn { border-radius: 12px; }
 
 /* Edit-state inputs inside the table grid */
 .timekeeper-root .tk-row--table .tk-row-select,
 .timekeeper-root .tk-row--table .tk-row-input,
 .timekeeper-root .tk-row--table input[type="time"] {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 6px 8px;
-  border-radius: 10px;
+  width: 100%; box-sizing: border-box; padding: 6px 8px; border-radius: 10px;
 }
+
+/* Ticket input size */
+.timekeeper-root .tk-ticket-input { max-width: 140px; }
 
 /* Responsive stacking */
 @media (max-width: 992px) {
-  .timekeeper-root .tk-row--table .tk-row-grid {
-    grid-template-columns: 1fr 1fr;
-    row-gap: 8px;
-  }
-  .timekeeper-root .tk-row--header .tk-row-grid {
-    grid-template-columns: 1fr 1fr;
-  }
+  .timekeeper-root .tk-row--table .tk-row-grid { grid-template-columns: 1fr 1fr; row-gap: 8px; }
+  .timekeeper-root .tk-row--header .tk-row-grid { grid-template-columns: 1fr 1fr; }
   .timekeeper-root .tk-row--table .cell-desc { grid-column: 1 / -1; }
   .timekeeper-root .tk-row--table .cell-actions { grid-column: 1 / -1; justify-content: flex-end; }
 }
 
-/* Very small screens: make flags and times wrap nicely */
+/* Very small screens */
 @media (max-width: 560px) {
   .timekeeper-root .tk-row--table .cell-times,
-  .timekeeper-root .tk-row--table .cell-flags {
-    grid-column: 1 / -1;
-  }
+  .timekeeper-root .tk-row--table .cell-flags { grid-column: 1 / -1; }
 }
+
+/* Hide legacy saved-grid styles if present */
+.timekeeper-root .tk-saved-grid,
+.timekeeper-root .tk-saved-item { display: none; }

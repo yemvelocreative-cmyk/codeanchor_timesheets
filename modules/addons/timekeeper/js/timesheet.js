@@ -16,7 +16,13 @@
       const show = !!chk.checked;
       inp.classList.toggle('col-hidden', !show);
       inp.classList.toggle('col-show', show);
-      if (!show) inp.value = '';
+      if (!show) {
+        inp.value = '';
+      } else if (!inp.value) {
+        // Autofill from time_spent if available
+        const spent = qn(form, 'time_spent');
+        if (spent && spent.value) inp.value = spent.value;
+      }
       if (header) {
         header.classList.toggle('col-hidden', !show);
         header.classList.toggle('col-show', show);
@@ -126,7 +132,8 @@
       const taskSel = form.querySelector('.edit-task-category');
       if (deptSel && taskSel) bindDeptTaskFilter(deptSel, taskSel);
 
-      // Support billable/sla toggle in inline editor using the same class toggles
+      const spent = qn(form, 'time_spent'); // hidden (edit) or readonly (add)
+
       const billChk = form.querySelector('input[name="billable"]');
       const billInp = form.querySelector('input[name="billable_time"]');
       const slaChk  = form.querySelector('input[name="sla"]');
@@ -137,7 +144,11 @@
           const show = !!billChk.checked;
           billInp.classList.toggle('col-hidden', !show);
           billInp.classList.toggle('col-show', show);
-          if (!show) billInp.value = '';
+          if (!show) {
+            billInp.value = '';
+          } else if (!billInp.value && spent && spent.value) {
+            billInp.value = spent.value; // autofill
+          }
         }
         billChk.addEventListener('change', setBill);
         setBill();
@@ -148,7 +159,11 @@
           const show = !!slaChk.checked;
           slaInp.classList.toggle('col-hidden', !show);
           slaInp.classList.toggle('col-show', show);
-          if (!show) slaInp.value = '';
+          if (!show) {
+            slaInp.value = '';
+          } else if (!slaInp.value && spent && spent.value) {
+            slaInp.value = spent.value; // autofill
+          }
         }
         slaChk.addEventListener('change', setSla);
         setSla();

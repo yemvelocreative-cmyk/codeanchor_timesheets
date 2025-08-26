@@ -222,7 +222,7 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
             <div class="hdr">Description</div>
             <div class="hdr">Time</div>
             <div class="hdr">Flags</div>
-            <div class="hdr" style="text-align:right;">Actions</div>
+            <div class="hdr">Actions</div>
           </div>
         </div>
 
@@ -280,20 +280,30 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
                   </div>
 
                   <div class="cell cell-flags">
+                    <!-- Editable Ticket -->
+                    <input type="text"
+                           name="ticket_id"
+                           class="tk-row-input tk-ticket-input"
+                           placeholder="Ticket #"
+                           value="<?= htmlspecialchars($task->ticket_id ?? '', ENT_QUOTES, 'UTF-8') ?>">
+
+                    <!-- Billable -->
                     <label class="checkbox-inline tk-inline-check">
                       <input type="checkbox" name="billable" value="1" <?= $task->billable ? 'checked' : '' ?>><span>Billable</span>
                     </label>
                     <input type="text" name="billable_time"
-                          class="tk-inline-time-input <?= $task->billable ? 'col-show' : 'col-hidden' ?>"
-                          placeholder="0.00" value="<?= number_format((float)$task->billable_time, 2) ?>">
+                           class="tk-inline-time-input <?= $task->billable ? 'col-show' : 'col-hidden' ?>"
+                           placeholder="0.00" value="<?= number_format((float)$task->billable_time, 2) ?>">
 
+                    <!-- SLA -->
                     <label class="checkbox-inline tk-inline-check">
                       <input type="checkbox" name="sla" value="1" <?= $task->sla ? 'checked' : '' ?>><span>SLA</span>
                     </label>
                     <input type="text" name="sla_time"
-                          class="tk-inline-time-input <?= $task->sla ? 'col-show' : 'col-hidden' ?>"
-                          placeholder="0.00" value="<?= number_format((float)$task->sla_time, 2) ?>">
+                           class="tk-inline-time-input <?= $task->sla ? 'col-show' : 'col-hidden' ?>"
+                           placeholder="0.00" value="<?= number_format((float)$task->sla_time, 2) ?>">
 
+                    <!-- Optional badges while editing -->
                     <?php if (!empty($task->ticket_id)): ?>
                       <span class="tk-badge tk-badge--success">Ticket #<?= htmlspecialchars($task->ticket_id, ENT_QUOTES, 'UTF-8') ?></span>
                     <?php else: ?>
