@@ -160,7 +160,7 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
 
           <!-- Actions under the right block -->
           <div class="tk-actions-right">
-            <button type="submit" btn btn-primary"><?= $isEditing ? 'Save Changes' : 'Add' ?></button>
+            <button type="submit" class="btn btn-primary"><?= $isEditing ? 'Save Changes' : 'Add' ?></button>
             <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet" class="btn btn-default">Cancel</a>
           </div>
         </section>
