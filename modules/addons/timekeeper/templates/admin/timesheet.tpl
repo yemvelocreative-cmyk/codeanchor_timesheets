@@ -200,36 +200,40 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
         ?>
 
         <h4>Saved Entries</h4>
-        <div class="tk-row tk-card tk-row--table">
-  <div class="tk-row-grid">
-    <div class="cell cell-client">
+        <div class="tk-row tk-card tk-row--rails">
+  <div class="rail-left">
+    <div class="title">
       <strong><?= htmlspecialchars($clientMap[$task->client_id] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></strong>
+      <span class="sep">·</span>
+      <span class="muted"><?= htmlspecialchars($departmentMap[$task->department_id] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></span>
+      <span class="sep">·</span>
+      <span class="muted"><?= htmlspecialchars($taskMap[$task->task_category_id] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></span>
     </div>
-    <div class="cell cell-dept"><?= htmlspecialchars($departmentMap[$task->department_id] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></div>
-    <div class="cell cell-cat"><?= htmlspecialchars($taskMap[$task->task_category_id] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></div>
-    <div class="cell cell-desc"><?= htmlspecialchars($task->description, ENT_QUOTES, 'UTF-8') ?></div>
+    <div class="desc"><?= htmlspecialchars($task->description, ENT_QUOTES, 'UTF-8') ?></div>
+  </div>
 
-    <div class="cell cell-times">
-      <span><?= htmlspecialchars($task->start_time, ENT_QUOTES, 'UTF-8') ?>–<?= htmlspecialchars($task->end_time, ENT_QUOTES, 'UTF-8') ?></span>
-      <span class="sep">•</span>
-      <span><strong><?= number_format((float)$task->time_spent, 2) ?></strong> hrs</span>
+  <div class="rail-right">
+    <div class="stats">
+      <div class="times">
+        <span><?= htmlspecialchars($task->start_time, ENT_QUOTES, 'UTF-8') ?>–<?= htmlspecialchars($task->end_time, ENT_QUOTES, 'UTF-8') ?></span>
+        <span class="dot">•</span>
+        <span><strong><?= number_format((float)$task->time_spent, 2) ?></strong> hrs</span>
+      </div>
+      <div class="badges">
+        <?php if (!empty($task->ticket_id)): ?>
+          <span class="tk-badge tk-badge--success">Ticket #<?= htmlspecialchars($task->ticket_id, ENT_QUOTES, 'UTF-8') ?></span>
+        <?php else: ?>
+          <span class="tk-badge">No ticket</span>
+        <?php endif; ?>
+        <?php if ((float)$task->billable_time > 0): ?>
+          <span class="tk-badge">Billable <?= number_format((float)$task->billable_time, 2) ?>h</span>
+        <?php endif; ?>
+        <?php if ((float)$task->sla_time > 0): ?>
+          <span class="tk-badge">SLA <?= number_format((float)$task->sla_time, 2) ?>h</span>
+        <?php endif; ?>
+      </div>
     </div>
-
-    <div class="cell cell-flags">
-      <?php if (!empty($task->ticket_id)): ?>
-        <span class="tk-badge tk-badge--success">Ticket #<?= htmlspecialchars($task->ticket_id, ENT_QUOTES, 'UTF-8') ?></span>
-      <?php else: ?>
-        <span class="tk-badge">No ticket</span>
-      <?php endif; ?>
-      <?php if ((float)$task->billable_time > 0): ?>
-        <span class="tk-badge">Billable <?= number_format((float)$task->billable_time, 2) ?>h</span>
-      <?php endif; ?>
-      <?php if ((float)$task->sla_time > 0): ?>
-        <span class="tk-badge">SLA <?= number_format((float)$task->sla_time, 2) ?>h</span>
-      <?php endif; ?>
-    </div>
-
-    <div class="cell cell-actions">
+    <div class="actions">
       <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet&edit_id=<?= (int)$task->id ?>" class="btn btn-default">Edit</a>
       <form method="post" class="ts-delete-form inline-form">
         <input type="hidden" name="delete_id" value="<?= (int)$task->id ?>">
