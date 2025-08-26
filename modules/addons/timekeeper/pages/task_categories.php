@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add')
         tk_redirect($modulelink, ['error' => 'invalid_department']);
     }
 
-    // Duplicate guard (collation is case-insensitive)
+    // Duplicate guard
     $dup = Capsule::table('mod_timekeeper_task_categories')
         ->where('department_id', $departmentId)
         ->where('name', $name)
@@ -143,31 +143,54 @@ foreach ($departments as $dept) {
 }
 $content = str_replace('<!--DEPARTMENT_OPTIONS-->', $deptOptions, $content);
 
-/** Build editable rows (no inline styles/onclick) **/
-$rows = '';
+/** Group categories by department (sectioned cards) **/
+$grouped = [];
 foreach ($taskCategories as $cat) {
-    $rows .= '<form method="post" class="border p-3 mb-3 rounded bg-light">';
-    $rows .= '  <div class="row align-items-center">';
-    $rows .= '    <div class="col-md-5 mb-2">';
-    $rows .= '      <input type="text" name="name" value="' . htmlspecialchars($cat->name, ENT_QUOTES, 'UTF-8') . '" class="form-control" required>';
-    $rows .= '    </div>';
-    $rows .= '    <div class="col-md-4 mb-2">';
-    $rows .= '      <select name="department_id" class="form-control" required>';
-    foreach ($departments as $dept) {
-        $selected = ((int)$dept->id === (int)$cat->department_id) ? ' selected' : '';
-        $rows .= '        <option value="' . (int)$dept->id . '"' . $selected . '>'
-              . htmlspecialchars($dept->name, ENT_QUOTES, 'UTF-8') . '</option>';
-    }
-    $rows .= '      </select>';
-    $rows .= '    </div>';
-    $rows .= '    <div class="col-md-3 d-flex gap-2 tc-actions">';
-    $rows .= '      <input type="hidden" name="id" value="' . (int)$cat->id . '">';
-    $rows .= '      <input type="hidden" name="action" value="edit">';
-    $rows .= '      <button type="submit" class="btn btn-success">Save</button>';
-    $rows .= '      <a href="' . $modulelink . '&delete=' . (int)$cat->id . '" class="btn btn-danger">Delete</a>';
-    $rows .= '    </div>';
+    $deptId = (int)$cat->department_id;
+    if (!isset($departments[$deptId])) continue; // skip orphaned
+    $grouped[$deptId][] = $cat;
+}
+
+/** Build grouped sections **/
+$rows = '';
+foreach ($departments as $deptId => $dept) {
+    if (empty($grouped[$deptId])) continue;
+
+    $rows .= '<div class="tk-card">';
+    $rows .= '  <div class="tk-card-header">';
+    $rows .= '    <h4 class="tk-card-title">'
+           . htmlspecialchars($dept->name, ENT_QUOTES, 'UTF-8')
+           . ' — <span style="font-weight:400;color:#6b7280;">'
+           . count($grouped[$deptId]) . ' categor' . (count($grouped[$deptId]) === 1 ? 'y' : 'ies')
+           . '</span></h4>';
     $rows .= '  </div>';
-    $rows .= '</form>';
+
+    foreach ($grouped[$deptId] as $cat) {
+        $rows .= '<form method="post" class="tc-row">';
+        $rows .= '  <div class="row align-items-center">';
+        $rows .= '    <div class="col-md-5 mb-2">';
+        $rows .= '      <input type="text" name="name" value="' . htmlspecialchars($cat->name, ENT_QUOTES, 'UTF-8') . '" class="form-control" required>';
+        $rows .= '    </div>';
+        $rows .= '    <div class="col-md-4 mb-2">';
+        $rows .= '      <select name="department_id" class="form-control" required>';
+        foreach ($departments as $d2) {
+            $selected = ((int)$d2->id === (int)$cat->department_id) ? ' selected' : '';
+            $rows .= '        <option value="' . (int)$d2->id . '"' . $selected . '>'
+                  . htmlspecialchars($d2->name, ENT_QUOTES, 'UTF-8') . '</option>';
+        }
+        $rows .= '      </select>';
+        $rows .= '    </div>';
+        $rows .= '    <div class="col-md-3 d-flex gap-2 tc-actions">';
+        $rows .= '      <input type="hidden" name="id" value="' . (int)$cat->id . '">';
+        $rows .= '      <input type="hidden" name="action" value="edit">';
+        $rows .= '      <button type="submit" class="btn btn-success">Save</button>';
+        $rows .= '      <a href="' . $modulelink . '&delete=' . (int)$cat->id . '" class="btn btn-danger">Delete</a>';
+        $rows .= '    </div>';
+        $rows .= '  </div>';
+        $rows .= '</form>';
+    }
+
+    $rows .= '</div>'; // .tk-card
 }
 
 /** Messages **/

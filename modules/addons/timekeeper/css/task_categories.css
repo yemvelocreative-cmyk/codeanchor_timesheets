@@ -2,11 +2,47 @@
 .timekeeper-root h2 { margin-bottom: 4px; }
 .timekeeper-root .alert { margin: 10px 0 14px; }
 
-/* Intro text (moved from inline) */
+/* Intro text */
 .timekeeper-root .tc-intro {
   margin-top: 4px;
   font-size: 14px;
   color: #555;
+}
+
+/* Global rounding + inputs to match reports/settings */
+.timekeeper-root .btn { 
+  border-radius: 12px;       /* consistent “rounded” feel */
+  white-space: nowrap;
+}
+.timekeeper-root .btn + .btn { margin-left: 6px; }
+.timekeeper-root .form-control,
+.timekeeper-root select.form-control {
+  border-radius: 10px;
+}
+
+/* “Card” pattern (matches reports/settings look) */
+.timekeeper-root .tk-card {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  box-shadow:
+    0 1px 2px rgba(16,24,40,.04),
+    0 2px 8px rgba(16,24,40,.06);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.timekeeper-root .tk-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.timekeeper-root .tk-card-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
 }
 
 /* Add form container */
@@ -15,40 +51,28 @@
   .timekeeper-root form.mb-4 .row { width: 100%; max-width: none; }
 }
 
-/* Edit rows (your .border.p-3.mb-3 wrapper) */
-.timekeeper-root .border.p-3.mb-3 {
-  max-width: 760px;
-  background: #fff;
-  border-color: #e5e5e5 !important;
+/* Edit row container (inside cards) */
+.timekeeper-root .tc-rows .tc-row {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  background: #fafafa;
+  padding: 12px;
+  margin-bottom: 10px;
 }
-.timekeeper-root .border.p-3.mb-3 .row { width: 100%; }
-.timekeeper-root .border.p-3.mb-3 input[type="text"] { min-width: 220px; }
-
-.timekeeper-root .btn { white-space: nowrap; }
-.timekeeper-root .btn + .btn { margin-left: 6px; }
-
-/* Task Categories layout fixes */
-.timekeeper-root .tc-rows {
-  max-width: 860px;     /* give the row some breathing room */
-}
+.timekeeper-root .tc-rows .tc-row:last-of-type { margin-bottom: 0; }
 
 .timekeeper-root .tc-rows .row {
-  align-items: center;  /* vertically center inputs & buttons */
-  width: 100% !important; /* ensure full width (no inline widths) */
+  align-items: center;
+  width: 100% !important;
 }
+.timekeeper-root .tc-rows input[type="text"] { min-width: 220px; }
 
-.timekeeper-root .tc-actions {
-  padding-top: 2px;
-}
+.timekeeper-root .tc-actions { padding-top: 2px; }
+.timekeeper-root .tc-actions .btn { white-space: nowrap; }
 
-.timekeeper-root .tc-actions .btn {
-  white-space: nowrap;  /* avoids breaking long button labels */
-}
+/* Wrapper to give a bit more width breathing room */
+.timekeeper-root .tc-rows { max-width: 860px; }
 
-/* Add a little space between consecutive rows */
-.timekeeper-root .tc-rows form {
-  margin-bottom: 2px;
-}
-.timekeeper-root .tc-rows form:last-of-type {
-  margin-bottom: 0;
-}
+/* Compact spacing between forms (fallback if any) */
+.timekeeper-root .tc-rows form { margin-bottom: 2px; }
+.timekeeper-root .tc-rows form:last-of-type { margin-bottom: 0; }
