@@ -2,24 +2,76 @@
 .timekeeper-root h2 { margin-bottom: 4px; }
 .timekeeper-root .alert { margin: 10px 0 14px; }
 
-/* Add form layout (uses your .mb-4 form) */
-.timekeeper-root form.mb-4 .row {
-  width: 50%;
-  max-width: 760px;
+/* Intro text helper (optional) */
+.timekeeper-root .dept-intro {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #555;
 }
+
+/* Global rounding (match reports/settings) */
+.timekeeper-root .btn {
+  border-radius: 12px;      /* consistent rounded feel */
+  white-space: nowrap;
+}
+.timekeeper-root .btn + .btn { margin-left: 6px; }
+.timekeeper-root .form-control,
+.timekeeper-root select.form-control {
+  border-radius: 10px;
+}
+
+/* Card pattern (shared look and feel) */
+.timekeeper-root .tk-card {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  box-shadow:
+    0 1px 2px rgba(16,24,40,.04),
+    0 2px 8px rgba(16,24,40,.06);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.timekeeper-root .tk-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.timekeeper-root .tk-card-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Add form layout */
+.timekeeper-root form.mb-4 .row { width: 50%; max-width: 760px; }
 @media (max-width: 992px) {
   .timekeeper-root form.mb-4 .row { width: 100%; max-width: none; }
 }
 
-/* Edit rows (your .border.p-3.mb-3 wrapper) */
-.timekeeper-root .border.p-3.mb-3 {
-  max-width: 760px;
-  background: #fff;
-  border-color: #e5e5e5 !important;
+/* Edit/list rows inside grouped sections */
+.timekeeper-root .dept-rows { max-width: 860px; }
+.timekeeper-root .dept-rows .dept-row {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  background: #fafafa;
+  padding: 12px;
+  margin-bottom: 10px;
 }
-.timekeeper-root .border.p-3.mb-3 .row { width: 100%; }
-.timekeeper-root .border.p-3.mb-3 input[type="text"] { min-width: 240px; }
+.timekeeper-root .dept-rows .dept-row:last-of-type { margin-bottom: 0; }
 
-/* Buttons */
-.timekeeper-root .btn { white-space: nowrap; }
-.timekeeper-root .btn + .btn { margin-left: 6px; }
+.timekeeper-root .dept-rows .row {
+  align-items: center;
+  width: 100% !important;
+}
+
+.timekeeper-root .dept-rows input[type="text"] { min-width: 240px; }
+
+.timekeeper-root .dept-actions { padding-top: 2px; }
+.timekeeper-root .dept-actions .btn { white-space: nowrap; }
+
+/* Fallback spacing if forms are still used for individual rows */
+.timekeeper-root .dept-rows form { margin-bottom: 2px; }
+.timekeeper-root .dept-rows form:last-of-type { margin-bottom: 0; }
