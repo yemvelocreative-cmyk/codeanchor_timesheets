@@ -200,9 +200,9 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
         ?>
 
         <h4>Saved Entries</h4>
-        <div class="tk-row tk-card tk-row--rails">
-  <div class="rail-left">
-    <div class="title">
+        <div class="tk-row tk-card tk-row--footerbar">
+  <div class="top">
+    <div class="line-1">
       <strong><?= htmlspecialchars($clientMap[$task->client_id] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></strong>
       <span class="sep">·</span>
       <span class="muted"><?= htmlspecialchars($departmentMap[$task->department_id] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></span>
@@ -210,29 +210,26 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
       <span class="muted"><?= htmlspecialchars($taskMap[$task->task_category_id] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></span>
     </div>
     <div class="desc"><?= htmlspecialchars($task->description, ENT_QUOTES, 'UTF-8') ?></div>
+    <div class="meta">
+      <span><?= htmlspecialchars($task->start_time, ENT_QUOTES, 'UTF-8') ?>–<?= htmlspecialchars($task->end_time, ENT_QUOTES, 'UTF-8') ?></span>
+      <span class="dot">•</span>
+      <span><strong><?= number_format((float)$task->time_spent, 2) ?></strong> hrs</span>
+      <?php if ((float)$task->billable_time > 0): ?>
+        <span class="dot">•</span><span>Billable <?= number_format((float)$task->billable_time, 2) ?> hrs</span>
+      <?php endif; ?>
+      <?php if ((float)$task->sla_time > 0): ?>
+        <span class="dot">•</span><span>SLA <?= number_format((float)$task->sla_time, 2) ?> hrs</span>
+      <?php endif; ?>
+      <?php if (!empty($task->ticket_id)): ?>
+        <span class="dot">•</span><span class="tk-badge tk-badge--success">Ticket #<?= htmlspecialchars($task->ticket_id, ENT_QUOTES, 'UTF-8') ?></span>
+      <?php else: ?>
+        <span class="dot">•</span><span class="tk-badge">No ticket</span>
+      <?php endif; ?>
+    </div>
   </div>
 
-  <div class="rail-right">
-    <div class="stats">
-      <div class="times">
-        <span><?= htmlspecialchars($task->start_time, ENT_QUOTES, 'UTF-8') ?>–<?= htmlspecialchars($task->end_time, ENT_QUOTES, 'UTF-8') ?></span>
-        <span class="dot">•</span>
-        <span><strong><?= number_format((float)$task->time_spent, 2) ?></strong> hrs</span>
-      </div>
-      <div class="badges">
-        <?php if (!empty($task->ticket_id)): ?>
-          <span class="tk-badge tk-badge--success">Ticket #<?= htmlspecialchars($task->ticket_id, ENT_QUOTES, 'UTF-8') ?></span>
-        <?php else: ?>
-          <span class="tk-badge">No ticket</span>
-        <?php endif; ?>
-        <?php if ((float)$task->billable_time > 0): ?>
-          <span class="tk-badge">Billable <?= number_format((float)$task->billable_time, 2) ?>h</span>
-        <?php endif; ?>
-        <?php if ((float)$task->sla_time > 0): ?>
-          <span class="tk-badge">SLA <?= number_format((float)$task->sla_time, 2) ?>h</span>
-        <?php endif; ?>
-      </div>
-    </div>
+  <div class="footerbar">
+    <div class="spacer"></div>
     <div class="actions">
       <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet&edit_id=<?= (int)$task->id ?>" class="btn btn-default">Edit</a>
       <form method="post" class="ts-delete-form inline-form">
