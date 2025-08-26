@@ -5,15 +5,15 @@
   // Quick selector by name within a form
   function qn(form, name) { return form.querySelector('[name="' + name + '"]'); }
 
-  // Show/hide billable/sla time inputs + headers
+  // Show/hide billable/sla time inputs + (optional) headers using col-hidden/col-show
   function toggleTimeField(form, checkboxName, inputName, headerId) {
     const chk = qn(form, checkboxName);
     const inp = qn(form, inputName);
-    const header = document.getElementById(headerId);
+    const header = headerId ? document.getElementById(headerId) : null;
     if (!chk || !inp) return;
 
     function apply() {
-      const show = chk.checked === true;
+      const show = !!chk.checked;
       inp.classList.toggle('col-hidden', !show);
       inp.classList.toggle('col-show', show);
       if (!show) inp.value = '';
@@ -61,7 +61,6 @@
         const show = (!dep || dep === dept || opt.value === '');
         opt.style.display = show ? 'block' : 'none';
       });
-      // Reset if current selection is hidden
       if (taskSel.selectedOptions.length && taskSel.selectedOptions[0].style.display === 'none') {
         taskSel.value = '';
       }
@@ -94,6 +93,18 @@
     });
   }
 
+  // Attach mobile labels to row cells based on header
+  function installMobileLabels() {
+    const header = document.querySelector('.timekeeper-root .ts-subheader');
+    if (!header) return;
+    const labels = Array.from(header.children).map(el => el.textContent.trim());
+    document.querySelectorAll('.timekeeper-root .ts-row:not(.ts-subheader)').forEach(row => {
+      Array.from(row.children).forEach((cell, i) => {
+        if (!cell.hasAttribute('data-col') && labels[i]) cell.setAttribute('data-col', labels[i]);
+      });
+    });
+  }
+
   // ------- Boot -------
   document.addEventListener('DOMContentLoaded', function () {
     // Add form behavior
@@ -109,34 +120,43 @@
     }
 
     // Edit row behavior (per-row)
-    document.querySelectorAll('form.ts-item').forEach(form => {
+    document.querySelectorAll('form.ts-item, form.tk-row-edit').forEach(form => {
       bindTimeCalc(form);
       const deptSel = form.querySelector('.edit-department');
       const taskSel = form.querySelector('.edit-task-category');
       if (deptSel && taskSel) bindDeptTaskFilter(deptSel, taskSel);
+
+      // Support billable/sla toggle in inline editor using the same class toggles
+      const billChk = form.querySelector('input[name="billable"]');
+      const billInp = form.querySelector('input[name="billable_time"]');
+      const slaChk  = form.querySelector('input[name="sla"]');
+      const slaInp  = form.querySelector('input[name="sla_time"]');
+
+      if (billChk && billInp) {
+        function setBill() {
+          const show = !!billChk.checked;
+          billInp.classList.toggle('col-hidden', !show);
+          billInp.classList.toggle('col-show', show);
+          if (!show) billInp.value = '';
+        }
+        billChk.addEventListener('change', setBill);
+        setBill();
+      }
+
+      if (slaChk && slaInp) {
+        function setSla() {
+          const show = !!slaChk.checked;
+          slaInp.classList.toggle('col-hidden', !show);
+          slaInp.classList.toggle('col-show', show);
+          if (!show) slaInp.value = '';
+        }
+        slaChk.addEventListener('change', setSla);
+        setSla();
+      }
     });
 
     bindDeleteConfirms();
     initSelect2();
+    installMobileLabels();
   });
-
-  (function () {
-    'use strict';
-    document.addEventListener('DOMContentLoaded', function () {
-      const header = document.querySelector('.timekeeper-root .ts-subheader');
-      if (!header) return;
-
-      const labels = Array.from(header.children).map(el => el.textContent.trim());
-
-      // Apply data-col to every non-header row so CSS can show inline labels on mobile
-      document.querySelectorAll('.timekeeper-root .ts-row:not(.ts-subheader)').forEach(row => {
-        Array.from(row.children).forEach((cell, i) => {
-          // Only set if not already present
-          if (!cell.hasAttribute('data-col') && labels[i]) {
-            cell.setAttribute('data-col', labels[i]);
-          }
-        });
-      });
-    });
-  })();
 })();

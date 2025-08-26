@@ -1,6 +1,15 @@
 /* ===== Timekeeper Timesheet (scoped) ===== */
 .timekeeper-root .timesheet-root {}
 
+/* Consistent rounded UI like Reports/Settings */
+.timekeeper-root .btn { border-radius: 12px; white-space: nowrap; }
+.timekeeper-root .form-control,
+.timekeeper-root select,
+.timekeeper-root input[type="text"],
+.timekeeper-root input[type="time"],
+.timekeeper-root textarea { border-radius: 10px; }
+
+/* Alerts */
 .timekeeper-root .ts-alert {
   padding: 10px;
   border: 1px solid;
@@ -21,28 +30,15 @@
 }
 
 /* Headings / rows */
-.timekeeper-root .ts-header {
-  font-weight: bold;
-  padding-bottom: 6px;
-  margin-top: 16px;
-}
-.timekeeper-root .ts-subheader {
-  font-weight: 600;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #ccc;
-  margin-top: 6px;
-}
+.timekeeper-root .ts-header { font-weight: bold; padding-bottom: 6px; margin-top: 16px; }
+.timekeeper-root .ts-subheader { font-weight: 600; padding-bottom: 6px; border-bottom: 1px solid #ccc; margin-top: 6px; }
 .timekeeper-root .ts-entryform,
-.timekeeper-root .ts-item {
-  padding: 6px 0;
-  border-bottom: 1px solid #eee;
-  font-size: 14px;
-}
+.timekeeper-root .ts-item { padding: 6px 0; border-bottom: 1px solid #eee; font-size: 14px; }
 
 /* Horizontal scroll wrapper for wide tables */
 .timekeeper-root .ts-scroll { overflow-x: auto; }
 
-/* Fixed width helpers (used outside grid or for buttons) */
+/* Fixed width helpers */
 .timekeeper-root .w-50  { width: 50px; }
 .timekeeper-root .w-70  { width: 70px; }
 .timekeeper-root .w-80  { width: 80px; }
@@ -58,257 +54,145 @@
 
 .timekeeper-root .sla-group { display: flex; align-items: center; gap: 4px; }
 
-/* Hide/show columns (for billable/sla time) */
-.timekeeper-root .col-hidden { visibility: hidden; height: 0; }
-.timekeeper-root .col-show   { visibility: visible; height: auto; }
+/* Hide/show columns */
+.timekeeper-root .col-hidden { visibility: hidden; height: 0; display: none; }
+.timekeeper-root .col-show   { visibility: visible; height: auto; display: inline-block; }
 
 /* Totals row */
 .timekeeper-root .ts-totals {
-  display: flex;
-  gap: 20px;
-  justify-content: flex-end;
-  margin-top: 16px;
-  flex-wrap: wrap;
+  display: flex; gap: 20px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap;
 }
 
 /* Compact table-like spacing */
 .timekeeper-root .timesheet-root .table.compact th,
-.timekeeper-root .timesheet-root .table.compact td {
-  padding: 6px 8px;
-}
+.timekeeper-root .timesheet-root .table.compact td { padding: 6px 8px; }
 
 /* Small buttons unified width */
 .timekeeper-root .btn.w-70 { width: 70px; }
 
-/* ===== Timesheet: lock columns so header and inputs align perfectly (Grid) ===== */
+/* ===== Grid alignment for classic layout ===== */
 .timekeeper-root .ts-row {
   display: grid;
   grid-template-columns:
-    200px  /* Client */
-    180px  /* Department */
-    180px  /* Task Category */
-    90px   /* Ticket ID */
-    250px  /* Description */
-    90px   /* Start */
-    90px   /* End */
-    80px   /* Time */
-    50px   /* Billable */
-    90px   /* Billable Time */
-    50px   /* SLA */
-    90px   /* SLA Time */
-    70px   /* Save/Edit */
-    70px;  /* Cancel/Actions */
-  column-gap: 8px;            /* spacing between columns */
-  align-items: center;        /* vertical centering per row */
+    200px 180px 180px 90px 250px 90px 90px 80px 50px 90px 50px 90px 70px 70px;
+  column-gap: 8px;
+  align-items: center;
 }
 
-/* Header row uses same grid; keep bold style */
+/* Header row */
 .timekeeper-root .ts-subheader { font-weight: 600; }
 .tk-totals-wrap { margin: .25rem 0 .5rem; }
 .tk-totals-bar { display: inline-flex; align-items: center; gap: .35rem; font-size: 14px; }
-.tk-totals-bar .lbl { color: #6B7280; }
+.tk-totals-bar .lbl, .tk-totals-bar .unit { color: #6B7280; }
 .tk-totals-bar .val { font-weight: 600; }
-.tk-totals-bar .unit { color: #6B7280; margin-left: .15rem; }
 .tk-totals-bar .sep { opacity: .5; margin: 0 .35rem; }
 
-/* Let grid govern widths inside rows (ignore .w-XXX in grid cells) */
+/* Let grid govern widths inside rows */
 .timekeeper-root .ts-row > [class^="w-"],
 .timekeeper-root .ts-row > [class*=" w-"] { width: auto; }
 
-/* Inputs expand to the cell width neatly */
+/* Inputs fill cell */
 .timekeeper-root .ts-row select,
 .timekeeper-root .ts-row input[type="text"],
 .timekeeper-root .ts-row input[type="time"],
-.timekeeper-root .ts-row textarea {
-  width: 100%;
-  box-sizing: border-box;
-}
+.timekeeper-root .ts-row textarea { width: 100%; box-sizing: border-box; }
 
-/* ---------- Tablet & below: progressively hide low-priority columns ---------- */
-/* Column order (for reference):
-   1 Client, 2 Dept, 3 TaskCat, 4 Ticket, 5 Description, 6 Start, 7 End,
-   8 Time, 9 Billable, 10 Billable Time, 11 SLA, 12 SLA Time, 13 Save/Edit, 14 Cancel/Actions
-*/
-
-/* ≤1200px: hide Billable Time (10) and SLA Time (12) */
+/* ≤1200px: hide Billable Time + SLA Time */
 @media (max-width: 1200px) {
   .timekeeper-root .ts-row > :nth-child(10),
   .timekeeper-root .ts-row > :nth-child(12) { display: none; }
-
   .timekeeper-root .ts-row {
     grid-template-columns:
-      200px 180px 180px 90px 250px 90px 90px 80px 50px /* (cols 1-9) */
-      50px  /* (col 11: SLA) */
-      70px  /* (col 13: Save/Edit) */
-      70px; /* (col 14: Cancel/Actions) */
+      200px 180px 180px 90px 250px 90px 90px 80px 50px 50px 70px 70px;
   }
 }
 
-/* ≤992px: also hide Ticket ID (4) */
+/* ≤992px: also hide Ticket ID */
 @media (max-width: 992px) {
   .timekeeper-root .ts-row > :nth-child(4) { display: none; }
-
   .timekeeper-root .ts-row {
     grid-template-columns:
-      200px 180px 180px /* 1-3: Client, Dept, TaskCat */
-      250px             /* 5: Description */
-      90px 90px         /* 6-7: Start, End */
-      80px              /* 8: Time */
-      50px              /* 9: Billable */
-      50px              /* 11: SLA */
-      70px 70px;        /* 13-14: Actions */
+      200px 180px 180px 250px 90px 90px 80px 50px 50px 70px 70px;
   }
 }
 
-/* ---------- Mobile: card layout with inline labels (no header row) ---------- */
+/* ===== Mobile card layout ===== */
 @media (max-width: 768px) {
-  /* Hide the separate header row entirely */
   .timekeeper-root .ts-subheader { display: none; }
-
-  /* Each row becomes a 2-column card: Label (auto) + Value (1fr) */
   .timekeeper-root .ts-row {
-    grid-template-columns: 130px 1fr;
-    column-gap: 12px;
-    row-gap: 8px;
-    align-items: start;
+    grid-template-columns: 130px 1fr; column-gap: 12px; row-gap: 8px; align-items: start;
   }
-
-  /* Every cell shows its own tiny label above the value using data-col */
   .timekeeper-root .ts-row > *[data-col]::before {
     content: attr(data-col);
-    display: block;
-    font-size: 12px;
-    line-height: 1.2;
-    color: #6c757d;
-    margin-bottom: 4px;
+    display: block; font-size: 12px; line-height: 1.2; color: #6c757d; margin-bottom: 4px;
   }
-
-  /* Put actions on one line at the bottom spanning both columns */
   .timekeeper-root .ts-row > :nth-last-child(2),
-  .timekeeper-root .ts-row > :last-child {
-    grid-column: 1 / -1;
-  }
-
-  /* Let long fields breathe */
+  .timekeeper-root .ts-row > :last-child { grid-column: 1 / -1; }
   .timekeeper-root .ts-row input[type="text"],
-  .timekeeper-root .ts-row textarea {
-    min-height: 32px;
-  }
+  .timekeeper-root .ts-row textarea { min-height: 32px; }
 }
 
 /* ===== Block-based entry card ===== */
 .timekeeper-root .tk-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 1px 2px rgba(16,24,40,0.04);
-  margin-bottom: 16px;
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px;
+  box-shadow: 0 1px 2px rgba(16,24,40,0.04); margin-bottom: 16px;
 }
-
-.timekeeper-root .tk-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-
-.timekeeper-root .tk-card-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0;
-}
-
-.timekeeper-root .tk-section-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 10px 0 6px;
-}
-
-.timekeeper-root .tk-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-}
-
-.timekeeper-root .tk-field {
-  display: grid;
-  grid-template-columns: 180px 1fr;
-  align-items: center;
-  gap: 10px;
-}
-
-.timekeeper-root .tk-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: #334155;
-  text-align: right;
-  padding-right: 4px;
-}
-
-.timekeeper-root .tk-input {
-  width: 100%;
-}
-
-.timekeeper-root .tk-inline {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.timekeeper-root .tk-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  margin-top: 8px;
-}
+.timekeeper-root .tk-card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.timekeeper-root .tk-card-header--compact { padding: .5rem 1rem; }
+.timekeeper-root .tk-card-title { font-size: 16px; font-weight: 600; color: #0f172a; margin: 0; }
+.timekeeper-root .tk-section-title { font-size: 14px; font-weight: 600; color: #0f172a; margin: 10px 0 6px; }
+.timekeeper-root .tk-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.timekeeper-root .tk-field { display: grid; grid-template-columns: 180px 1fr; align-items: center; gap: 10px; }
+.timekeeper-root .tk-label { font-size: 13px; font-weight: 500; color: #334155; text-align: right; padding-right: 4px; }
+.timekeeper-root .tk-input { width: 100%; }
+.timekeeper-root .tk-inline { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.timekeeper-root .tk-inline-nowrap { flex-wrap: nowrap; }
+.timekeeper-root .tk-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-top: 8px; }
 
 /* Compact controls */
 .timekeeper-root .tk-input input[type="text"],
 .timekeeper-root .tk-input input[type="time"],
 .timekeeper-root .tk-input input[type="number"],
 .timekeeper-root .tk-input select,
-.timekeeper-root .tk-input textarea {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 6px 8px;
-}
+.timekeeper-root .tk-input textarea { width: 100%; box-sizing: border-box; padding: 6px 8px; }
 
-/* Tighten card layout on wide screens: 2 or 3 columns of blocks */
+/* Tighten card layout on wide screens */
 @media (min-width: 1100px) {
-  .timekeeper-root .tk-block-grid-3 {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 16px;
-  }
+  .timekeeper-root .tk-block-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
 }
 @media (min-width: 900px) and (max-width: 1099px) {
-  .timekeeper-root .tk-block-grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
+  .timekeeper-root .tk-block-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 }
 
 /* Mobile: stack labels above inputs */
 @media (max-width: 768px) {
-  .timekeeper-root .tk-field {
-    grid-template-columns: 1fr;
-  }
-  .timekeeper-root .tk-label {
-    text-align: left;
-    padding: 0;
-  }
+  .timekeeper-root .tk-field { grid-template-columns: 1fr; }
+  .timekeeper-root .tk-label { text-align: left; padding: 0; }
 }
 
-.tk-actions-right {
-  display: flex;
-  justify-content: flex-end;
-  gap: .5rem;
-  margin-top: 1rem;
-}
+/* Right-aligned action buttons */
+.tk-actions-right { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1rem; }
+
+/* Saved entries list */
+.timekeeper-root .tk-saved-list { display: grid; grid-template-columns: 1fr; gap: .75rem; }
+.timekeeper-root .tk-row { padding: .75rem 1rem; }
+.timekeeper-root .tk-row-main { display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: center; }
+.timekeeper-root .tk-row-left { min-width: 0; }
+.timekeeper-root .tk-row-right { display: grid; gap: .5rem; justify-items: end; }
+@media (min-width: 900px) { .timekeeper-root .tk-row-right { grid-auto-flow: row; } }
+.timekeeper-root .tk-row-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem; font-size: 14px; }
+.timekeeper-root .tk-row-title .sep { opacity: .5; }
+.timekeeper-root .tk-row-title .muted { color: #666; }
+.timekeeper-root .tk-row-desc { margin-top: .15rem; font-size: 14px; color: #222; overflow-wrap: anywhere; }
+.timekeeper-root .tk-row-meta { margin-top: .25rem; font-size: 12px; color: #555; display: flex; flex-wrap: wrap; gap: .35rem .5rem; align-items: center; }
+.timekeeper-root .tk-row-meta .dot { opacity: .5; }
+.timekeeper-root .tk-badges { display: flex; gap: .5rem; align-items: center; }
+.timekeeper-root .tk-badge { font-size: 12px; padding: .15rem .5rem; border: 1px solid #E5E7EB; border-radius: 999px; background: #F9FAFB; color: #374151; white-space: nowrap; }
+.timekeeper-root .tk-badge--success { border-color: #C7F0D8; background: #ECFDF5; color: #065F46; }
+.timekeeper-root .tk-row-actions { display: flex; gap: .5rem; }
+.timekeeper-root .tk-row-select { max-width: 220px; }
+.timekeeper-root .tk-row-input { width: 100%; }
+
+/* Hide legacy saved-grid styles if present */
+.timekeeper-root .tk-saved-grid,
+.timekeeper-root .tk-saved-item { display: none; }
