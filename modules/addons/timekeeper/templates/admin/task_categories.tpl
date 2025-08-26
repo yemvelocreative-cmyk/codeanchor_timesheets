@@ -1,5 +1,5 @@
 <h2>Task Categories</h2>
-<p style="margin-top:4px;font-size:14px;color:#555;">
+<p class="tc-intro">
   Create and manage task categories, each linked to a department.
 </p>
 
@@ -8,16 +8,22 @@
 <!-- Add Task Category -->
 <form method="post" class="mb-4">
   <input type="hidden" name="action" value="add">
-  <div class="row" style="width:50%;max-width:760px;">
+  <div class="row">
     <div class="col-md-5 mb-2">
-      <input type="text" name="name" class="form-control" placeholder="Task Category Name" required
-             oninvalid="this.setCustomValidity('Required field. Please provide a task category name.')"
-             oninput="this.setCustomValidity('')">
+      <input
+        type="text"
+        name="name"
+        class="form-control"
+        placeholder="Task Category Name"
+        required
+      >
     </div>
     <div class="col-md-4 mb-2">
-      <select name="department_id" class="form-control" required
-              oninvalid="this.setCustomValidity('Please select a department.')"
-              oninput="this.setCustomValidity('')">
+      <select
+        name="department_id"
+        class="form-control"
+        required
+      >
         <!--DEPARTMENT_OPTIONS-->
       </select>
     </div>

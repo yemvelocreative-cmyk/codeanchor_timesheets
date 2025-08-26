@@ -49,10 +49,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add')
     }
 
     Capsule::table('mod_timekeeper_task_categories')->insert([
-        'name'         => $name,
-        'department_id'=> $departmentId,
-        'status'       => 'active',
-        'created_at'   => date('Y-m-d H:i:s'),
+        'name'          => $name,
+        'department_id' => $departmentId,
+        'status'        => 'active',
+        'created_at'    => date('Y-m-d H:i:s'),
     ]);
 
     tk_redirect($modulelink, ['success' => 1]);
@@ -143,12 +143,11 @@ foreach ($departments as $dept) {
 }
 $content = str_replace('<!--DEPARTMENT_OPTIONS-->', $deptOptions, $content);
 
-/** Build editable rows **/
+/** Build editable rows (no inline styles/onclick) **/
 $rows = '';
-$confirmJS = "return confirm('Are you sure you want to delete this task category?');";
 foreach ($taskCategories as $cat) {
     $rows .= '<form method="post" class="border p-3 mb-3 rounded bg-light">';
-    $rows .= '  <div class="row align-items-center" style="width:50%;max-width:760px">';
+    $rows .= '  <div class="row align-items-center">';
     $rows .= '    <div class="col-md-5 mb-2">';
     $rows .= '      <input type="text" name="name" value="' . htmlspecialchars($cat->name, ENT_QUOTES, 'UTF-8') . '" class="form-control" required>';
     $rows .= '    </div>';
@@ -165,7 +164,7 @@ foreach ($taskCategories as $cat) {
     $rows .= '      <input type="hidden" name="id" value="' . (int)$cat->id . '">';
     $rows .= '      <input type="hidden" name="action" value="edit">';
     $rows .= '      <button type="submit" class="btn btn-success">Save</button>';
-    $rows .= '      <a href="' . $modulelink . '&delete=' . (int)$cat->id . '" class="btn btn-danger" style="margin-left:5px;" onclick="' . $confirmJS . '">Delete</a>';
+    $rows .= '      <a href="' . $modulelink . '&delete=' . (int)$cat->id . '" class="btn btn-danger">Delete</a>';
     $rows .= '    </div>';
     $rows .= '  </div>';
     $rows .= '</form>';

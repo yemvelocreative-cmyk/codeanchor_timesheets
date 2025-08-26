@@ -2,6 +2,13 @@
 .timekeeper-root h2 { margin-bottom: 4px; }
 .timekeeper-root .alert { margin: 10px 0 14px; }
 
+/* Intro text (moved from inline) */
+.timekeeper-root .tc-intro {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #555;
+}
+
 /* Add form container */
 .timekeeper-root form.mb-4 .row { width: 50%; max-width: 760px; }
 @media (max-width: 992px) {
@@ -27,7 +34,7 @@
 
 .timekeeper-root .tc-rows .row {
   align-items: center;  /* vertically center inputs & buttons */
-  width: 100% !important; /* override inline 50% width */
+  width: 100% !important; /* ensure full width (no inline widths) */
 }
 
 .timekeeper-root .tc-actions {
