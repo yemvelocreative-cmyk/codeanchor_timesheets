@@ -73,7 +73,6 @@
   column-gap: 8px;
   align-items: center;
 }
-.timekeeper-root .ts-subheader { font-weight: 600; }
 .tk-totals-wrap { margin: .25rem 0 .5rem; }
 .tk-totals-bar { display: inline-flex; align-items: center; gap: .35rem; font-size: 14px; }
 .tk-totals-bar .lbl, .tk-totals-bar .unit { color: #6B7280; }
@@ -244,3 +243,27 @@
 /* Hide legacy saved-grid styles if present */
 .timekeeper-root .tk-saved-grid,
 .timekeeper-root .tk-saved-item { display: none; }
+
+/* --- Compact header meta grid (used at top of form) --- */
+.timekeeper-root .tk-meta-grid { display: grid; grid-template-columns: 1fr; gap: .25rem; }
+@media (min-width: 900px) {
+  .timekeeper-root .tk-meta-grid { grid-template-columns: auto auto auto auto; align-items: center; gap: 1rem; }
+}
+
+/* --- Start/End compact row --- */
+.timekeeper-root .tk-inline-times { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.timekeeper-root .tk-inline-times .tk-time { flex: 0 1 35%; min-width: 140px; }
+
+/* --- Half-width helper for Time Spent (used in tpl) --- */
+.timekeeper-root .tk-half { width: 50%; min-width: 120px; }
+
+/* --- Inline time input width for billable/sla fields --- */
+.timekeeper-root .tk-inline-time-input { width: 130px; min-width: 120px; }
+
+/* --- Badges (used in saved rows) --- */
+.timekeeper-root .tk-badges { display: flex; gap: .5rem; align-items: center; }
+.timekeeper-root .tk-badge {
+  font-size: 12px; padding: .15rem .5rem; border: 1px solid #E5E7EB; border-radius: 999px;
+  background: #F9FAFB; color: #374151; white-space: nowrap;
+}
+.timekeeper-root .tk-badge--success { border-color: #C7F0D8; background: #ECFDF5; color: #065F46; }

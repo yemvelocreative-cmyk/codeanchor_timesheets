@@ -1,11 +1,14 @@
-// Timekeeper — Timesheet
+// Timekeeper — Timesheet (clean)
 (function () {
   'use strict';
 
   // Quick selector by name within a form
-  function qn(form, name) { return form.querySelector('[name="' + name + '"]'); }
+  function qn(form, name) {
+    return form.querySelector('[name="' + name + '"]');
+  }
 
   // Show/hide billable/sla time inputs + (optional) headers using col-hidden/col-show
+  // headerId is optional; pass if you have a matching header element to toggle.
   function toggleTimeField(form, checkboxName, inputName, headerId) {
     const chk = qn(form, checkboxName);
     const inp = qn(form, inputName);
@@ -16,6 +19,7 @@
       const show = !!chk.checked;
       inp.classList.toggle('col-hidden', !show);
       inp.classList.toggle('col-show', show);
+
       if (!show) {
         inp.value = '';
       } else if (!inp.value) {
@@ -23,11 +27,13 @@
         const spent = qn(form, 'time_spent');
         if (spent && spent.value) inp.value = spent.value;
       }
+
       if (header) {
         header.classList.toggle('col-hidden', !show);
         header.classList.toggle('col-show', show);
       }
     }
+
     chk.addEventListener('change', apply);
     apply();
   }
@@ -42,17 +48,21 @@
     function calc() {
       const s = start.value, e = end.value;
       if (!s || !e) { spent.value = ''; return; }
+
       const [sh, sm] = s.split(':').map(Number);
       const [eh, em] = e.split(':').map(Number);
       let diff = (eh * 60 + em) - (sh * 60 + sm);
+
       if (diff <= 0) {
         alert('End time must be later than start time.');
         end.value = '';
         spent.value = '';
         return;
       }
+
       spent.value = (Math.round((diff / 60) * 100) / 100).toFixed(2);
     }
+
     start.addEventListener('change', calc);
     end.addEventListener('change', calc);
   }
@@ -60,6 +70,7 @@
   // Filter task_category by selected department (single form)
   function bindDeptTaskFilter(deptSel, taskSel) {
     if (!deptSel || !taskSel) return;
+
     function apply() {
       const dept = deptSel.value;
       Array.from(taskSel.options).forEach(opt => {
@@ -67,10 +78,13 @@
         const show = (!dep || dep === dept || opt.value === '');
         opt.style.display = show ? 'block' : 'none';
       });
+
+      // Reset if current selection is now hidden
       if (taskSel.selectedOptions.length && taskSel.selectedOptions[0].style.display === 'none') {
         taskSel.value = '';
       }
     }
+
     deptSel.addEventListener('change', apply);
     apply();
   }
@@ -99,25 +113,13 @@
     });
   }
 
-  // Attach mobile labels to row cells based on header
-  function installMobileLabels() {
-    const header = document.querySelector('.timekeeper-root .ts-subheader');
-    if (!header) return;
-    const labels = Array.from(header.children).map(el => el.textContent.trim());
-    document.querySelectorAll('.timekeeper-root .ts-row:not(.ts-subheader)').forEach(row => {
-      Array.from(row.children).forEach((cell, i) => {
-        if (!cell.hasAttribute('data-col') && labels[i]) cell.setAttribute('data-col', labels[i]);
-      });
-    });
-  }
-
   // ------- Boot -------
   document.addEventListener('DOMContentLoaded', function () {
     // Add form behavior
     const addForm = document.getElementById('addTaskForm');
     if (addForm) {
-      toggleTimeField(addForm, 'billable', 'billable_time', 'billableTimeHeader');
-      toggleTimeField(addForm, 'sla', 'sla_time', 'slaTimeHeader');
+      toggleTimeField(addForm, 'billable', 'billable_time'); // headerId optional, omitted
+      toggleTimeField(addForm, 'sla', 'sla_time');           // headerId optional, omitted
       bindTimeCalc(addForm);
       bindDeptTaskFilter(
         document.getElementById('department_id'),
@@ -125,20 +127,19 @@
       );
     }
 
-    // Edit row behavior (per-row)
-    document.querySelectorAll('form.ts-item, form.tk-row-edit').forEach(form => {
+    // Inline edit behavior (per-row)
+    document.querySelectorAll('form.tk-row-edit').forEach(form => {
       bindTimeCalc(form);
+
       const deptSel = form.querySelector('.edit-department');
       const taskSel = form.querySelector('.edit-task-category');
       if (deptSel && taskSel) bindDeptTaskFilter(deptSel, taskSel);
 
       const spent = qn(form, 'time_spent'); // hidden (edit) or readonly (add)
 
+      // Billable toggle + autofill
       const billChk = form.querySelector('input[name="billable"]');
       const billInp = form.querySelector('input[name="billable_time"]');
-      const slaChk  = form.querySelector('input[name="sla"]');
-      const slaInp  = form.querySelector('input[name="sla_time"]');
-
       if (billChk && billInp) {
         function setBill() {
           const show = !!billChk.checked;
@@ -147,13 +148,16 @@
           if (!show) {
             billInp.value = '';
           } else if (!billInp.value && spent && spent.value) {
-            billInp.value = spent.value; // autofill
+            billInp.value = spent.value; // autofill from time_spent
           }
         }
         billChk.addEventListener('change', setBill);
         setBill();
       }
 
+      // SLA toggle + autofill
+      const slaChk = form.querySelector('input[name="sla"]');
+      const slaInp = form.querySelector('input[name="sla_time"]');
       if (slaChk && slaInp) {
         function setSla() {
           const show = !!slaChk.checked;
@@ -162,7 +166,7 @@
           if (!show) {
             slaInp.value = '';
           } else if (!slaInp.value && spent && spent.value) {
-            slaInp.value = spent.value; // autofill
+            slaInp.value = spent.value; // autofill from time_spent
           }
         }
         slaChk.addEventListener('change', setSla);
@@ -172,6 +176,5 @@
 
     bindDeleteConfirms();
     initSelect2();
-    installMobileLabels();
   });
 })();
