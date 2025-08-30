@@ -29,7 +29,7 @@
       <header>Awaiting Action</header>
 
       <!-- Header row (5 cols per CSS grid: Admin | Date | Status | (empty) | Actions) -->
-      <div class="pt-row edesk-pts-fw-600">
+      <div class="pt-row" style="font-weight:600;">
         <div>Admin</div>
         <div>Date</div>
         <div>Status</div>
@@ -71,12 +71,12 @@
 
         <!-- Rejection note (if applicable) -->
         <?php if (isset($timesheet) && $timesheet->status === 'rejected' && !empty($timesheet->admin_rejection_note)): ?>
-          <div class="alert alert-danger edesk-pts-mb-16">
+          <div class="alert alert-danger" style="margin-bottom:14px;">
             <strong>Reason for rejection:</strong><br>
             <?= nl2br(htmlspecialchars($timesheet->admin_rejection_note)) ?>
             <?php if (!empty($timesheet->rejected_at) || !empty($timesheet->rejected_by)): ?>
               <br>
-              <span class="muted">
+              <span style="font-size:90%;">
                 <?php if (!empty($timesheet->rejected_at)): ?>
                   <strong>Rejected on:</strong> <?= htmlspecialchars($timesheet->rejected_at) ?>
                 <?php endif; ?>
@@ -89,11 +89,11 @@
         <?php endif; ?>
 
         <!-- Add New Line -->
-        <div class="pt-list edesk-pts-mb-16">
+        <div class="pt-list" style="margin-bottom:16px;">
           <header>Add New Line</header>
           <div class="body">
             <!-- Header labels (match grid), with billable/SLA headers toggle targets -->
-            <div class="pt-entry-row edesk-pts-fw-600">
+            <div class="pt-entry-row" style="font-weight:600;">
               <div>Client</div>
               <div>Department</div>
               <div>Task Category</div>
@@ -187,7 +187,7 @@
           ?>
 
           <!-- Labels -->
-          <div class="pt-entry-row edesk-pts-fw-600">
+          <div class="pt-entry-row" style="font-weight:600;">
             <div>Client</div>
             <div>Department</div>
             <div>Task Category</div>
@@ -226,7 +226,7 @@
                   <?php endforeach; ?>
                 </select>
 
-                <select name="department_id" class="edit-department pending-edit-department">
+                <select name="department_id" class="pending-edit-department">
                   <?php foreach ($departmentMap as $id => $label): ?>
                     <option value="<?= (int)$id ?>" <?= ((int)$entry->department_id === (int)$id) ? 'selected' : '' ?>>
                       <?= htmlspecialchars($label) ?>
@@ -234,7 +234,7 @@
                   <?php endforeach; ?>
                 </select>
 
-                <select name="task_category_id" class="edit-task-category pending-edit-task-category">
+                <select name="task_category_id" class="pending-edit-task-category">
                   <?php foreach ($taskCategories as $cat): ?>
                     <option value="<?= (int)$cat->id ?>"
                             data-dept="<?= (int)$cat->department_id ?>"
@@ -260,6 +260,24 @@
                 <a href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&admin_id=<?= (int)$editAdminId ?>&date=<?= htmlspecialchars($editTimesheetDate) ?>" class="btn btn-sm btn-secondary">Cancel</a>
               </form>
 
+              <?php
+                $needsVerify = (
+                  isset($unbilledTimeValidateMin) && $unbilledTimeValidateMin !== '' && $unbilledTimeValidateMin !== null
+                  && (float)$entry->time_spent >= (float)$unbilledTimeValidateMin
+                  && (int)$entry->billable === 0
+                  && (int)$entry->sla === 0
+                );
+                if ($needsVerify):
+              ?>
+                <div class="pt-inline-verify alert alert-warning" style="margin:8px 0;">
+                  <label class="d-block">
+                    <input type="checkbox" name="verify_unbilled_<?= (int)$entry->id ?>" value="1" required>
+                    Verify entry #<?= (int)$entry->id ?> — <?= htmlspecialchars($entry->description ?: 'No description') ?>
+                    (<?= number_format((float)$entry->time_spent, 2) ?>h)
+                  </label>
+                </div>
+              <?php endif; ?>
+
             <?php else: ?>
               <div class="pt-entry-row">
                 <div><?= htmlspecialchars($clientMap[$entry->client_id] ?? 'N/A') ?></div>
@@ -282,6 +300,24 @@
                 </div>
                 <div></div>
               </div>
+
+              <?php
+                $needsVerify = (
+                  isset($unbilledTimeValidateMin) && $unbilledTimeValidateMin !== '' && $unbilledTimeValidateMin !== null
+                  && (float)$entry->time_spent >= (float)$unbilledTimeValidateMin
+                  && (int)$entry->billable === 0
+                  && (int)$entry->sla === 0
+                );
+                if ($needsVerify):
+              ?>
+                <div class="pt-inline-verify alert alert-warning" style="margin:8px 0;">
+                  <label class="d-block">
+                    <input type="checkbox" name="verify_unbilled_<?= (int)$entry->id ?>" value="1" required>
+                    Verify entry #<?= (int)$entry->id ?> — <?= htmlspecialchars($entry->description ?: 'No description') ?>
+                    (<?= number_format((float)$entry->time_spent, 2) ?>h)
+                  </label>
+                </div>
+              <?php endif; ?>
             <?php endif; ?>
 
           <?php endforeach; ?>
@@ -295,52 +331,26 @@
 
           <!-- Approve / Reject -->
           <?php if ($canApprove && isset($timesheet)): ?>
-            <?php
-              // Build verify list now so it sits INSIDE the approve form
-              $verifyList = [];
-              if (isset($unbilledTimeValidateMin) && $unbilledTimeValidateMin !== '' && $unbilledTimeValidateMin !== null) {
-                foreach ($editTimesheetEntries as $entry) {
-                  $needsVerify = (
-                    (float)$entry->time_spent >= (float)$unbilledTimeValidateMin &&
-                    (int)$entry->billable === 0 &&
-                    (int)$entry->sla === 0
-                  );
-                  if ($needsVerify) {
-                    $verifyList[] = $entry;
-                  }
-                }
-              }
-            ?>
-
             <form method="post"
                   id="approve-form"
-                  class="pt-approve-form edesk-pts-mb-16"
+                  class="pt-approve-form"
+                  style="margin-top: 12px;"
                   action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
               <?php if (!empty($tkCsrf)): ?>
                 <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
               <?php endif; ?>
               <input type="hidden" name="approve_timesheet_id" value="<?= (int)$timesheet->id ?>">
 
-              <?php if (!empty($verifyList)): ?>
-                <div class="alert alert-warning edesk-pts-mb-16">
-                  The following unbilled/SLA-exempt entries meet the verification threshold (≥
-                  <?= number_format((float)$unbilledTimeValidateMin, 2) ?>h). Please confirm:
-                </div>
-
-                <?php foreach ($verifyList as $entry): ?>
-                  <label class="d-block edesk-pts-mb-8">
-                    <input type="checkbox" name="verify_unbilled_<?= (int)$entry->id ?>" value="1" required>
-                    Verify entry #<?= (int)$entry->id ?> — <?= htmlspecialchars($entry->description ?: 'No description') ?>
-                    (<?= number_format((float)$entry->time_spent, 2) ?>h)
-                  </label>
-                <?php endforeach; ?>
-              <?php endif; ?>
+              <div class="alert alert-info" style="margin-bottom: 10px;">
+                Please ensure all flagged entries above are ticked “Verified” before approving.
+              </div>
 
               <button type="submit" class="btn btn-success">Approve Timesheet</button>
             </form>
 
             <form method="post"
                   class="pt-reject-form"
+                  style="margin-top: 12px;"
                   action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
               <?php if (!empty($tkCsrf)): ?>
                 <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
@@ -357,6 +367,7 @@
         <?php if (isset($timesheet) && $timesheet->status === 'rejected' && (int)$editAdminId === (int)$_SESSION['adminid']): ?>
           <form method="post"
                 class="pt-resubmit-form"
+                style="margin-top: 16px;"
                 action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
             <?php if (!empty($tkCsrf)): ?>
               <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">

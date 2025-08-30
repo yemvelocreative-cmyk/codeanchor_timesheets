@@ -80,3 +80,5 @@
   margin-top: 10px;
   flex-wrap: wrap;
 }
+
+.timekeeper-root .pt-inline-verify { margin: 8px 0; }
