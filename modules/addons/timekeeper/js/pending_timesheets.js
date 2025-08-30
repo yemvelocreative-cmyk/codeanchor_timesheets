@@ -73,16 +73,21 @@
   }
 
   // Approve form: copy verify_unbilled_* checkboxes into the form on submit
+  // Approve form: only inject verify_unbilled_* if those checkboxes are OUTSIDE the form
   function bindApproveInjection() {
-    var approveForm = document.getElementById('approve-form'); // ensure this id is on the Approve form
+    var approveForm = document.getElementById('approve-form');
     if (!approveForm) return;
+
     approveForm.addEventListener('submit', function () {
+      // Find any verify checkboxes that are NOT descendants of #approve-form
       document.querySelectorAll('input[type="checkbox"][name^="verify_unbilled_"]').forEach(function (chk) {
-        var hidden = document.createElement('input');
-        hidden.type = 'hidden';
-        hidden.name = chk.name;
-        hidden.value = chk.checked ? '1' : '0';
-        approveForm.appendChild(hidden);
+        if (!approveForm.contains(chk)) {
+          var hidden = document.createElement('input');
+          hidden.type = 'hidden';
+          hidden.name = chk.name;
+          hidden.value = chk.checked ? '1' : '0';
+          approveForm.appendChild(hidden);
+        }
       });
     });
   }

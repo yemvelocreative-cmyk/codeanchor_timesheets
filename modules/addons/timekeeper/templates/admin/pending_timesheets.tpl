@@ -29,7 +29,7 @@
       <header>Awaiting Action</header>
 
       <!-- Header row (5 cols per CSS grid: Admin | Date | Status | (empty) | Actions) -->
-      <div class="pt-row" style="font-weight:600;">
+      <div class="pt-row edesk-pts-fw-600">
         <div>Admin</div>
         <div>Date</div>
         <div>Status</div>
@@ -71,12 +71,12 @@
 
         <!-- Rejection note (if applicable) -->
         <?php if (isset($timesheet) && $timesheet->status === 'rejected' && !empty($timesheet->admin_rejection_note)): ?>
-          <div class="alert alert-danger" style="margin-bottom:14px;">
+          <div class="alert alert-danger edesk-pts-mb-16">
             <strong>Reason for rejection:</strong><br>
             <?= nl2br(htmlspecialchars($timesheet->admin_rejection_note)) ?>
             <?php if (!empty($timesheet->rejected_at) || !empty($timesheet->rejected_by)): ?>
               <br>
-              <span style="font-size:90%;">
+              <span class="muted">
                 <?php if (!empty($timesheet->rejected_at)): ?>
                   <strong>Rejected on:</strong> <?= htmlspecialchars($timesheet->rejected_at) ?>
                 <?php endif; ?>
@@ -89,11 +89,11 @@
         <?php endif; ?>
 
         <!-- Add New Line -->
-        <div class="pt-list" style="margin-bottom:16px;">
+        <div class="pt-list edesk-pts-mb-16">
           <header>Add New Line</header>
           <div class="body">
             <!-- Header labels (match grid), with billable/SLA headers toggle targets -->
-            <div class="pt-entry-row" style="font-weight:600;">
+            <div class="pt-entry-row edesk-pts-fw-600">
               <div>Client</div>
               <div>Department</div>
               <div>Task Category</div>
@@ -110,7 +110,13 @@
               <div></div>
             </div>
 
-            <form method="post" id="pt-add-form" class="pt-entry-row">
+            <form method="post"
+                  id="pt-add-form"
+                  class="pt-entry-row"
+                  action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
+              <?php if (!empty($tkCsrf)): ?>
+                <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
+              <?php endif; ?>
               <input type="hidden" name="add_new_entry" value="1">
               <input type="hidden" name="admin_id" value="<?= (int)$editAdminId ?>">
               <input type="hidden" name="timesheet_date" value="<?= htmlspecialchars($editTimesheetDate) ?>">
@@ -124,7 +130,7 @@
               </select>
 
               <!-- Department -->
-              <select name="department_id" id="department_id" required>
+              <select name="department_id" id="pending-add-department" required>
                 <option value="">Select…</option>
                 <?php foreach ($departmentMap as $id => $label): ?>
                   <option value="<?= (int)$id ?>"><?= htmlspecialchars($label) ?></option>
@@ -132,7 +138,7 @@
               </select>
 
               <!-- Task Category (filtered by department) -->
-              <select name="task_category_id" id="task_category_id" required>
+              <select name="task_category_id" id="pending-add-task-category" required>
                 <option value="">Select…</option>
                 <?php foreach ($taskCategories as $cat): ?>
                   <option value="<?= (int)$cat->id ?>" data-dept="<?= (int)$cat->department_id ?>">
@@ -181,7 +187,7 @@
           ?>
 
           <!-- Labels -->
-          <div class="pt-entry-row" style="font-weight:600;">
+          <div class="pt-entry-row edesk-pts-fw-600">
             <div>Client</div>
             <div>Department</div>
             <div>Task Category</div>
@@ -202,7 +208,12 @@
             <?php $isEditing = ($editingEntryId == $entry->id); ?>
 
             <?php if ($isEditing): ?>
-              <form method="post" class="pt-entry-row">
+              <form method="post"
+                    class="pt-entry-row"
+                    action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
+                <?php if (!empty($tkCsrf)): ?>
+                  <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
+                <?php endif; ?>
                 <input type="hidden" name="save_id" value="<?= (int)$entry->id ?>">
                 <input type="hidden" name="admin_id" value="<?= (int)$editAdminId ?>">
                 <input type="hidden" name="timesheet_date" value="<?= htmlspecialchars($editTimesheetDate) ?>">
@@ -215,7 +226,7 @@
                   <?php endforeach; ?>
                 </select>
 
-                <select name="department_id" class="edit-department">
+                <select name="department_id" class="edit-department pending-edit-department">
                   <?php foreach ($departmentMap as $id => $label): ?>
                     <option value="<?= (int)$id ?>" <?= ((int)$entry->department_id === (int)$id) ? 'selected' : '' ?>>
                       <?= htmlspecialchars($label) ?>
@@ -223,7 +234,7 @@
                   <?php endforeach; ?>
                 </select>
 
-                <select name="task_category_id" class="edit-task-category">
+                <select name="task_category_id" class="edit-task-category pending-edit-task-category">
                   <?php foreach ($taskCategories as $cat): ?>
                     <option value="<?= (int)$cat->id ?>"
                             data-dept="<?= (int)$cat->department_id ?>"
@@ -282,7 +293,7 @@
             <div><strong>Total SLA Time:</strong> <?= number_format($totalSlaTime, 2) ?> hrs</div>
           </div>
 
-          <!-- Approve / Reject (separate forms; verify checkboxes belong to Approve form) -->
+          <!-- Approve / Reject -->
           <?php if ($canApprove && isset($timesheet)): ?>
             <?php
               // Build verify list now so it sits INSIDE the approve form
@@ -301,17 +312,23 @@
               }
             ?>
 
-           <form method="post" id="approve-form" class="pt-approve-form" style="margin-top: 12px;">
+            <form method="post"
+                  id="approve-form"
+                  class="pt-approve-form edesk-pts-mb-16"
+                  action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
+              <?php if (!empty($tkCsrf)): ?>
+                <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
+              <?php endif; ?>
               <input type="hidden" name="approve_timesheet_id" value="<?= (int)$timesheet->id ?>">
 
               <?php if (!empty($verifyList)): ?>
-                <div class="alert alert-warning" style="margin-bottom: 10px;">
+                <div class="alert alert-warning edesk-pts-mb-16">
                   The following unbilled/SLA-exempt entries meet the verification threshold (≥
                   <?= number_format((float)$unbilledTimeValidateMin, 2) ?>h). Please confirm:
                 </div>
 
                 <?php foreach ($verifyList as $entry): ?>
-                  <label style="display:block; margin-bottom:6px;">
+                  <label class="d-block edesk-pts-mb-8">
                     <input type="checkbox" name="verify_unbilled_<?= (int)$entry->id ?>" value="1" required>
                     Verify entry #<?= (int)$entry->id ?> — <?= htmlspecialchars($entry->description ?: 'No description') ?>
                     (<?= number_format((float)$entry->time_spent, 2) ?>h)
@@ -322,7 +339,12 @@
               <button type="submit" class="btn btn-success">Approve Timesheet</button>
             </form>
 
-            <form method="post" class="pt-reject-form" style="margin-top: 12px;">
+            <form method="post"
+                  class="pt-reject-form"
+                  action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
+              <?php if (!empty($tkCsrf)): ?>
+                <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
+              <?php endif; ?>
               <input type="hidden" name="reject_timesheet_id" value="<?= (int)$timesheet->id ?>">
               <textarea name="admin_rejection_note" class="form-control" placeholder="Rejection Note (required)" style="max-width:420px; height:60px; margin:8px 0;"></textarea>
               <button type="submit" class="btn btn-danger">Reject Timesheet</button>
@@ -333,7 +355,12 @@
 
         <!-- Resubmit (owner of rejected sheet) -->
         <?php if (isset($timesheet) && $timesheet->status === 'rejected' && (int)$editAdminId === (int)$_SESSION['adminid']): ?>
-          <form method="post" class="pt-resubmit-form" style="margin-top: 16px;">
+          <form method="post"
+                class="pt-resubmit-form"
+                action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
+            <?php if (!empty($tkCsrf)): ?>
+              <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
+            <?php endif; ?>
             <input type="hidden" name="resubmit_timesheet_id" value="<?= (int)$timesheet->id ?>">
             <button type="submit" class="btn btn-primary">Re-Submit</button>
           </form>
