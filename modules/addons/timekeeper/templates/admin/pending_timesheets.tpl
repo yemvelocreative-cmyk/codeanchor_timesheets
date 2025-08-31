@@ -88,57 +88,54 @@
           </div>
         <?php endif; ?>
 
-        <!-- Add New Line -->
-        <div class="pt-list pt-mb-16">
-          <header>Add New Line</header>
-          <div class="body">
-            <!-- Header labels (match grid), with billable/SLA headers toggle targets -->
-            <div class="pt-entry-row pt-fw-600">
-              <div>Client</div>
-              <div>Department</div>
-              <div>Task Category</div>
-              <div>Ticket ID</div>
-              <div>Description</div>
-              <div>Start</div>
-              <div>End</div>
-              <div>Time Spent</div>
-              <div>Billable</div>
-              <div id="pt-billable-header" class="col-hidden">Billable Time</div>
-              <div>SLA</div>
-              <div id="pt-sla-header" class="col-hidden">SLA Time</div>
-              <div></div>
-              <div></div>
-            </div>
+        <!-- Add New Line -->        
+        <div class="tk-row tk-card tk-row--table tk-row--header">
+          <div class="tk-row-grid">
+            <div class="hdr">Client</div>
+            <div class="hdr">Department</div>
+            <div class="hdr">Task Category</div>
+            <div class="hdr">Description</div>
+            <div class="hdr">Time</div>
+            <div class="hdr">Flags</div>
+            <div class="hdr">Actions</div>
+          </div>
+        </div>
 
-            <form method="post"
-                  id="pt-add-form"
-                  class="pt-entry-row"
-                  action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
-              <?php if (!empty($tkCsrf)): ?>
-                <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
-              <?php endif; ?>
-              <input type="hidden" name="add_new_entry" value="1">
-              <input type="hidden" name="admin_id" value="<?= (int)$editAdminId ?>">
-              <input type="hidden" name="timesheet_date" value="<?= htmlspecialchars($editTimesheetDate) ?>">
+        <div class="tk-row tk-card tk-row--table">
+          <form method="post"
+                id="pt-add-form"
+                class="tk-row-grid tk-row-edit"
+                action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
+            <?php if (!empty($tkCsrf)): ?>
+              <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
+            <?php endif; ?>
+            <input type="hidden" name="add_new_entry" value="1">
+            <input type="hidden" name="admin_id" value="<?= (int)$editAdminId ?>">
+            <input type="hidden" name="timesheet_date" value="<?= htmlspecialchars($editTimesheetDate) ?>">
 
-              <!-- Client -->
-              <select name="client_id" required>
+            <!-- Client -->
+            <div class="cell cell-client">
+              <select name="client_id" class="tk-row-select" required>
                 <option value="">Select…</option>
                 <?php foreach ($clientMap as $id => $label): ?>
                   <option value="<?= (int)$id ?>"><?= htmlspecialchars($label) ?></option>
                 <?php endforeach; ?>
               </select>
+            </div>
 
-              <!-- Department -->
-              <select name="department_id" id="pending-add-department" required>
+            <!-- Department -->
+            <div class="cell cell-dept">
+              <select name="department_id" id="pending-add-department" class="tk-row-select" required>
                 <option value="">Select…</option>
                 <?php foreach ($departmentMap as $id => $label): ?>
                   <option value="<?= (int)$id ?>"><?= htmlspecialchars($label) ?></option>
                 <?php endforeach; ?>
               </select>
+            </div>
 
-              <!-- Task Category (filtered by department) -->
-              <select name="task_category_id" id="pending-add-task-category" required>
+            <!-- Task Category -->
+            <div class="cell cell-cat">
+              <select name="task_category_id" id="pending-add-task-category" class="tk-row-select" required>
                 <option value="">Select…</option>
                 <?php foreach ($taskCategories as $cat): ?>
                   <option value="<?= (int)$cat->id ?>" data-dept="<?= (int)$cat->department_id ?>">
@@ -146,30 +143,63 @@
                   </option>
                 <?php endforeach; ?>
               </select>
+            </div>
 
-              <!-- Ticket & description -->
-              <input type="text" name="ticket_id" placeholder="">
-              <input type="text" name="description" placeholder="">
+            <!-- Description -->
+            <div class="cell cell-desc">
+              <input type="text" name="description" class="tk-row-input" placeholder="">
+            </div>
 
-              <!-- Times -->
+            <!-- Time -->
+            <div class="cell cell-times tk-inline">
               <input type="time" name="start_time" required>
               <input type="time" name="end_time" required>
-              <input type="text" name="time_spent" readonly>
+              <!-- Keep a visible readonly input so your JS shows the computed decimal -->
+              <input type="text" name="time_spent" value="" readonly class="tk-inline-time-input" placeholder="0.00">
+            </div>
 
-              <!-- Billable / Time -->
-              <input type="checkbox" name="billable" value="1">
-              <input type="text" name="billable_time" class="col-hidden" placeholder="">
+            <!-- Flags -->
+            <div class="cell cell-flags cell-flags--grid">
+              <!-- Ticket -->
+              <div class="flag-item">
+                <label class="tk-flag-label">Ticket</label>
+                <input type="text" name="ticket_id" class="tk-row-input" placeholder="Ticket #">
+              </div>
 
-              <!-- SLA / Time -->
-              <input type="checkbox" name="sla" value="1" id="sla-checkbox">
-              <input type="text" name="sla_time" class="col-hidden" placeholder="">
+              <!-- Billable -->
+              <div class="flag-item">
+                <label class="tk-flag-label">
+                  <span class="checkbox-inline tk-inline-check">
+                    <input type="checkbox" name="billable" value="1">
+                    <span>Billable</span>
+                  </span>
+                </label>
+                <input type="text" name="billable_time"
+                      class="tk-inline-time-input col-hidden"
+                      placeholder="0.00">
+              </div>
 
-              <!-- Actions -->
+              <!-- SLA -->
+              <div class="flag-item">
+                <label class="tk-flag-label">
+                  <span class="checkbox-inline tk-inline-check">
+                    <input type="checkbox" name="sla" value="1" id="sla-checkbox">
+                    <span>SLA</span>
+                  </span>
+                </label>
+                <input type="text" name="sla_time"
+                      class="tk-inline-time-input col-hidden"
+                      placeholder="0.00">
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="cell cell-actions">
               <button type="submit" class="btn btn-sm btn-success">Add</button>
-              <div></div>
-            </form>
-          </div>
+            </div>
+          </form>
         </div>
+
 
         <!-- Existing entries -->
         <?php if (empty($editTimesheetEntries)): ?>
