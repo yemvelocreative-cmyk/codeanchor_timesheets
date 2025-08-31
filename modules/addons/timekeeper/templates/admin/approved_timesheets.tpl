@@ -33,11 +33,11 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
             <span class="tk-pill tk-pill-success">Approved</span>
           </div>
           <div class="tk-col tk-w-220 tk-actions">
-            <a class="tk-btn tk-btn-rounded tk-btn-outline"
+            <a class="tk-btn tk-btn-sm tk-btn-rounded tk-btn-outline"
                href="addonmodules.php?module=timekeeper&timekeeperpage=approved_timesheets&admin_id=<?= (int)$ts->admin_id ?>&date=<?= $h($ts->timesheet_date) ?>">
               View
             </a>
-            <a class="tk-btn tk-btn-rounded"
+            <a class="tk-btn tk-btn-sm tk-btn-rounded"
                href="addonmodules.php?module=timekeeper&timekeeperpage=reports&report=timesheet&admin_id=<?= (int)$ts->admin_id ?>&date=<?= $h($ts->timesheet_date) ?>">
               Export
             </a>
@@ -96,9 +96,11 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
             <div class="tk-col tk-w-200"></div>
             <div class="tk-col tk-w-180"></div>
             <div class="tk-col tk-w-180"></div>
-            <div class="tk-col tk-w-90"></div>
-            <div class="tk-col tk-w-250 tk-text-right"><strong>Totals:</strong></div>
+            <!-- Total under the Time column -->
             <div class="tk-col tk-w-90 tk-text-right"><strong><?= number_format((float)$totalTime, 2) ?> hrs</strong></div>
+            <!-- Label in Notes column -->
+            <div class="tk-col tk-w-250 tk-text-right"><strong>Totals:</strong></div>
+            <div class="tk-col tk-w-90"></div>
             <div class="tk-col tk-w-90"></div>
             <div class="tk-col tk-w-80"></div>
             <div class="tk-col tk-w-90"></div>

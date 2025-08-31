@@ -21,21 +21,22 @@ $try('/helpers/approved_timesheets_helper.php', '/includes/helpers/approved_time
 use Timekeeper\Helpers\CoreHelper as CoreH;
 use Timekeeper\Helpers\ApprovedTimesheetsHelper as ApprovedH;
 
-// Context admin + role
+// ---- Context: current admin + role ----
 $adminId = isset($_SESSION['adminid']) ? (int) $_SESSION['adminid'] : 0;
 $admin   = Capsule::table('tbladmins')->where('id', $adminId)->first();
 $roleId  = $admin ? (int) $admin->roleid : 0;
 
-// Permission: roles that may view ALL approved timesheets
+// ---- Permission: roles that may view ALL approved timesheets ----
+// Single source of truth comes from settings via helper
 $viewAllRoleIds = ApprovedH::viewAllRoleIds();
 
-// Build map data used by the template
+// ---- Maps for template ----
 $adminMap      = ApprovedH::adminMap();
 $clientMap     = ApprovedH::clientMap();
-$departmentMap = ApprovedH::departmentMap();
-$taskMap       = ApprovedH::taskMap();
+$departmentMap = ApprovedH::departmentMap();   // uses mod_timekeeper_departments
+$taskMap       = ApprovedH::taskMap();         // uses mod_timekeeper_task_categories
 
-// Listing vs viewing a specific timesheet
+// ---- Listing vs. viewing a specific approved timesheet ----
 $reqAdminId = CoreH::get('admin_id', null);
 $reqDate    = CoreH::get('date', null);
 
@@ -44,19 +45,33 @@ $timesheet          = null;
 $timesheetEntries   = [];
 $totalTime          = 0.0;
 
-// If a specific timesheet is requested
 if ($reqAdminId && $reqDate) {
-    $timesheet = ApprovedH::getApprovedTimesheet((int)$reqAdminId, $reqDate, $adminId, $roleId, $viewAllRoleIds);
+    // Respect "view all" when opening a specific sheet
+    $reqAdminId = (int) $reqAdminId;
+    $reqDate    = (string) $reqDate;
+
+    $timesheet = ApprovedH::getApprovedTimesheet(
+        $reqAdminId,
+        $reqDate,
+        $adminId,
+        $roleId,
+        $viewAllRoleIds
+    );
+
     if ($timesheet) {
         $timesheetEntries = ApprovedH::getTimesheetEntries((int)$timesheet->id);
         $totalTime        = ApprovedH::sumColumn($timesheetEntries, 'time_spent');
     }
 } else {
-    // Otherwise list the approved timesheets visible to this admin
-    $approvedTimesheets = ApprovedH::listVisibleApproved($adminId, $roleId, $viewAllRoleIds);
+    // List only the approved timesheets visible to this admin/role
+    $approvedTimesheets = ApprovedH::listVisibleApproved(
+        $adminId,
+        $roleId,
+        $viewAllRoleIds
+    );
 }
 
-// Pass to template
+// ---- Pass to template ----
 $vars = compact(
     'approvedTimesheets',
     'adminMap',

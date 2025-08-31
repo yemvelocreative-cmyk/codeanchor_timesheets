@@ -8,14 +8,10 @@ class ApprovedTimesheetsHelper
     /** Roles that can view ALL approved timesheets */
     public static function viewAllRoleIds(): array
     {
-        // Setting key dedicated to APPROVED visibility
-        $saved = Capsule::table('mod_timekeeper_permissions')
-            ->where('setting_key', 'permission_approved_timesheets_view_all')
-            ->value('setting_value');
-
-        if (!$saved) return [];
-        return array_values(array_filter(array_map('intval', explode(',', $saved))));
+        // Single source of truth: read from settings table
+        return \Timekeeper\Helpers\CoreHelper::rolesFromSetting('permission_approved_timesheets_view_all');
     }
+
 
     public static function adminMap(): array
     {
@@ -74,31 +70,37 @@ class ApprovedTimesheetsHelper
     }
 
     /** List approved timesheets visible to the current admin/role */
-    public static function listVisibleApproved(int $adminId, int $roleId, array $viewAllRoleIds)
+    public static function listVisibleApproved(int $viewerAdminId, int $viewerRoleId, array $viewAllRoleIds)
     {
-        $q = Capsule::table('mod_timekeeper_timesheets')
+        $q = \WHMCS\Database\Capsule::table('mod_timekeeper_timesheets')
             ->where('status', 'approved')
             ->orderBy('timesheet_date', 'desc')
             ->orderBy('admin_id', 'asc');
 
-        if (!in_array($roleId, $viewAllRoleIds, true)) {
-            $q->where('admin_id', $adminId);
+        if (!in_array($viewerRoleId, $viewAllRoleIds, true)) {
+            $q->where('admin_id', $viewerAdminId);
         }
         return $q->get();
     }
 
     /** Fetch a single approved timesheet if visible to current admin/role */
-    public static function getApprovedTimesheet(int $tsAdminId, string $date, int $viewerAdminId, int $viewerRoleId, array $viewAllRoleIds)
-    {
-        $q = Capsule::table('mod_timekeeper_timesheets')
+    public static function getApprovedTimesheet(
+        int $tsAdminId,
+        string $date,
+        int $viewerAdminId,
+        int $viewerRoleId,
+        array $viewAllRoleIds
+    ) {
+        // If viewer is NOT view-all and is not the owner, deny
+        if (!in_array($viewerRoleId, $viewAllRoleIds, true) && $tsAdminId !== $viewerAdminId) {
+            return null;
+        }
+
+        return \WHMCS\Database\Capsule::table('mod_timekeeper_timesheets')
             ->where('admin_id', $tsAdminId)
             ->where('timesheet_date', $date)
-            ->where('status', 'approved');
-
-        if (!in_array($viewerRoleId, $viewAllRoleIds, true)) {
-            $q->where('admin_id', $viewerAdminId);
-        }
-        return $q->first();
+            ->where('status', 'approved')
+            ->first();
     }
 
     public static function getTimesheetEntries(int $timesheetId)
