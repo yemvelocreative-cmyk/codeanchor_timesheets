@@ -1,21 +1,21 @@
 <?php
-// modules/addons/timekeeper/includes/helpers/Pending.php
+// modules/addons/timekeeper/includes/helpers/pending_timesheet_helper.php
 namespace Timekeeper\Helpers;
 
 use WHMCS\Database\Capsule;
 
-final class Pending
+final class PendingTimesheetHelper
 {
     /** Roles allowed to view all pending/rejected timesheets */
     public static function viewAllRoles(): array
     {
-        return Core::rolesFromSetting('permission_pending_timesheets_view_all');
+        return CoreHelper::rolesFromSetting('permission_pending_timesheets_view_all');
     }
 
     /** Roles allowed to approve/reject */
     public static function approveRoles(): array
     {
-        return Core::rolesFromSetting('permission_pending_timesheets_approve');
+        return CoreHelper::rolesFromSetting('permission_pending_timesheets_approve');
     }
 
     /**
@@ -25,6 +25,7 @@ final class Pending
     public static function baseQuery(int $adminId, int $roleId)
     {
         $today = date('Y-m-d');
+
         $q = Capsule::table('mod_timekeeper_timesheets')
             ->whereIn('status', ['pending', 'rejected'])
             ->where('timesheet_date', '<', $today);
@@ -32,7 +33,7 @@ final class Pending
         if (!in_array($roleId, self::viewAllRoles(), true)) {
             $q->where('admin_id', $adminId);
         }
-        return $q; // Query\Builder
+        return $q; // Illuminate\Database\Query\Builder
     }
 
     /** Badge count identical to the page logic */

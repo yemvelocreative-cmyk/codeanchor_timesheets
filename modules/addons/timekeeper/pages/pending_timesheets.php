@@ -6,11 +6,11 @@ if (!defined('WHMCS')) {
     die('Access Denied');
 }
 
-require_once __DIR__ . '/../includes/core_helper.php';
-require_once __DIR__ . '/../includes/pending_timesheet_helper.php';
+require_once __DIR__ . '/../includes/helpers/core_helper.php';
+require_once __DIR__ . '/../includes/helpers/pending_timesheet_helper.php';
 
-use Timekeeper\Helpers\Core;
-use Timekeeper\Helpers\Pending;
+use Timekeeper\Helpers\CoreHelper as Core;
+use Timekeeper\Helpers\PendingTimesheetHelper as PendingH;
 
 // ---- Session / admin ----
 $adminId = isset($_SESSION['adminid']) ? (int) $_SESSION['adminid'] : 0;
@@ -28,13 +28,13 @@ $adminRoleId = $admin ? (int) $admin->roleid : 0;
 $allowedViewCsv = Capsule::table('mod_timekeeper_permissions')
     ->where('setting_key', 'permission_pending_timesheets_view_all')
     ->value('setting_value');
-$allowedViewRoles    = Pending::viewAllRoles();
+$allowedViewRoles    = PendingH::viewAllRoles();
 
 // Who can approve/reject?
 $allowedApproveCsv = Capsule::table('mod_timekeeper_permissions')
     ->where('setting_key', 'permission_pending_timesheets_approve')
     ->value('setting_value');
-$allowedApprovalRoles = Pending::approveRoles();
+$allowedApprovalRoles = PendingH::approveRoles();
 
 $canApprove = in_array($adminRoleId, $allowedApprovalRoles, true);
 
@@ -233,7 +233,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reject_timesheet_id']
 // GET: list + optional detail context
 // ======================================================================
 
-$pendingTimesheets = Pending::baseQuery($adminId, $adminRoleId)
+$pendingTimesheets = PendingH::baseQuery($adminId, $adminRoleId)
     ->orderBy('timesheet_date', 'desc')
     ->get();
 
@@ -279,7 +279,7 @@ if (!empty($_GET['admin_id']) && !empty($_GET['date'])) {
         ->first();
 
     if ($timesheet) {
-        $editTimesheetEntries = Pending::entriesSorted((int)$timesheet->id);
+        $editTimesheetEntries = PendingH::entriesSorted((int)$timesheet->id);
     }
 }
 

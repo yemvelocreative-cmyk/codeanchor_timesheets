@@ -1,12 +1,10 @@
 <?php
 if (!defined('WHMCS')) { die('Access Denied'); }
 
-require_once __DIR__ . '/../includes/core_helper.php';
-require_once __DIR__ . '/../includes/pending_timesheet_helper.php';
+require_once __DIR__ . '/helpers/core_helper.php';
+require_once __DIR__ . '/helpers/pending_timesheet_helper.php';
 
-use Timekeeper\Helpers\Core;
-use Timekeeper\Helpers\Pending;
-
+use Timekeeper\Helpers\PendingTimesheetHelper as PendingH;
 use WHMCS\Database\Capsule;
 
 /** Current admin + role **/
@@ -14,7 +12,19 @@ $navAdminId = (int)($_SESSION['adminid'] ?? 0);
 $admin      = Capsule::table('tbladmins')->where('id', $navAdminId)->first();
 $roleId     = $admin ? (int)$admin->roleid : 0;
 
-$navPendingCount = Pending::menuCount($navAdminId, $roleId);
+/** Canonical Pending badge (matches Pending page exactly) */
+$navPendingCount = PendingH::menuCount($navAdminId, $roleId);
+
+/** Per-user Approved & Rejected counts (adjust if you want view-all) */
+$navApprovedCount = (int) Capsule::table('mod_timekeeper_timesheets')
+    ->where('status', 'approved')
+    ->where('admin_id', $navAdminId)
+    ->count();
+
+$navRejectedCount = (int) Capsule::table('mod_timekeeper_timesheets')
+    ->where('status', 'rejected')
+    ->where('admin_id', $navAdminId)
+    ->count();
 
 /** 1) Dismiss banner (session + cookie) **/
 if (isset($_GET['dismiss_rejected_banner']) && $_GET['dismiss_rejected_banner'] === '1') {
@@ -30,48 +40,6 @@ if (isset($_GET['dismiss_rejected_banner']) && $_GET['dismiss_rejected_banner'] 
         exit;
     }
 }
-
-// Counts to show badges in nav (canonical to pending_timesheets.php)
-
-/* helper: parse role ID CSV safely (define once) */
-if (!function_exists('tk_parse_id_list')) {
-    function tk_parse_id_list(?string $csv): array {
-        if (!$csv) return [];
-        $out = [];
-        foreach (explode(',', $csv) as $p) {
-            $v = (int) trim($p);
-            if ($v > 0) $out[] = $v;
-        }
-        return $out;
-    }
-}
-
-/* roles allowed to view all pending/rejected */
-$allowedViewCsv   = Capsule::table('mod_timekeeper_permissions')
-    ->where('setting_key', 'permission_pending_timesheets_view_all')
-    ->value('setting_value');
-$allowedViewRoles = tk_parse_id_list($allowedViewCsv);
-
-$today = date('Y-m-d');
-
-/* PENDING badge = pending + rejected, < today, filtered by role */
-$pendingQ = Capsule::table('mod_timekeeper_timesheets')
-    ->whereIn('status', ['pending', 'rejected'])
-    ->where('timesheet_date', '<', $today);
-
-if (!in_array($roleId, $allowedViewRoles, true)) {
-    $pendingQ->where('admin_id', $navAdminId);
-}
-$navPendingCount = (int) $pendingQ->count();
-
-/* APPROVED badge — leave per-admin unless you want it to honor view-all too */
-$approvedQ = Capsule::table('mod_timekeeper_timesheets')
-    ->where('status', 'approved');
-
-if (!in_array($roleId, $allowedViewRoles, true)) {
-    $approvedQ->where('admin_id', $navAdminId);
-}
-$navApprovedCount = (int) $approvedQ->count();
 
 /** 3) Should we show the banner? **/
 $hideViaSession = !empty($_SESSION['timekeeper_hide_rejected_banner']);

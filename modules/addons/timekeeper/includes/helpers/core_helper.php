@@ -1,10 +1,10 @@
 <?php
-// modules/addons/timekeeper/includes/helpers/Core.php
+// modules/addons/timekeeper/includes/helpers/core_helper.php
 namespace Timekeeper\Helpers;
 
 use WHMCS\Database\Capsule;
 
-final class Core
+final class CoreHelper
 {
     public const VERSION = '1.0.0';
 
@@ -26,6 +26,7 @@ final class Core
         $csv = Capsule::table('mod_timekeeper_permissions')
             ->where('setting_key', $settingKey)
             ->value('setting_value');
+
         return self::parseIdList($csv);
     }
 
