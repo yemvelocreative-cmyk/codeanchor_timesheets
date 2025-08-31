@@ -63,7 +63,7 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
     <div class="tk-approvals-island tk-card tk-card--padded">
       <div class="tk-approvals-card" data-scope="approve">
         <div class="tk-approvals-head">
-          <h5 class="tk-approvals-title">Roles that can Approve / Unapprove</h5>
+          <h5 class="tk-approvals-title">Roles that can Approve / Unapprove Timesheets</h5>
           <div class="tk-approvals-actions">
             <label class="tk-approvals-toggleall">
               <input type="checkbox" class="js-approvals-approve-toggleall">
@@ -115,7 +115,7 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
           <h5 class="tk-approvals-title">Pagination</h5>
         </div>
 
-        <div class="tk-approvals-body">
+        <div class="tk-validate-row">
           <label for="pagination_value" class="form-label">Timesheets per page</label>
           <small id="paginationHelp" class="text-muted d-block">
             Set the number of Pending/Approved Timesheets to list per page. Leave blank to use the system default.

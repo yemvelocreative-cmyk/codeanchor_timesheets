@@ -74,13 +74,13 @@
   height: 18px;
 }
 
-/* Islands + grid */
-.timekeeper-approvals-settings .tk-approvals-island { margin-bottom: 16px; }
-.timekeeper-approvals-settings .tk-approvals-grid {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: 1fr 1fr;
+/* Islands + spacing */
+.timekeeper-approvals-settings .tk-approvals-island {
+  margin: 20px 0;     /* adds space above/below each container */
 }
+.timekeeper-approvals-settings .tk-approvals-island:first-child { margin-top: 0; }
+.timekeeper-approvals-settings .tk-approvals-island:last-child  { margin-bottom: 0; }
+
 
 /* Responsive (consolidated) */
 @media (max-width: 900px) {
@@ -100,3 +100,10 @@
 
 /* If you notice “double borders” inside islands, you can neutralize the inner card: */
 /* .timekeeper-approvals-settings .tk-approvals-island .tk-approvals-card { border:0; box-shadow:none; padding:0; } */
+
+/* Headings in each container */
+.timekeeper-approvals-settings .tk-approvals-title {
+  margin: 0;
+  font-size: 1rem;   /* H5 scale in your UI */
+  font-weight: 600;  /* ensure bold */
+}
