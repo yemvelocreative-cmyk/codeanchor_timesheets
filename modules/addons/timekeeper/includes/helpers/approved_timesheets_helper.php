@@ -5,39 +5,66 @@ use WHMCS\Database\Capsule;
 
 class ApprovedTimesheetsHelper
 {
+    /**
+     * Collect role IDs from mod_timekeeper_permissions for a given key.
+     * Supports:
+     *  - multiple rows (role_id populated per row)
+     *  - setting_value as a single number, CSV, or JSON array
+     */
+    protected static function roleIdsFromPermissions(string $settingKey): array
+    {
+        $ids = [];
+
+        try {
+            $rows = Capsule::table('mod_timekeeper_permissions')
+                ->where('setting_key', $settingKey)
+                ->get();
+
+            foreach ($rows as $row) {
+                // Source A: dedicated role_id column (nullable)
+                if (isset($row->role_id) && $row->role_id !== null) {
+                    $ids[] = (int) $row->role_id;
+                }
+
+                // Source B: setting_value may be single, CSV, or JSON
+                $val = (string) ($row->setting_value ?? '');
+                if ($val !== '') {
+                    // Try JSON first
+                    $decoded = json_decode($val, true);
+                    if (is_array($decoded)) {
+                        foreach ($decoded as $v) {
+                            if (is_numeric($v)) { $ids[] = (int) $v; }
+                        }
+                    } else {
+                        // CSV or single
+                        $ids = array_merge($ids, CoreHelper::parseIdList($val));
+                        if (empty($ids) && is_numeric($val)) {
+                            $ids[] = (int) $val;
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // fall through with whatever we collected
+        }
+
+        // Normalise
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static fn($n) => $n > 0)));
+        return $ids;
+    }
+
     /** Roles that can view ALL approved timesheets (from Settings) */
     public static function viewAllRoleIds(): array
     {
-        // Canonical key first; fallbacks for older installs
-        $keys = [
-            'permission_approved_timesheets_view_all',
-            'permission_timesheets_view_all',
-            'permission_view_all_timesheets',
-        ];
-        foreach ($keys as $k) {
-            $ids = CoreHelper::rolesFromSetting($k);
-            if (!empty($ids)) {
-                return $ids;
-            }
-        }
-        return [];
+        // Per your spec, use the *pending* key for approved view-all
+        return self::roleIdsFromPermissions('permission_pending_timesheets_view_all');
     }
 
     /** Roles that can Approve / Unapprove timesheets (from Settings) */
     public static function canUnapproveRoles(): array
     {
-        // Canonical key first; fallback if older key is used
-        $keys = [
-            'permission_timesheets_approve_unapprove',
-            'permission_timesheets_approve',
-        ];
-        foreach ($keys as $k) {
-            $ids = CoreHelper::rolesFromSetting($k);
-            if (!empty($ids)) {
-                return $ids;
-            }
-        }
-        return [];
+        // Per your spec, use this exact key
+        return self::roleIdsFromPermissions('permission_pending_timesheets_approve');
     }
 
     /** Check if a given role can unapprove */
@@ -52,7 +79,7 @@ class ApprovedTimesheetsHelper
         $rows = Capsule::table('tbladmins')->select(['id', 'firstname', 'lastname'])->get();
         $map = [];
         foreach ($rows as $r) {
-            $map[(int) $r->id] = trim(($r->firstname ?? '') . ' ' . ($r->lastname ?? '')) ?: ('Admin ' . (int) $r->id);
+            $map[(int)$r->id] = trim(($r->firstname ?? '') . ' ' . ($r->lastname ?? '')) ?: ('Admin ' . (int)$r->id);
         }
         return $map;
     }
@@ -64,7 +91,7 @@ class ApprovedTimesheetsHelper
         $map = [];
         foreach ($rows as $r) {
             $name = $r->companyname ?: trim(($r->firstname ?? '') . ' ' . ($r->lastname ?? ''));
-            $map[(int) $r->id] = $name ?: ('Client ' . (int) $r->id);
+            $map[(int)$r->id] = $name ?: ('Client ' . (int)$r->id);
         }
         return $map;
     }
@@ -80,10 +107,9 @@ class ApprovedTimesheetsHelper
                 ->get();
 
             foreach ($rows as $r) {
-                $map[(int) $r->id] = (string) ($r->name ?? ('Department ' . (int) $r->id));
+                $map[(int)$r->id] = (string) ($r->name ?? ('Department ' . (int)$r->id));
             }
         } catch (\Throwable $e) {
-            // Graceful: return empty map if table missing/misconfigured
             return [];
         }
         return $map;
@@ -100,7 +126,7 @@ class ApprovedTimesheetsHelper
                 ->get();
 
             foreach ($rows as $r) {
-                $map[(int) $r->id] = (string) ($r->name ?? ('Task ' . (int) $r->id));
+                $map[(int)$r->id] = (string) ($r->name ?? ('Task ' . (int)$r->id));
             }
         } catch (\Throwable $e) {
             return [];
