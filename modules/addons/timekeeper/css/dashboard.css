@@ -82,9 +82,10 @@
 .timekeeper-root .progress-bar {
   height: 8px;
   background: #0d6efd;
+  transition: width 200ms ease-in-out;
 }
 
-/* Small alerts (replacing inline) */
+/* Small alerts */
 .timekeeper-root .tk-alert {
   padding: 8px;
   border: 1px solid;

@@ -3,138 +3,60 @@ use WHMCS\Database\Capsule;
 
 if (!defined('WHMCS')) { die('Access Denied'); }
 
+// Base dir and helpers
+$base = dirname(__DIR__); // /modules/addons/timekeeper
+$try = function (string $relA, string $relB) use ($base) {
+    $a = $base . $relA;
+    $b = $base . $relB;
+    if (is_file($a)) { require_once $a; return; }
+    if (is_file($b)) { require_once $b; return; }
+    throw new \RuntimeException("Missing helper: tried {$a} and {$b}");
+};
+$try('/helpers/core_helper.php', '/includes/helpers/core_helper.php');
+$try('/helpers/dashboard_helper.php', '/includes/helpers/dashboard_helper.php');
+
+use Timekeeper\Helpers\CoreHelper as CoreH;
+use Timekeeper\Helpers\DashboardHelper as DashH;
+
 /**
  * timekeeper Dashboard (permissions-aware)
- * - View permission: users not in "view_all_admin_ids_json" only see their own data
- * - Approval permission: only users in "approval_admin_ids_json" see Approvals Queue
- * - Date range filter (defaults to current month)
+ * Housekeeping:
+ *  - No inline CSS (progress widths set via data attributes + JS)
+ *  - No inline scripts (logic moved to dashboard.js)
+ *  - Dashboard-specific queries moved to DashboardHelper
  */
 
 $today = date('Y-m-d');
-$from  = isset($_GET['from']) ? preg_replace('/[^0-9\-]/', '', $_GET['from']) : date('Y-m-01');
-$to    = isset($_GET['to'])   ? preg_replace('/[^0-9\-]/', '', $_GET['to'])   : date('Y-m-d');
 
-// -------- Permissions --------
+// Inputs
+$rawFrom = isset($_GET['from']) ? $_GET['from'] : null;
+$rawTo   = isset($_GET['to'])   ? $_GET['to']   : null;
+
+$from = (CoreH::isValidDate($rawFrom) ? $rawFrom : date('Y-m-01'));
+$to   = (CoreH::isValidDate($rawTo)   ? $rawTo   : date('Y-m-d'));
+
+// Current admin
 $currentAdminId = (int) ($_SESSION['adminid'] ?? 0);
 
-// Load JSON arrays of admin IDs from settings
-$perm = Capsule::table('mod_timekeeper_permissions')
-    ->whereIn('setting_key', ['view_all_admin_ids_json', 'approval_admin_ids_json'])
-    ->pluck('setting_value', 'setting_key');
+// Permissions
+[$canViewAll, $canApprove] = DashH::resolvePermissions($currentAdminId);
 
-$viewAllIds = [];
-$approveIds = [];
-if (isset($perm['view_all_admin_ids_json'])) {
-    $decoded = json_decode($perm['view_all_admin_ids_json'], true);
-    if (is_array($decoded)) {
-        $viewAllIds = array_map('intval', $decoded);
-    }
-}
-if (isset($perm['approval_admin_ids_json'])) {
-    $decoded = json_decode($perm['approval_admin_ids_json'], true);
-    if (is_array($decoded)) {
-        $approveIds = array_map('intval', $decoded);
-    }
-}
+// KPIs
+$kpi = DashH::kpis($from, $to, $currentAdminId, $canViewAll, $today);
 
-// Defaults:
-// - If no "view all" list configured, assume everyone can see all (keeps current behavior sane).
-// - If no "approval" list configured, assume nobody can approve.
-$canViewAll = empty($viewAllIds) ? true : in_array($currentAdminId, $viewAllIds, true);
-$canApprove = !empty($approveIds) && in_array($currentAdminId, $approveIds, true);
-
-// -------- KPI queries (respect canViewAll) --------
-$baseTs = Capsule::table('mod_timekeeper_timesheets')
-    ->whereBetween('timesheet_date', [$from, $to]);
-if (!$canViewAll) {
-    $baseTs->where('admin_id', $currentAdminId);
-}
-
-$kpi = [];
-$kpi['pending']  = (clone $baseTs)->where('status', 'pending')->count();
-$kpi['approved'] = (clone $baseTs)->where('status', 'approved')->count();
-$kpi['rejected'] = (clone $baseTs)->where('status', 'rejected')->count();
-
-$totalsQ = Capsule::table('mod_timekeeper_timesheet_entries AS e')
-    ->join('mod_timekeeper_timesheets AS t','e.timesheet_id','=','t.id')
-    ->whereBetween('t.timesheet_date', [$from, $to]);
-if (!$canViewAll) {
-    $totalsQ->where('t.admin_id', $currentAdminId);
-}
-$totals = $totalsQ->selectRaw('ROUND(SUM(e.billable_time),2) AS billable, ROUND(SUM(e.sla_time),2) AS sla')->first();
-$kpi['billable_hours'] = (float) ($totals->billable ?? 0);
-$kpi['sla_hours']      = (float) ($totals->sla ?? 0);
-
-// "Missing Today" is a team-wide metric — show only to view-all users
-$kpi['missing_today'] = 0;
-if ($canViewAll) {
-    $assignedAdminIds = Capsule::table('mod_timekeeper_permissions')
-        ->where('setting_key','cron_assigned_users_json')
-        ->value('setting_value');
-    $assigned = $assignedAdminIds ? (json_decode($assignedAdminIds, true) ?: []) : [];
-    $assigned = array_map('intval', $assigned);
-
-    $haveTsToday = Capsule::table('mod_timekeeper_timesheets')
-        ->where('timesheet_date', $today)
-        ->pluck('admin_id')
-        ->toArray();
-    $haveTsToday = array_map('intval', $haveTsToday);
-
-    if (!empty($assigned)) {
-        $kpi['missing_today'] = max(0, count(array_diff($assigned, $haveTsToday)));
-    }
-}
-
-// -------- Approvals queue (only for approvers) --------
+// Approvals queue
 $pending = [];
 $pendingTotals = [];
 if ($canApprove) {
-    $pending = Capsule::table('mod_timekeeper_timesheets AS t')
-        ->join('tbladmins AS a','t.admin_id','=','a.id')
-        ->where('t.status','pending')
-        ->orderBy('t.timesheet_date','desc')
-        ->limit(10)
-        ->get(['t.id','t.timesheet_date','t.status', Capsule::raw("CONCAT(a.firstname,' ',a.lastname) AS admin_name")]);
-
-    if (count($pending)) {
-        $ids = array_map(fn($r)=>$r->id, $pending->toArray());
-        $rows = Capsule::table('mod_timekeeper_timesheet_entries')
-            ->whereIn('timesheet_id',$ids)
-            ->selectRaw('timesheet_id, ROUND(SUM(time_spent),2) AS total, ROUND(SUM(billable_time),2) AS billable, ROUND(SUM(sla_time),2) AS sla')
-            ->groupBy('timesheet_id')->get();
-        foreach ($rows as $r) { $pendingTotals[$r->timesheet_id] = $r; }
-    }
+    [$pending, $pendingTotals] = DashH::approvalsQueue();
 }
 
-// -------- Time by Department (respect canViewAll) --------
-$byDeptQ = Capsule::table('mod_timekeeper_timesheet_entries AS e')
-    ->join('mod_timekeeper_timesheets AS t','e.timesheet_id','=','t.id')
-    ->join('mod_timekeeper_departments AS d','e.department_id','=','d.id')
-    ->whereBetween('t.timesheet_date', [$from, $to]);
-if (!$canViewAll) {
-    $byDeptQ->where('t.admin_id', $currentAdminId);
-}
-$byDept = $byDeptQ->groupBy('d.id','d.name')
-    ->orderBy('d.name')
-    ->selectRaw("d.name AS dept, ROUND(SUM(e.time_spent),2) AS total, ROUND(SUM(e.billable_time),2) AS billable, ROUND(SUM(e.sla_time),2) AS sla")
-    ->get();
+// Time by Department
+$byDept = DashH::timeByDept($from, $to, $currentAdminId, $canViewAll);
 
-// -------- Recent Activity (respect canViewAll) --------
-$recentQ = Capsule::table('mod_timekeeper_timesheet_entries AS e')
-    ->join('mod_timekeeper_timesheets AS t','e.timesheet_id','=','t.id')
-    ->join('tbladmins AS a','t.admin_id','=','a.id')
-    ->orderBy('e.updated_at','desc')
-    ->limit(10);
-if (!$canViewAll) {
-    $recentQ->where('t.admin_id', $currentAdminId);
-}
-$recent = $recentQ->get([
-    't.timesheet_date',
-    Capsule::raw("CONCAT(a.firstname,' ',a.lastname) AS admin_name"),
-    'e.description', 'e.updated_at'
-]);
+// Recent Activity
+$recent = DashH::recentActivity(10, $currentAdminId, $canViewAll);
 ?>
-
 <div class="timekeeper-fullwidth dashboard-root">
   <h2>Dashboard</h2>
 
@@ -224,20 +146,21 @@ $recent = $recentQ->get([
         <?php else: ?>
           <table class="table table-bordered compact">
             <thead>
-                <tr>
-                  <th>Department</th>
-                  <th>Total</th>
-                  <th>Billable</th>
-                  <th>Billable %</th>
-                  <th>SLA</th>
-                  <th>SLA %</th>
-                </tr>
+              <tr>
+                <th>Department</th>
+                <th>Total</th>
+                <th>Billable</th>
+                <th>Billable %</th>
+                <th>SLA</th>
+                <th>SLA %</th>
+              </tr>
             </thead>
-
             <tbody>
               <?php foreach ($byDept as $r):
                 $billablePct = ($r->total > 0) ? ($r->billable / $r->total * 100) : 0;
                 $slaPct      = ($r->total > 0) ? ($r->sla      / $r->total * 100) : 0;
+                $billablePct = (float) max(0, min(100, $billablePct));
+                $slaPct      = (float) max(0, min(100, $slaPct));
               ?>
               <tr>
                 <td><?= htmlspecialchars($r->dept) ?></td>
@@ -245,17 +168,20 @@ $recent = $recentQ->get([
                 <td><?= number_format((float)$r->billable,2) ?></td>
                 <td>
                   <?= number_format($billablePct,0) ?>%
-                  <div class="progress-wrap"><div class="progress-bar" style="width:<?= min(100,max(0,$billablePct)) ?>%"></div></div>
+                  <div class="progress-wrap">
+                    <div class="progress-bar" data-width="<?= $billablePct ?>"></div>
+                  </div>
                 </td>
                 <td><?= number_format((float)$r->sla,2) ?></td>
                 <td>
                   <?= number_format($slaPct,0) ?>%
-                  <div class="progress-wrap"><div class="progress-bar" style="width:<?= min(100,max(0,$slaPct)) ?>%"></div></div>
+                  <div class="progress-wrap">
+                    <div class="progress-bar" data-width="<?= $slaPct ?>"></div>
+                  </div>
                 </td>
               </tr>
               <?php endforeach; ?>
             </tbody>
-
           </table>
         <?php endif; ?>
       </div>
