@@ -101,3 +101,8 @@
   line-height: 1.3;
   font-weight: 700;
 }
+
+/* Simple vertical spacer used between approvals islands */
+.timekeeper-root .timekeeper-approvals-settings .tk-gap-approvals {
+  height: 16px;       /* adjust here if you want more/less space */
+}
