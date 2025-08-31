@@ -1,10 +1,16 @@
 <?php
 
+/**
+ * Timekeeper Addon
+ * Router + per-role page RBAC (driven by Hide Menu Tabs),
+ * asset loader, normalized routing, and safe defaults.
+ */
+
 if (!defined('WHMCS')) { die('This file cannot be accessed directly.'); }
 
 use WHMCS\Database\Capsule;
 
-// --- Load helpers (supports helpers/ or includes/helpers/) ---
+// ---- Load helpers (supports helpers/ or includes/helpers/) ----
 $base = __DIR__; // /modules/addons/timekeeper
 $try = function (string $relA, string $relB) use ($base) {
     $a = $base . $relA; $b = $base . $relB;
@@ -13,20 +19,77 @@ $try = function (string $relA, string $relB) use ($base) {
     throw new \RuntimeException("Missing helper: tried {$a} and {$b}");
 };
 $try('/helpers/core_helper.php', '/includes/helpers/core_helper.php');
+$try('/helpers/settings_helper.php', '/includes/helpers/settings_helper.php');
 $try('/helpers/timekeeper_helper.php', '/includes/helpers/timekeeper_helper.php');
 
 use Timekeeper\Helpers\CoreHelper as CoreH;
+use Timekeeper\Helpers\SettingsHelper as SetH;
 use Timekeeper\Helpers\TimekeeperHelper as TkH;
 
 /* ============================================================
  * WHMCS Addon Entry Points
- * (config/activate/deactivate/upgrade are unchanged)
  * ============================================================ */
 
-function timekeeper_config() { /* ... keep as-is ... */ }
-function timekeeper_activate() { /* ... keep as-is ... */ }
-function timekeeper_deactivate() { /* ... keep as-is ... */ }
-function timekeeper_upgrade($vars) { /* ... keep as-is ... */ }
+function timekeeper_config()
+{
+    return [
+        'name'        => 'Timekeeper',
+        'description' => 'WHMCS admin time tracking module with built-in dashboard',
+        'version'     => '1.0.0',
+        'author'      => 'CodeAnchorPro',
+        'fields'      => [],
+    ];
+}
+
+function timekeeper_activate()
+{
+    try {
+        $schema = Capsule::schema();
+
+        $needsInstall =
+            !$schema->hasTable('mod_timekeeper_assigned_users') ||
+            !$schema->hasTable('mod_timekeeper_departments') ||
+            !$schema->hasTable('mod_timekeeper_hidden_tabs') ||
+            !$schema->hasTable('mod_timekeeper_permissions') ||
+            !$schema->hasTable('mod_timekeeper_task_categories') ||
+            !$schema->hasTable('mod_timekeeper_timesheets') ||
+            !$schema->hasTable('mod_timekeeper_timesheet_entries');
+
+        if ($needsInstall) {
+            $sqlPath = __DIR__ . '/db/install.sql';
+            if (!is_readable($sqlPath)) {
+                throw new \RuntimeException('Install SQL not found or not readable at: ' . $sqlPath);
+            }
+            $sql = file_get_contents($sqlPath);
+
+            // Split on semicolon + newline(s). Safe for this file.
+            $statements = array_filter(array_map('trim', preg_split('/;[\r\n]+/u', $sql)));
+            foreach ($statements as $stmt) {
+                if ($stmt !== '') {
+                    Capsule::unprepared($stmt . ';');
+                }
+            }
+        }
+
+        // Optional: one-time migration from legacy hidden tab table into JSON setting
+        // tk_migrateHiddenTabsLegacyToSetting(); // uncomment if needed
+
+        return ['status' => 'success', 'description' => 'Timekeeper activated. Database verified/installed.'];
+    } catch (\Throwable $e) {
+        return ['status' => 'error', 'description' => 'Activation failed: ' . $e->getMessage()];
+    }
+}
+
+function timekeeper_deactivate()
+{
+    return ['status' => 'success', 'description' => 'Timekeeper deactivated. No data removed.'];
+}
+
+function timekeeper_upgrade($vars)
+{
+    // Place guarded ALTERs here as you iterate versions
+    return ['status' => 'success', 'description' => 'Upgrade checks complete.'];
+}
 
 /**
  * Main admin output (router).
@@ -36,33 +99,57 @@ function timekeeper_output($vars)
     $adminId = (int)($vars['adminid'] ?? ($_SESSION['adminid'] ?? 0));
     $roleId  = TkH::getAdminRoleId($adminId);
 
-    // Normalize requested page using the global helper from core_helper.php
+    // Determine requested page and normalize (core normalize + alias resolver)
     $rawPage = isset($_GET['timekeeperpage']) ? (string)$_GET['timekeeperpage'] : 'dashboard';
     $page    = tk_normalize_page($rawPage);
+    $page    = TkH::resolvePageAlias($page);
 
-    // After: $page = TkH::resolvePageAlias(\tk_normalize_page($rawPage));
-    $title = 'Timekeeper — ' . ucwords(str_replace('_',' ', $page));
-    $GLOBALS['pagetitle'] = $title;              // WHMCS expects this to be a string
-    // (Optional niceties)
-    $GLOBALS['helplink'] = '';                   // or a doc URL if you have one
-    $GLOBALS['breadcrumbnav'] = 'Home > ' . $title;
+    // Human-friendly labels (used for title & breadcrumb)
+    $labels = [
+        'dashboard'           => 'Dashboard',
+        'timesheet'           => 'Timesheet',
+        'pending_timesheets'  => 'Pending Timesheets',
+        'approved_timesheets' => 'Approved Timesheets',
+        'departments'         => 'Departments',
+        'task_categories'     => 'Task Categories',
+        'reports'             => 'Reports',
+        'settings'            => 'Settings',
+        'approval'            => 'Timesheet Settings',
+        'cron'                => 'Daily Cron Setup',
+        'hide_tabs'           => 'Hide Menu Tabs',
+    ];
+    $label  = $labels[$page] ?? ucwords(str_replace('_',' ', $page));
+    $title  = "Timekeeper — {$label}";
 
-    // RBAC via Hide Tabs config
+    // Set admin page globals (Mixpanel expects a string page title)
+    $GLOBALS['pagetitle'] = $title;
+    $GLOBALS['helplink']  = '';
+
+    // Breadcrumb: show Settings > Subtab when inside settings area
+    $settingsChildren = ['approval','cron','hide_tabs'];
+    if ($page === 'settings' || in_array($page, $settingsChildren, true)) {
+        $parent  = 'Settings';
+        $current = ($page === 'settings') ? 'Settings' : $label;
+        $GLOBALS['breadcrumbnav'] = 'Home > ' . $parent . ' > ' . $current;
+    } else {
+        $GLOBALS['breadcrumbnav'] = 'Home > ' . $label;
+    }
+
+    // Enforce page-level RBAC based on Hide Tabs config (shared with settings)
     if (!TkH::isPageAllowedForRole($roleId, $page)) {
-        echo '<div class="alert alert-danger" style="margin-top:8px">'
+        echo '<div class="tk-alert tk-alert--error tk-mt-8">'
            . 'Access Denied: Your role does not have permission to view this page.'
            . '</div>';
 
         $fallback = TkH::firstAllowedPageForRole($roleId);
-        $_GET['timekeeperpage'] = $fallback;
+        $_GET['timekeeperpage'] = $fallback; // keep existing routers/templates happy
         $page = $fallback;
     }
 
-    // Default landing
+    // If no page specified at all, land on dashboard
     if (empty($_GET['timekeeperpage'])) {
         $url = 'addonmodules.php?module=timekeeper&timekeeperpage=dashboard';
-        if (!headers_sent()) { header('Location: ' . $url); exit; }
-        echo '<script>window.location.replace(' . json_encode($url) . ');</script>';
+        TkH::redirect($url);
         return;
     }
 
@@ -79,9 +166,9 @@ function timekeeper_output($vars)
             'task_categories'     => ['css' => ['timekeeper.css', 'task_categories.css'],     'js' => ['timekeeper.js', 'task_categories.js']],
             'reports'             => ['css' => ['timekeeper.css', 'reports.css'],             'js' => ['timekeeper.js', 'reports.js']],
             'settings'            => ['css' => ['timekeeper.css', 'settings_tabs.css', 'settings.css'], 'js' => ['timekeeper.js', 'settings.js']],
-            'approval'            => ['css' => ['timekeeper.css', 'settings_tabs.css', 'settings.css'], 'js' => ['timekeeper.js', 'settings.js']],
-            'cron'                => ['css' => ['timekeeper.css', 'settings_tabs.css', 'settings.css'], 'js' => ['timekeeper.js', 'settings.js']],
-            'hide_tabs'           => ['css' => ['timekeeper.css', 'settings_tabs.css', 'settings.css'], 'js' => ['timekeeper.js', 'settings.js']],
+            'approval'            => ['css' => ['timekeeper.css', 'settings_tabs.css', 'settings.css'], 'js' => ['timekeeper.js', 'settings.js']], // settings child
+            'cron'                => ['css' => ['timekeeper.css', 'settings_tabs.css', 'settings.css'], 'js' => ['timekeeper.js', 'settings.js']], // settings child
+            'hide_tabs'           => ['css' => ['timekeeper.css', 'settings_tabs.css', 'settings.css'], 'js' => ['timekeeper.js', 'settings.js']], // settings child
         ];
 
         if (isset($tkPageAssets[$page])) {
@@ -90,19 +177,22 @@ function timekeeper_output($vars)
             TkH::loadAssetsIfExists(['css' => ['timekeeper.css'], 'js' => ['timekeeper.js']]);
         }
 
-        // Optional navigation assets
+        // Always include navigation assets if they exist
         TkH::loadAssetsIfExists(['css' => ['navigation.css'], 'js' => ['navigation.js']]);
 
-        // subpage suffix assets (kept as-is)
-        $genericSub  = isset($_GET['sub']) ? preg_replace('/[^a-z0-9_\-]/i', '', (string) $_GET['sub']) : null;
+        // ---- Subpage auto-loader conventions ----
+        $genericSub  = isset($_GET['sub'])      ? preg_replace('/[^a-z0-9_\-]/i', '', (string) $_GET['sub'])      : null;
         $settingsSub = ($page === 'settings' && isset($_GET['subtab']))
-            ? preg_replace('/[^a-z0-9_\-]/i', '', (string) $_GET['subtab'])
-            : null;
+                     ? preg_replace('/[^a-z0-9_\-]/i', '', (string) $_GET['subtab'])
+                     : null;
         $reportSub   = ($page === 'reports' && isset($_GET['report_sub']))
-            ? preg_replace('/[^a-z0-9_\-]/i', '', (string) $_GET['report_sub'])
-            : null;
+                     ? preg_replace('/[^a-z0-9_\-]/i', '', (string) $_GET['report_sub'])
+                     : null;
 
-        $subSuffixes = array_values(array_filter([$genericSub, $settingsSub, $reportSub]));
+        $subSuffixes = [];
+        foreach ([$genericSub, $settingsSub, $reportSub] as $s) {
+            if ($s && !in_array($s, $subSuffixes, true)) $subSuffixes[] = $s;
+        }
         if (!empty($subSuffixes)) {
             foreach ($subSuffixes as $suf) {
                 TkH::loadAssetsIfExists(['css' => ["{$page}_{$suf}.css"], 'js' => ["{$page}_{$suf}.js"]]);
@@ -117,7 +207,7 @@ function timekeeper_output($vars)
         if (is_readable($nav)) { include $nav; }
     }
 
-    /* ----------------- Page Router (unchanged) ----------------- */
+    /* ----------------- Page Router ----------------- */
     switch ($page) {
         case 'dashboard':          include __DIR__ . '/pages/dashboard.php'; break;
         case 'timesheet':          include __DIR__ . '/pages/timesheet.php'; break;
@@ -126,12 +216,17 @@ function timekeeper_output($vars)
         case 'departments':        include __DIR__ . '/pages/departments.php'; break;
         case 'task_categories':    include __DIR__ . '/pages/task_categories.php'; break;
         case 'reports':            include __DIR__ . '/pages/reports.php'; break;
-        case 'settings':           include __DIR__ . '/pages/settings.php'; break;
+        case 'settings':
         case 'approval':
         case 'cron':
-        case 'hide_tabs':          include __DIR__ . '/pages/settings.php'; break;
-        default:                   include __DIR__ . '/pages/dashboard.php'; break;
+        case 'hide_tabs':
+            include __DIR__ . '/pages/settings.php';
+            break;
+        default:
+            include __DIR__ . '/pages/dashboard.php';
     }
 
-    if (!$isExport) { echo '</div>'; }
+    if (!$isExport) {
+        echo '</div>'; // .timekeeper-root
+    }
 }
