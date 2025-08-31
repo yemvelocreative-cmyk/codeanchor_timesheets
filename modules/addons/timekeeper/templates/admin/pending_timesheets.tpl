@@ -28,8 +28,8 @@
     <div class="pt-list">
       <header>Awaiting Action</header>
 
-      <!-- Header row (5 cols per CSS grid: Admin | Date | Status | (empty) | Actions) -->
-      <div class="pt-row" style="font-weight:600;">
+      <!-- Header row -->
+      <div class="pt-row pt-row-head">
         <div>Admin</div>
         <div>Date</div>
         <div>Status</div>
@@ -71,12 +71,12 @@
 
         <!-- Rejection note (if applicable) -->
         <?php if (isset($timesheet) && $timesheet->status === 'rejected' && !empty($timesheet->admin_rejection_note)): ?>
-          <div class="alert alert-danger" style="margin-bottom:14px;">
+          <div class="alert alert-danger pt-mb-16">
             <strong>Reason for rejection:</strong><br>
             <?= nl2br(htmlspecialchars($timesheet->admin_rejection_note)) ?>
             <?php if (!empty($timesheet->rejected_at) || !empty($timesheet->rejected_by)): ?>
               <br>
-              <span style="font-size:90%;">
+              <span class="pt-note">
                 <?php if (!empty($timesheet->rejected_at)): ?>
                   <strong>Rejected on:</strong> <?= htmlspecialchars($timesheet->rejected_at) ?>
                 <?php endif; ?>
@@ -89,11 +89,11 @@
         <?php endif; ?>
 
         <!-- Add New Line -->
-        <div class="pt-list" style="margin-bottom:16px;">
+        <div class="pt-list pt-mb-16">
           <header>Add New Line</header>
           <div class="body">
             <!-- Header labels (match grid), with billable/SLA headers toggle targets -->
-            <div class="pt-entry-row" style="font-weight:600;">
+            <div class="pt-entry-row pt-fw-600">
               <div>Client</div>
               <div>Department</div>
               <div>Task Category</div>
@@ -187,7 +187,7 @@
           ?>
 
           <!-- Labels -->
-          <div class="pt-entry-row" style="font-weight:600;">
+          <div class="pt-entry-row pt-fw-600">
             <div>Client</div>
             <div>Department</div>
             <div>Task Category</div>
@@ -269,7 +269,7 @@
                 );
                 if ($needsVerify):
               ?>
-                <div class="pt-inline-verify alert alert-warning" style="margin:8px 0;">
+                <div class="pt-inline-verify">
                   <label class="d-block">
                     <input type="checkbox" form="approve-form" name="verify_unbilled_<?= (int)$entry->id ?>" value="1" required>
                     Verify entry — <?= htmlspecialchars($entry->description ?: 'No description') ?>
@@ -310,7 +310,7 @@
                 );
                 if ($needsVerify):
               ?>
-                <div class="pt-inline-verify alert alert-warning" style="margin:8px 0;">
+                <div class="pt-inline-verify">
                   <label class="d-block">
                     <input type="checkbox" form="approve-form" name="verify_unbilled_<?= (int)$entry->id ?>" value="1" required>
                     Verify entry — <?= htmlspecialchars($entry->description ?: 'No description') ?>
@@ -333,15 +333,14 @@
           <?php if ($canApprove && isset($timesheet)): ?>
             <form method="post"
                   id="approve-form"
-                  class="pt-approve-form"
-                  style="margin-top: 12px;"
+                  class="pt-approve-form pt-mt-12"
                   action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
               <?php if (!empty($tkCsrf)): ?>
                 <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
               <?php endif; ?>
               <input type="hidden" name="approve_timesheet_id" value="<?= (int)$timesheet->id ?>">
 
-              <div class="alert alert-info" style="margin-bottom: 10px;">
+              <div class="alert alert-info pt-mb-10">
                 Please ensure all flagged entries above are ticked “Verified” before approving.
               </div>
 
@@ -349,14 +348,13 @@
             </form>
 
             <form method="post"
-                  class="pt-reject-form"
-                  style="margin-top: 12px;"
+                  class="pt-reject-form pt-mt-12"
                   action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
               <?php if (!empty($tkCsrf)): ?>
                 <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
               <?php endif; ?>
               <input type="hidden" name="reject_timesheet_id" value="<?= (int)$timesheet->id ?>">
-              <textarea name="admin_rejection_note" class="form-control" placeholder="Rejection Note (required)" style="max-width:420px; height:60px; margin:8px 0;"></textarea>
+              <textarea name="admin_rejection_note" class="form-control pt-reject-note" placeholder="Rejection Note (required)"></textarea>
               <button type="submit" class="btn btn-danger">Reject Timesheet</button>
             </form>
           <?php endif; ?>
@@ -366,8 +364,7 @@
         <!-- Resubmit (owner of rejected sheet) -->
         <?php if (isset($timesheet) && $timesheet->status === 'rejected' && (int)$editAdminId === (int)$_SESSION['adminid']): ?>
           <form method="post"
-                class="pt-resubmit-form"
-                style="margin-top: 16px;"
+                class="pt-resubmit-form pt-mt-12"
                 action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
             <?php if (!empty($tkCsrf)): ?>
               <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
