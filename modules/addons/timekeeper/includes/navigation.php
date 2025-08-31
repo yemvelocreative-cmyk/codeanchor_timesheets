@@ -21,11 +21,6 @@ $navPendingCount = PendingH::menuCount($navAdminId, $roleId);
 
 $navApprovedCount = ApprovedH::menuCount($navAdminId, $roleId);
 
-$navRejectedCount = (int) Capsule::table('mod_timekeeper_timesheets')
-    ->where('status', 'rejected')
-    ->where('admin_id', $navAdminId)
-    ->count();
-
 /** 1) Dismiss banner (session + cookie) **/
 if (isset($_GET['dismiss_rejected_banner']) && $_GET['dismiss_rejected_banner'] === '1') {
     $_SESSION['timekeeper_hide_rejected_banner'] = '1';
