@@ -1,7 +1,7 @@
 <?php if (!defined('WHMCS')) { die('Access Denied'); } ?>
 <?php $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); ?>
 
-<link rel="stylesheet" href="../modules/addons/timekeeper/css/approved_timesheets.css?v=10" />
+<link rel="stylesheet" href="../modules/addons/timekeeper/css/approved_timesheets.css?v=11" />
 <script defer src="../modules/addons/timekeeper/js/approved_timesheets.js?v=10"></script>
 
 <div class="timekeeper-root approved-timesheets">
@@ -48,6 +48,37 @@
       </div>
     </form>
 
+    <!-- Pager (top) -->
+    <div class="tk-pager">
+      <div class="tk-pager-info">
+        <?php
+          $from = (int)($pager['from'] ?? 0);
+          $to   = (int)($pager['to'] ?? 0);
+          $tot  = (int)($pager['total'] ?? 0);
+          $pg   = (int)($pager['page'] ?? 1);
+          $pgs  = (int)($pager['pages'] ?? 1);
+        ?>
+        <span class="tk-muted">Showing</span>
+        <strong><?= $from ?></strong><span class="tk-muted">–</span><strong><?= $to ?></strong>
+        <span class="tk-muted">of</span>
+        <strong><?= $tot ?></strong>
+        <span class="tk-muted">(Page <?= $pg ?> of <?= $pgs ?>)</span>
+      </div>
+      <div class="tk-pager-controls">
+        <?php if (!empty($pager['prevUrl'])): ?>
+          <a class="tk-btn tk-btn-outline tk-btn-sm tk-btn-rounded" href="<?= $h($pager['prevUrl']) ?>" aria-label="Previous page">Prev</a>
+        <?php else: ?>
+          <span class="tk-btn tk-btn-outline tk-btn-sm tk-btn-rounded" aria-disabled="true">Prev</span>
+        <?php endif; ?>
+
+        <?php if (!empty($pager['nextUrl'])): ?>
+          <a class="tk-btn tk-btn-outline tk-btn-sm tk-btn-rounded" href="<?= $h($pager['nextUrl']) ?>" aria-label="Next page">Next</a>
+        <?php else: ?>
+          <span class="tk-btn tk-btn-outline tk-btn-sm tk-btn-rounded" aria-disabled="true">Next</span>
+        <?php endif; ?>
+      </div>
+    </div>
+
     <?php if (empty($approvedTimesheets)): ?>
       <div class="tk-alert tk-alert-success">No approved timesheets found.</div>
     <?php else: ?>
@@ -82,6 +113,30 @@
             </div>
           </div>
         <?php endforeach; ?>
+      </div>
+
+      <!-- Pager (bottom) -->
+      <div class="tk-pager tk-mt-12">
+        <div class="tk-pager-info">
+          <span class="tk-muted">Showing</span>
+          <strong><?= (int)$pager['from'] ?></strong><span class="tk-muted">–</span><strong><?= (int)$pager['to'] ?></strong>
+          <span class="tk-muted">of</span>
+          <strong><?= (int)$pager['total'] ?></strong>
+          <span class="tk-muted">(Page <?= (int)$pager['page'] ?> of <?= (int)$pager['pages'] ?>)</span>
+        </div>
+        <div class="tk-pager-controls">
+          <?php if (!empty($pager['prevUrl'])): ?>
+            <a class="tk-btn tk-btn-outline tk-btn-sm tk-btn-rounded" href="<?= $h($pager['prevUrl']) ?>" aria-label="Previous page">Prev</a>
+          <?php else: ?>
+            <span class="tk-btn tk-btn-outline tk-btn-sm tk-btn-rounded" aria-disabled="true">Prev</span>
+          <?php endif; ?>
+
+          <?php if (!empty($pager['nextUrl'])): ?>
+            <a class="tk-btn tk-btn-outline tk-btn-sm tk-btn-rounded" href="<?= $h($pager['nextUrl']) ?>" aria-label="Next page">Next</a>
+          <?php else: ?>
+            <span class="tk-btn tk-btn-outline tk-btn-sm tk-btn-rounded" aria-disabled="true">Next</span>
+          <?php endif; ?>
+        </div>
       </div>
     <?php endif; ?>
   <?php endif; ?>

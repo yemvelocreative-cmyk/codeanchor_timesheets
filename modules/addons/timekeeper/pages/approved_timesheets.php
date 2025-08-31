@@ -1,161 +1,287 @@
 <?php
-// /modules/addons/timekeeper/pages/approved_timesheets.php
+
 use WHMCS\Database\Capsule;
 
-// --- Load helpers (supports either helpers/ or includes/helpers/) ---
-$base = dirname(__DIR__); // -> /modules/addons/timekeeper
-$try = function (string $relA, string $relB) use ($base) {
-    $a = $base . $relA;
-    $b = $base . $relB;
-    if (is_file($a)) { require_once $a; return; }
-    if (is_file($b)) { require_once $b; return; }
-    throw new \RuntimeException("Missing helper: tried {$a} and {$b}");
-};
-$try('/helpers/core_helper.php', '/includes/helpers/core_helper.php');
-$try('/helpers/approved_timesheets_helper.php', '/includes/helpers/approved_timesheets_helper.php');
+if (!defined('WHMCS')) { die('Access Denied'); }
 
-use Timekeeper\Helpers\CoreHelper as CoreH;
-use Timekeeper\Helpers\ApprovedTimesheetsHelper as ApprovedH;
-
-// ---- Context: current admin + role ----
-$adminId = isset($_SESSION['adminid']) ? (int) $_SESSION['adminid'] : 0;
-$admin   = Capsule::table('tbladmins')->where('id', $adminId)->first();
-$roleId  = $admin ? (int) $admin->roleid : 0;
-
-// ---- CSRF token for actions (unapprove) ----
-if (empty($_SESSION['tk_csrf'])) {
-    $_SESSION['tk_csrf'] = bin2hex(random_bytes(16));
+/* -------------------------------
+   CSRF (module-local, session-based)
+-------------------------------- */
+if (session_status() !== PHP_SESSION_ACTIVE) { @session_start(); }
+if (empty($_SESSION['timekeeper_csrf'])) {
+    $_SESSION['timekeeper_csrf'] = bin2hex(random_bytes(32));
 }
-$tkCsrf = (string) $_SESSION['tk_csrf'];
+$tkCsrf = $_SESSION['timekeeper_csrf'];
 
-// ---- Permissions from Settings ----
-$viewAllRoleIds = ApprovedH::viewAllRoleIds();      // roles allowed to view ALL approved timesheets
-$canUnapprove   = ApprovedH::canUnapprove($roleId); // role can approve/unapprove?
-$canUseAdminFilter = in_array($roleId, $viewAllRoleIds, true);
-
-// ---- Handle POST actions (Unapprove) ----
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = (string) CoreH::post('tk_action', '');
-    $csrf   = (string) CoreH::post('tk_csrf', '');
-    if (!hash_equals($tkCsrf, $csrf)) {
-        header('Location: addonmodules.php?module=timekeeper&timekeeperpage=approved_timesheets');
-        exit;
-    }
-
-    if ($action === 'unapprove' && $canUnapprove) {
-        $tsId = (int) CoreH::post('ts_id', 0);
-        if ($tsId > 0) {
-            $ts = Capsule::table('mod_timekeeper_timesheets')
-                ->where('id', $tsId)
-                ->where('status', 'approved')
-                ->first();
-
-            if ($ts) {
-                $ownerId           = (int) $ts->admin_id;
-                $viewerHasViewAll  = in_array($roleId, $viewAllRoleIds, true);
-                $viewerCanSeeSheet = $viewerHasViewAll || ($ownerId === $adminId);
-
-                if ($viewerCanSeeSheet) {
-                    Capsule::table('mod_timekeeper_timesheets')
-                        ->where('id', $tsId)
-                        ->update(['status' => 'pending']);
-                }
-            }
+function timekeeper_require_csrf() {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+        $posted = $_POST['tk_csrf'] ?? '';
+        $valid  = isset($_SESSION['timekeeper_csrf']) && hash_equals($_SESSION['timekeeper_csrf'], $posted);
+        if (!$valid) {
+            http_response_code(400);
+            die('Invalid request token.');
         }
-        header('Location: addonmodules.php?module=timekeeper&timekeeperpage=approved_timesheets');
-        exit;
     }
 }
 
-// ---- Maps for template ----
-$adminMap      = ApprovedH::adminMap();
-$clientMap     = ApprovedH::clientMap();
-$departmentMap = ApprovedH::departmentMap();   // mod_timekeeper_departments
-$taskMap       = ApprovedH::taskMap();         // mod_timekeeper_task_categories
+/* -------------------------------
+   Assets (prefer central loader in timekeeper.php)
+-------------------------------- */
+// echo '<link rel="stylesheet" href="../modules/addons/timekeeper/css/settings_tabs.css" />';
+// echo '<link rel="stylesheet" href="../modules/addons/timekeeper/css/settings.css" />';
+// echo '<script src="../modules/addons/timekeeper/js/settings.js" defer></script>';
 
-// ---- Listing vs. viewing a specific approved timesheet ----
-$reqAdminId = CoreH::get('admin_id', null);
-$reqDate    = CoreH::get('date', null);
-
-// Filters (listing only)
-$fltStart   = CoreH::get('start_date', '');
-$fltEnd     = CoreH::get('end_date', '');
-$fltAdminId = CoreH::get('filter_admin_id', '');
-
-$isValidDate = function ($s) { return is_string($s) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $s); };
-$fltStart = $isValidDate($fltStart) ? $fltStart : '';
-$fltEnd   = $isValidDate($fltEnd)   ? $fltEnd   : '';
-$fltAdmin = ctype_digit((string)$fltAdminId) ? (int)$fltAdminId : 0;
-
-$approvedTimesheets = [];
-$timesheet          = null;
-$timesheetEntries   = [];
-$totalTime          = 0.0;
-$totalBillable      = 0.0; // for single view totals bar
-$totalSla           = 0.0;
-
-if ($reqAdminId && $reqDate) {
-    $reqAdminId = (int) $reqAdminId;
-    $reqDate    = (string) $reqDate;
-
-    // Respect view-all when opening a specific sheet
-    $timesheet = ApprovedH::getApprovedTimesheet(
-        $reqAdminId, $reqDate, $adminId, $roleId, $viewAllRoleIds
-    );
-
-    if ($timesheet) {
-        $timesheetEntries = ApprovedH::getTimesheetEntries((int) $timesheet->id);
-        $totalTime        = ApprovedH::sumColumn($timesheetEntries, 'time_spent');
-        $totalBillable    = ApprovedH::sumColumn($timesheetEntries, 'billable_time');
-        $totalSla         = ApprovedH::sumColumn($timesheetEntries, 'sla_time');
-    }
-} else {
-    // Build listing query with filters
-    $q = Capsule::table('mod_timekeeper_timesheets')
-        ->where('status', 'approved');
-
-    // Admin scope
-    if (!$canUseAdminFilter) {
-        $q->where('admin_id', $adminId);
-    } elseif ($fltAdmin > 0) {
-        $q->where('admin_id', $fltAdmin);
-    }
-
-    // Date range
-    if ($fltStart !== '') { $q->where('timesheet_date', '>=', $fltStart); }
-    if ($fltEnd   !== '') { $q->where('timesheet_date', '<=', $fltEnd); }
-
-    $approvedTimesheets = $q
-        ->orderBy('timesheet_date', 'desc')
-        ->orderBy('admin_id', 'asc')
-        ->get();
-}
-
-// ---- Pass to template ----
-$filters = [
-    'start_date'       => $fltStart,
-    'end_date'         => $fltEnd,
-    'filter_admin_id'  => $fltAdmin ? (string)$fltAdmin : '',
+/* -------------------------------
+   Settings sub-tabs
+-------------------------------- */
+$settingsTabs = [
+    'cron'      => 'Daily Cron Setup',
+    'approval'  => 'Timesheet Settings',
+    'hide_tabs' => 'Hide Menu Tabs',
 ];
 
-$vars = compact(
-    'approvedTimesheets',
-    'adminMap',
-    'clientMap',
-    'departmentMap',
-    'taskMap',
-    'timesheet',
-    'timesheetEntries',
-    'totalTime',
-    'totalBillable',
-    'totalSla',
-    'tkCsrf',
-    'canUnapprove',
-    'canUseAdminFilter',
-    'filters'
-);
+// Selected sub-tab (default cron)
+$activeTab = (isset($_GET['subtab']) && array_key_exists($_GET['subtab'], $settingsTabs))
+    ? $_GET['subtab']
+    : 'cron';
 
-extract($vars);
+// Success flags consumed by wrapper
+$success          = (isset($_GET['success']) && $_GET['success'] == '1');
+$approval_success = (isset($_GET['approval_success']) && $_GET['approval_success'] == '1');
+$tab_visibility   = (isset($_GET['tab_visibility']) && $_GET['tab_visibility'] == '1');
 
-// Template is plural per your filenames:
-include __DIR__ . '/../templates/admin/approved_timesheets.tpl';
+/* -------------------------------
+   Tab-specific controllers
+   (prepare variables; include wrapper ONCE below)
+-------------------------------- */
+switch ($activeTab) {
+    /* ==== CRON TAB ==== */
+    case 'cron': {
+        $daysOfWeek = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+        if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+            timekeeper_require_csrf();
+
+            // Save Cron Days
+            $cronDays = (isset($_POST['cron_days']) && is_array($_POST['cron_days'])) ? $_POST['cron_days'] : [];
+            $cronDaysSanitized = array_values(array_intersect($cronDays, $daysOfWeek));
+            foreach ($daysOfWeek as $day) {
+                $key = 'cron_' . $day;
+                $status = in_array($day, $cronDaysSanitized, true) ? 'active' : 'inactive';
+                Capsule::table('mod_timekeeper_permissions')->updateOrInsert(
+                    ['setting_key' => $key, 'role_id' => 0],
+                    ['setting_value' => $status]
+                );
+            }
+
+            // Save Assigned Users
+            if (array_key_exists('cron_users', $_POST)) {
+                $postedUsers = is_array($_POST['cron_users']) ? array_map('intval', $_POST['cron_users']) : [];
+                $currentAssigned = Capsule::table('mod_timekeeper_assigned_users')->pluck('admin_id')->toArray();
+                $currentAssigned = array_map('intval', $currentAssigned);
+
+                $toAdd    = array_diff($postedUsers, $currentAssigned);
+                $toRemove = array_diff($currentAssigned, $postedUsers);
+
+                if (!empty($toAdd)) {
+                    foreach ($toAdd as $adminId) {
+                        Capsule::table('mod_timekeeper_assigned_users')->insert(['admin_id' => (int)$adminId]);
+                    }
+                }
+                if (!empty($toRemove)) {
+                    Capsule::table('mod_timekeeper_assigned_users')->whereIn('admin_id', $toRemove)->delete();
+                }
+            }
+
+            $redir = 'addonmodules.php?module=timekeeper&timekeeperpage=settings&subtab=cron&success=1';
+            if (!headers_sent()) { header('Location: ' . $redir); exit; }
+            echo '<script>window.location.replace(' . json_encode($redir) . ');</script>'; return;
+        }
+
+        // Load current day statuses (role_id = 0)
+        $cronKeys = array_map(fn($d) => 'cron_' . $d, $daysOfWeek);
+        $currentCronRows = Capsule::table('mod_timekeeper_permissions')
+            ->where('role_id', 0)
+            ->whereIn('setting_key', $cronKeys)
+            ->get();
+
+        $currentCronDays = [];
+        foreach ($currentCronRows as $row) {
+            $currentCronDays[$row->setting_key] = $row->setting_value;
+        }
+
+        // Load all active admins
+        $allAdmins = Capsule::table('tbladmins')
+            ->where('disabled', 0)
+            ->orderBy('firstname')
+            ->get();
+
+        // Load assigned users
+        $cronUsers = Capsule::table('mod_timekeeper_assigned_users')->pluck('admin_id')->toArray();
+        $cronUsers = array_map('intval', $cronUsers);
+
+        // Expose CSRF in template
+        $tkCsrf = $_SESSION['timekeeper_csrf'];
+        break;
+    }
+
+    /* ==== TIMESHEET SETTINGS (APPROVAL) TAB ==== */
+    case 'approval': {
+        $roles = Capsule::table('tbladminroles')->orderBy('name')->get();
+
+        if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+            timekeeper_require_csrf();
+
+            // Validate role IDs
+            $validRoleIds = Capsule::table('tbladminroles')->pluck('id')->toArray();
+            $validRoleIds = array_map('intval', $validRoleIds);
+
+            /* ---- Save "View All" roles ---- */
+            $selectedRoles = isset($_POST['pending_timesheets_roles'])
+                ? array_map('intval', (array)$_POST['pending_timesheets_roles'])
+                : [];
+            $selectedRoles = array_values(array_intersect($selectedRoles, $validRoleIds));
+            $roleList = implode(',', $selectedRoles);
+
+            Capsule::table('mod_timekeeper_permissions')->updateOrInsert(
+                ['setting_key' => 'permission_pending_timesheets_view_all', 'role_id' => 0],
+                ['setting_value' => $roleList]
+            );
+
+            /* ---- Save "Approve/Unapprove" roles ---- */
+            $selectedApprovalRoles = isset($_POST['pending_timesheets_approval_roles'])
+                ? array_map('intval', (array)$_POST['pending_timesheets_approval_roles'])
+                : [];
+            $selectedApprovalRoles = array_values(array_intersect($selectedApprovalRoles, $validRoleIds));
+            $approvalRoleList = implode(',', $selectedApprovalRoles);
+
+            Capsule::table('mod_timekeeper_permissions')->updateOrInsert(
+                ['setting_key' => 'permission_pending_timesheets_approve', 'role_id' => 0],
+                ['setting_value' => $approvalRoleList]
+            );
+
+            /* ---- Save Validate Minimum Task Time ---- */
+            if (array_key_exists('unbilled_time_validate_min', $_POST)) {
+                $raw = trim((string)($_POST['unbilled_time_validate_min'] ?? ''));
+                $minTime = ($raw === '') ? 0.0 : (is_numeric($raw) ? max(0, (float)$raw) : 0.0);
+                Capsule::table('mod_timekeeper_permissions')->updateOrInsert(
+                    ['setting_key' => 'unbilled_time_validate_min', 'role_id' => 0],
+                    ['setting_value' => (string)$minTime] // never NULL
+                );
+            }
+
+            /* ---- Save Pagination Value (optional) ---- */
+            $rawPag = trim((string)($_POST['pagination_value'] ?? ''));
+            if ($rawPag === '') {
+                // Blank: remove any stored pagination value so default applies
+                Capsule::table('mod_timekeeper_permissions')
+                    ->where('setting_key', 'pagination value')
+                    ->where('role_id', 0)
+                    ->delete();
+            } else {
+                // Accept only numeric; coerce and enforce min=1
+                $n = ctype_digit($rawPag) ? (int)$rawPag : (int)floor((float)$rawPag);
+                if ($n < 1) { $n = 1; }
+
+                Capsule::table('mod_timekeeper_permissions')->updateOrInsert(
+                    ['setting_key' => 'pagination value', 'role_id' => 0],
+                    ['setting_value' => (string)$n]
+                );
+            }
+
+            // Single redirect after saving everything
+            $redir = 'addonmodules.php?module=timekeeper&timekeeperpage=settings&subtab=approval&approval_success=1';
+            if (!headers_sent()) { header('Location: ' . $redir); exit; }
+            echo '<script>window.location.replace(' . json_encode($redir) . ');</script>'; return;
+        }
+
+        // Fetch saved roles/settings
+        $saved = Capsule::table('mod_timekeeper_permissions')
+            ->where('setting_key', 'permission_pending_timesheets_view_all')
+            ->where('role_id', 0)
+            ->value('setting_value');
+        $allowedRoles = ($saved !== null && $saved !== '') ? array_map('intval', explode(',', $saved)) : [];
+
+        $savedApproval = Capsule::table('mod_timekeeper_permissions')
+            ->where('setting_key', 'permission_pending_timesheets_approve')
+            ->where('role_id', 0)
+            ->value('setting_value');
+        $allowedApprovalRoles = ($savedApproval !== null && $savedApproval !== '') ? array_map('intval', explode(',', $savedApproval)) : [];
+
+        $unbilledTimeValidateMin = Capsule::table('mod_timekeeper_permissions')
+            ->where('setting_key', 'unbilled_time_validate_min')
+            ->where('role_id', 0)
+            ->value('setting_value');
+
+        // Load current Pagination value (string or '')
+        $paginationValue = (string) (Capsule::table('mod_timekeeper_permissions')
+            ->where('setting_key', 'pagination value')
+            ->where('role_id', 0)
+            ->value('setting_value') ?? '');
+
+        $tkCsrf = $_SESSION['timekeeper_csrf'];
+        break;
+    }
+
+    /* ==== HIDE TABS (RBAC) TAB ==== */
+    case 'hide_tabs': {
+        // Tabs that can be hidden (page keys must match router keys)
+        $tabs = [
+            'dashboard'           => 'Dashboard',
+            'timesheet'           => 'Timesheet',
+            'pending_timesheets'  => 'Pending Timesheets',
+            'approved_timesheets' => 'Approved Timesheets',
+            'departments'         => 'Departments',
+            'task_categories'     => 'Task Categories',
+            'reports'             => 'Reports',
+            'settings'            => 'Settings',
+        ];
+
+        // Load roles
+        $roles = Capsule::table('tbladminroles')->select('id','name')->orderBy('name','asc')->get();
+
+        // Load current hidden map from settings JSON
+        $hiddenMap = tk_getHiddenPagesByRole();                  // ["1" => ["settings",...], ...]
+        $hiddenTabsByRole = [];
+        foreach ($hiddenMap as $ridStr => $pages) {
+            $hiddenTabsByRole[(int)$ridStr] = array_values(array_map('tk_normalize_page', (array)$pages));
+        }
+
+        // Save
+        if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['hidemenutabs_save'] ?? '') === '1') {
+            timekeeper_require_csrf();
+
+            $incoming = $_POST['hide_tabs'] ?? [];               // hide_tabs[<roleId>][] = <tabKey>
+            $normalized = [];
+
+            foreach ($roles as $r) {
+                $rid = (int)$r->id;
+                $postedForRole = $incoming[$rid] ?? [];
+                $clean = [];
+                foreach ((array)$postedForRole as $tabKey) {
+                    $key = tk_normalize_page((string)$tabKey);
+                    if (array_key_exists($key, $tabs) && !in_array($key, $clean, true)) {
+                        $clean[] = $key;
+                    }
+                }
+                $normalized[(string)$rid] = $clean;
+            }
+
+            $ok = tk_saveHiddenPagesByRole($normalized);
+            $tab_visibility = $ok ? '1' : '0';
+
+            $redir = 'addonmodules.php?module=timekeeper&timekeeperpage=settings&subtab=hide_tabs';
+            if (!headers_sent()) { header('Location: ' . $redir); exit; }
+            echo '<script>window.location.replace(' . json_encode($redir) . ');</script>'; return;
+        }
+
+        $tkCsrf = $_SESSION['timekeeper_csrf'];
+        break;
+    }
+}
+
+/* -------------------------------
+   Include wrapper ONCE
+   (The wrapper picks the component via $activeTab)
+-------------------------------- */
+include __DIR__ . '/../templates/admin/settings.tpl';
