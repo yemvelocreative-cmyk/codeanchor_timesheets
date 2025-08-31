@@ -245,3 +245,14 @@
 .timekeeper-root .pending-root input[type="text"],
 .timekeeper-root .pending-root input[type="time"],
 .timekeeper-root .pending-root textarea { border-radius: 10px; }
+
+/* Section separator that matches the card header look */
+.timekeeper-root .pending-root .pt-sectionbar {
+  background: #fafafa;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+  font-weight: 600;
+  /* stretch edge-to-edge inside the card body */
+  margin: 16px -12px 12px;
+  padding: 10px 12px;
+}

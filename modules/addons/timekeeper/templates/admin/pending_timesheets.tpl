@@ -60,15 +60,12 @@
 
   <?php if ($editMode): ?>
     <div class="pt-detail">
-    <!-- Intentionally no visible header: we’ll show section headings below -->
-    <header aria-hidden="true"></header>
+    <header>
+      Add New Entry to Timesheet for <?= htmlspecialchars($editAdminName) ?> — <?= htmlspecialchars($editTimesheetDate) ?>
+    </header>
     <div class="body">
 
       <!-- Section: Add -->
-      <div class="tk-section-title">
-        Add New Entry to Timesheet for <?= htmlspecialchars($editAdminName) ?> — <?= htmlspecialchars($editTimesheetDate) ?>
-      </div>
-
         <!-- Rejection note (if applicable) -->
         <?php if (isset($timesheet) && $timesheet->status === 'rejected' && !empty($timesheet->admin_rejection_note)): ?>
           <div class="alert alert-danger pt-mb-16">
@@ -203,7 +200,7 @@
 
         <!-- Existing entries -->
             <!-- Section: View/Edit -->
-        <div class="tk-section-title">View/Edit Timesheet Entries</div>
+        <div class="pt-sectionbar">View/Edit Timesheet Entries</div>
         <?php if (empty($editTimesheetEntries)): ?>
           <div class="alert alert-warning">No entries found for this timesheet.</div>
         <?php else: ?>
