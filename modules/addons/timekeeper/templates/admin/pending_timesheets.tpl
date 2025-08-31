@@ -59,12 +59,12 @@
   <?php endif; ?>
 
   <?php if ($editMode): ?>
-    <div class="pt-detail">
-    <!-- Intentionally no visible header: we’ll show section headings below -->
-    <header aria-hidden="true"></header>
     <div class="tk-section-title">
         Add New Entry to Timesheet for <?= htmlspecialchars($editAdminName) ?> — <?= htmlspecialchars($editTimesheetDate) ?>
       </div>
+    <div class="pt-detail">
+    <!-- Intentionally no visible header: we’ll show section headings below -->
+    <header aria-hidden="true"></header>
     <div class="body">
 
       <!-- Section: Add -->
