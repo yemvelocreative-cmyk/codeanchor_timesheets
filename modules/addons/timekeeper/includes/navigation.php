@@ -1,9 +1,19 @@
 <?php
 if (!defined('WHMCS')) { die('Access Denied'); }
 
-require_once __DIR__ . '/helpers/core_helper.php';
-require_once __DIR__ . '/helpers/pending_timesheet_helper.php';
-require_once __DIR__ . '/helpers/approved_timesheets_helper.php';
+$base = __DIR__; // -> /modules/addons/timekeeper
+
+$try = function(string $relA, string $relB) use ($base) {
+    $a = $base . $relA;
+    $b = $base . $relB;
+    if (is_file($a)) { require_once $a; return; }
+    if (is_file($b)) { require_once $b; return; }
+    throw new \RuntimeException("Missing helper: tried {$a} and {$b}");
+};
+
+$try('/helpers/core_helper.php', '/includes/helpers/core_helper.php');
+$try('/helpers/pending_timesheet_helper.php', '/includes/helpers/pending_timesheet_helper.php');
+$try('/helpers/approved_timesheets_helper.php', '/includes/helpers/approved_timesheets_helper.php');
 
 use Timekeeper\Helpers\PendingTimesheetHelper as PendingH;
 use Timekeeper\Helpers\ApprovedTimesheetsHelper as ApprovedH;

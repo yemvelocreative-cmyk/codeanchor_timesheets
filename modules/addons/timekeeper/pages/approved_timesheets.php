@@ -1,12 +1,23 @@
 <?php
-
-if (!defined("WHMCS")) { die("Access Denied"); }
-
-// --- Load helpers ---
-require_once __DIR__ . '/../helpers/core_helper.php';
-require_once __DIR__ . '/../helpers/approved_timesheets_helper.php';
-
 use WHMCS\Database\Capsule;
+
+// --- Load helpers (supports either helpers/ or includes/helpers/) ---
+$base = dirname(__DIR__); // -> /modules/addons/timekeeper
+
+$try = function(string $relA, string $relB) use ($base) {
+    $a = $base . $relA;
+    $b = $base . $relB;
+    if (is_file($a)) { require_once $a; return; }
+    if (is_file($b)) { require_once $b; return; }
+    throw new \RuntimeException("Missing helper: tried {$a} and {$b}");
+};
+
+$try('/helpers/core_helper.php', '/includes/helpers/core_helper.php');
+$try('/helpers/approved_timesheets_helper.php', '/includes/helpers/approved_timesheets_helper.php');
+
+// If you also need Pending on this page in the future, add:
+// $try('/helpers/pending_timesheet_helper.php', '/includes/helpers/pending_timesheet_helper.php');
+
 use Timekeeper\Helpers\CoreHelper as CoreH;
 use Timekeeper\Helpers\ApprovedTimesheetsHelper as ApprovedH;
 
