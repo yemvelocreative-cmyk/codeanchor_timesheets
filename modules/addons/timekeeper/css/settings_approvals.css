@@ -87,10 +87,22 @@
   }
 }
 
-.timekeeper-approvals-settings .tk-approvals-footer{
-  display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-top:12px;
+.timekeeper-approvals-settings .tk-accordion { margin-bottom: 12px; }
+.timekeeper-approvals-settings .tk-accordion:last-of-type { margin-bottom: 0; }
+.timekeeper-approvals-settings .tk-accordion > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 10px 0;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
 }
-.timekeeper-approvals-settings .tk-approvals-footer__fields{
-  display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap;
+.timekeeper-approvals-settings .tk-accordion > summary::-webkit-details-marker { display: none; }
+.timekeeper-approvals-settings .tk-accordion__body {
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
 }
-.timekeeper-approvals-settings .tk-field{ min-width:220px; }
+.timekeeper-approvals-settings .tk-accordion__tools {
+  display: inline-flex; gap: 12px; align-items: center;
+}
+.timekeeper-approvals-settings .tk-acc-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;
+}
