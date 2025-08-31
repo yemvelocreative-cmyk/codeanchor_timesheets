@@ -38,17 +38,38 @@ class ApprovedTimesheetsHelper
 
     public static function departmentMap(): array
     {
-        $rows = Capsule::table('mod_timekeeper_task_departments')->select(['id','name'])->get();
         $map = [];
-        foreach ($rows as $r) { $map[(int)$r->id] = (string)$r->name; }
+        try {
+            $rows = \WHMCS\Database\Capsule::table('mod_timekeeper_departments')
+                ->select(['id', 'name'])
+                ->orderBy('name', 'asc')
+                ->get();
+
+            foreach ($rows as $r) {
+                $map[(int) $r->id] = (string) ($r->name ?? ('Department ' . (int) $r->id));
+            }
+        } catch (\Throwable $e) {
+            // Graceful: return empty map if table missing/misconfigured.
+            return [];
+        }
         return $map;
     }
 
     public static function taskMap(): array
     {
-        $rows = Capsule::table('mod_timekeeper_task_categories')->select(['id','name'])->get();
         $map = [];
-        foreach ($rows as $r) { $map[(int)$r->id] = (string)$r->name; }
+        try {
+            $rows = \WHMCS\Database\Capsule::table('mod_timekeeper_task_categories')
+                ->select(['id', 'name'])
+                ->orderBy('name', 'asc')
+                ->get();
+
+            foreach ($rows as $r) {
+                $map[(int) $r->id] = (string) ($r->name ?? ('Task ' . (int) $r->id));
+            }
+        } catch (\Throwable $e) {
+            return [];
+        }
         return $map;
     }
 
