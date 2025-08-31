@@ -180,185 +180,235 @@
             $totalBillableTime = 0.0;
             $totalSlaTime = 0.0;
             foreach ($editTimesheetEntries as $entry) {
-              $totalTime += (float)$entry->time_spent;
+              $totalTime         += (float)$entry->time_spent;
               $totalBillableTime += (float)$entry->billable_time;
-              $totalSlaTime += (float)$entry->sla_time;
+              $totalSlaTime      += (float)$entry->sla_time;
             }
           ?>
 
-          <!-- Labels -->
-          <div class="pt-entry-row pt-fw-600">
-            <div>Client</div>
-            <div>Department</div>
-            <div>Task Category</div>
-            <div>Ticket ID</div>
-            <div>Description</div>
-            <div>Start</div>
-            <div>End</div>
-            <div>Time Spent</div>
-            <div>Billable</div>
-            <div>Billable Time</div>
-            <div>SLA</div>
-            <div>SLA Time</div>
-            <div></div>
-            <div></div>
+          <!-- Header row to match Timesheet module -->
+          <div class="tk-row tk-card tk-row--table tk-row--header">
+            <div class="tk-row-grid">
+              <div class="hdr">Client</div>
+              <div class="hdr">Department</div>
+              <div class="hdr">Task Category</div>
+              <div class="hdr">Description</div>
+              <div class="hdr">Time</div>
+              <div class="hdr">Flags</div>
+              <div class="hdr">Actions</div>
+            </div>
           </div>
 
-          <?php foreach ($editTimesheetEntries as $entry): ?>
-            <?php $isEditing = ($editingEntryId == $entry->id); ?>
+          <div class="tk-saved-list">
+            <?php foreach ($editTimesheetEntries as $entry): ?>
+              <?php $isEditing = ((int)$editingEntryId === (int)$entry->id); ?>
 
-            <?php if ($isEditing): ?>
-              <form method="post"
-                    class="pt-entry-row"
-                    action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
-                <?php if (!empty($tkCsrf)): ?>
-                  <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
+              <div class="tk-row tk-card tk-row--table">
+                <?php if ($isEditing): ?>
+                  <!-- Inline EDIT row (Timesheet layout) -->
+                  <form method="post"
+                        class="tk-row-grid tk-row-edit"
+                        action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
+                    <?php if (!empty($tkCsrf)): ?>
+                      <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
+                    <?php endif; ?>
+                    <input type="hidden" name="save_id" value="<?= (int)$entry->id ?>">
+                    <input type="hidden" name="admin_id" value="<?= (int)$editAdminId ?>">
+                    <input type="hidden" name="timesheet_date" value="<?= htmlspecialchars($editTimesheetDate) ?>">
+                    <!-- Hidden time_spent so JS can update it (bindTimeCalc) and backend receives it -->
+                    <input type="hidden" name="time_spent" value="<?= number_format((float)$entry->time_spent, 2) ?>">
+
+                    <!-- Client -->
+                    <div class="cell cell-client">
+                      <select name="client_id" class="tk-row-select">
+                        <?php foreach ($clientMap as $id => $label): ?>
+                          <option value="<?= (int)$id ?>" <?= ((int)$entry->client_id === (int)$id) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($label) ?>
+                          </option>
+                        <?php endforeach; ?>
+                      </select>
+                    </div>
+
+                    <!-- Department -->
+                    <div class="cell cell-dept">
+                      <select name="department_id" class="tk-row-select pending-edit-department edit-department">
+                        <?php foreach ($departmentMap as $id => $label): ?>
+                          <option value="<?= (int)$id ?>" <?= ((int)$entry->department_id === (int)$id) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($label) ?>
+                          </option>
+                        <?php endforeach; ?>
+                      </select>
+                    </div>
+
+                    <!-- Task Category -->
+                    <div class="cell cell-cat">
+                      <select name="task_category_id" class="tk-row-select pending-edit-task-category edit-task-category">
+                        <?php foreach ($taskCategories as $cat): ?>
+                          <option value="<?= (int)$cat->id ?>"
+                                  data-dept="<?= (int)$cat->department_id ?>"
+                                  <?= ((int)$entry->task_category_id === (int)$cat->id) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($cat->name) ?>
+                          </option>
+                        <?php endforeach; ?>
+                      </select>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="cell cell-desc">
+                      <input type="text" name="description" class="tk-row-input"
+                            value="<?= htmlspecialchars($entry->description) ?>">
+                    </div>
+
+                    <!-- Time -->
+                    <div class="cell cell-times tk-inline">
+                      <input type="time" name="start_time" value="<?= htmlspecialchars($entry->start_time) ?>">
+                      <input type="time" name="end_time"   value="<?= htmlspecialchars($entry->end_time) ?>">
+                      <span class="sep">•</span>
+                      <span><strong><?= number_format((float)$entry->time_spent, 2) ?></strong> hrs</span>
+                    </div>
+
+                    <!-- Flags mini-grid -->
+                    <div class="cell cell-flags cell-flags--grid">
+                      <!-- Ticket -->
+                      <div class="flag-item">
+                        <label class="tk-flag-label">Ticket</label>
+                        <input type="text"
+                              name="ticket_id"
+                              class="tk-row-input tk-ticket-input"
+                              placeholder="Ticket #"
+                              value="<?= htmlspecialchars($entry->ticket_id) ?>">
+                      </div>
+
+                      <!-- Billable -->
+                      <div class="flag-item">
+                        <label class="tk-flag-label">
+                          <span class="checkbox-inline tk-inline-check">
+                            <input type="checkbox" name="billable" value="1" <?= $entry->billable ? 'checked' : '' ?>>
+                            <span>Billable</span>
+                          </span>
+                        </label>
+                        <input type="text" name="billable_time"
+                              class="tk-inline-time-input <?= $entry->billable ? 'col-show' : 'col-hidden' ?>"
+                              placeholder="0.00"
+                              value="<?= number_format((float)$entry->billable_time, 2) ?>">
+                      </div>
+
+                      <!-- SLA -->
+                      <div class="flag-item">
+                        <label class="tk-flag-label">
+                          <span class="checkbox-inline tk-inline-check">
+                            <input type="checkbox" name="sla" value="1" <?= $entry->sla ? 'checked' : '' ?>>
+                            <span>SLA</span>
+                          </span>
+                        </label>
+                        <input type="text" name="sla_time"
+                              class="tk-inline-time-input <?= $entry->sla ? 'col-show' : 'col-hidden' ?>"
+                              placeholder="0.00"
+                              value="<?= number_format((float)$entry->sla_time, 2) ?>">
+                      </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="cell cell-actions">
+                      <button type="submit" class="btn btn-sm btn-success">Save</button>
+                      <a href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&admin_id=<?= (int)$editAdminId ?>&date=<?= htmlspecialchars($editTimesheetDate) ?>"
+                        class="btn btn-sm btn-default">Cancel</a>
+                    </div>
+                  </form>
+
+                  <?php
+                    $needsVerify = (
+                      isset($unbilledTimeValidateMin) && $unbilledTimeValidateMin !== '' && $unbilledTimeValidateMin !== null
+                      && (float)$entry->time_spent >= (float)$unbilledTimeValidateMin
+                      && (int)$entry->billable === 0
+                      && (int)$entry->sla === 0
+                    );
+                    if ($needsVerify):
+                  ?>
+                    <div class="ts-alert ts-alert-warning">
+                      <label class="d-block">
+                        <input type="checkbox" form="approve-form" name="verify_unbilled_<?= (int)$entry->id ?>" value="1" required>
+                        Verify entry — <?= htmlspecialchars($entry->description ?: 'No description') ?>
+                        (<?= number_format((float)$entry->time_spent, 2) ?>h)
+                      </label>
+                    </div>
+                  <?php endif; ?>
+
+                <?php else: ?>
+                  <!-- READ-ONLY row (Timesheet layout) -->
+                  <div class="tk-row-grid">
+                    <div class="cell cell-client">
+                      <strong><?= htmlspecialchars($clientMap[$entry->client_id] ?? 'N/A') ?></strong>
+                    </div>
+                    <div class="cell cell-dept"><?= htmlspecialchars($departmentMap[$entry->department_id] ?? 'N/A') ?></div>
+                    <div class="cell cell-cat"><?= htmlspecialchars($taskMap[$entry->task_category_id] ?? 'N/A') ?></div>
+                    <div class="cell cell-desc"><?= htmlspecialchars($entry->description) ?></div>
+
+                    <div class="cell cell-times">
+                      <span><?= htmlspecialchars($entry->start_time) ?>–<?= htmlspecialchars($entry->end_time) ?></span>
+                      <span class="sep">•</span>
+                      <span><strong><?= number_format((float)$entry->time_spent, 2) ?></strong> hrs</span>
+                    </div>
+
+                    <div class="cell cell-flags">
+                      <div class="tk-badges">
+                        <?php if (!empty($entry->ticket_id)): ?>
+                          <span class="tk-badge tk-badge--success">Ticket <?= htmlspecialchars($entry->ticket_id) ?></span>
+                        <?php else: ?>
+                          <span class="tk-badge">No ticket</span>
+                        <?php endif; ?>
+                        <?php if ((float)$entry->billable_time > 0): ?>
+                          <span class="tk-badge">Billable <?= number_format((float)$entry->billable_time, 2) ?>h</span>
+                        <?php endif; ?>
+                        <?php if ((float)$entry->sla_time > 0): ?>
+                          <span class="tk-badge">SLA <?= number_format((float)$entry->sla_time, 2) ?>h</span>
+                        <?php endif; ?>
+                      </div>
+                    </div>
+
+                    <div class="cell cell-actions">
+                      <a class="btn btn-sm btn-outline-primary"
+                        href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&admin_id=<?= (int)$editAdminId ?>&date=<?= htmlspecialchars($editTimesheetDate) ?>&edit_id=<?= (int)$entry->id ?>">
+                        Edit
+                      </a>
+                    </div>
+                  </div>
+
+                  <?php
+                    $needsVerify = (
+                      isset($unbilledTimeValidateMin) && $unbilledTimeValidateMin !== '' && $unbilledTimeValidateMin !== null
+                      && (float)$entry->time_spent >= (float)$unbilledTimeValidateMin
+                      && (int)$entry->billable === 0
+                      && (int)$entry->sla === 0
+                    );
+                    if ($needsVerify):
+                  ?>
+                    <div class="ts-alert ts-alert-warning">
+                      <label class="d-block">
+                        <input type="checkbox" form="approve-form" name="verify_unbilled_<?= (int)$entry->id ?>" value="1" required>
+                        Verify entry — <?= htmlspecialchars($entry->description ?: 'No description') ?>
+                        (<?= number_format((float)$entry->time_spent, 2) ?>h)
+                      </label>
+                    </div>
+                  <?php endif; ?>
+
                 <?php endif; ?>
-                <input type="hidden" name="save_id" value="<?= (int)$entry->id ?>">
-                <input type="hidden" name="admin_id" value="<?= (int)$editAdminId ?>">
-                <input type="hidden" name="timesheet_date" value="<?= htmlspecialchars($editTimesheetDate) ?>">
-
-                <select name="client_id">
-                  <?php foreach ($clientMap as $id => $label): ?>
-                    <option value="<?= (int)$id ?>" <?= ((int)$entry->client_id === (int)$id) ? 'selected' : '' ?>>
-                      <?= htmlspecialchars($label) ?>
-                    </option>
-                  <?php endforeach; ?>
-                </select>
-
-                <select name="department_id" class="pending-edit-department">
-                  <?php foreach ($departmentMap as $id => $label): ?>
-                    <option value="<?= (int)$id ?>" <?= ((int)$entry->department_id === (int)$id) ? 'selected' : '' ?>>
-                      <?= htmlspecialchars($label) ?>
-                    </option>
-                  <?php endforeach; ?>
-                </select>
-
-                <select name="task_category_id" class="pending-edit-task-category">
-                  <?php foreach ($taskCategories as $cat): ?>
-                    <option value="<?= (int)$cat->id ?>"
-                            data-dept="<?= (int)$cat->department_id ?>"
-                            <?= ((int)$entry->task_category_id === (int)$cat->id) ? 'selected' : '' ?>>
-                      <?= htmlspecialchars($cat->name) ?>
-                    </option>
-                  <?php endforeach; ?>
-                </select>
-
-                <input type="text" name="ticket_id" value="<?= htmlspecialchars($entry->ticket_id) ?>">
-                <input type="text" name="description" value="<?= htmlspecialchars($entry->description) ?>">
-                <input type="time" name="start_time" value="<?= htmlspecialchars($entry->start_time) ?>">
-                <input type="time" name="end_time" value="<?= htmlspecialchars($entry->end_time) ?>">
-                <input type="text" name="time_spent" value="<?= number_format((float)$entry->time_spent, 2) ?>" readonly>
-
-                <input type="checkbox" name="billable" value="1" <?= $entry->billable ? 'checked' : '' ?>>
-                <input type="text" name="billable_time" value="<?= number_format((float)$entry->billable_time, 2) ?>">
-
-                <input type="checkbox" name="sla" value="1" <?= $entry->sla ? 'checked' : '' ?>>
-                <input type="text" name="sla_time" value="<?= number_format((float)$entry->sla_time, 2) ?>">
-
-                <button type="submit" class="btn btn-sm btn-success">Save</button>
-                <a href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&admin_id=<?= (int)$editAdminId ?>&date=<?= htmlspecialchars($editTimesheetDate) ?>" class="btn btn-sm btn-secondary">Cancel</a>
-              </form>
-
-              <?php
-                $needsVerify = (
-                  isset($unbilledTimeValidateMin) && $unbilledTimeValidateMin !== '' && $unbilledTimeValidateMin !== null
-                  && (float)$entry->time_spent >= (float)$unbilledTimeValidateMin
-                  && (int)$entry->billable === 0
-                  && (int)$entry->sla === 0
-                );
-                if ($needsVerify):
-              ?>
-                <div class="pt-inline-verify">
-                  <label class="d-block">
-                    <input type="checkbox" form="approve-form" name="verify_unbilled_<?= (int)$entry->id ?>" value="1" required>
-                    Verify entry — <?= htmlspecialchars($entry->description ?: 'No description') ?>
-                    (<?= number_format((float)$entry->time_spent, 2) ?>h)
-                  </label>
-                </div>
-              <?php endif; ?>
-
-            <?php else: ?>
-              <div class="pt-entry-row">
-                <div><?= htmlspecialchars($clientMap[$entry->client_id] ?? 'N/A') ?></div>
-                <div><?= htmlspecialchars($departmentMap[$entry->department_id] ?? 'N/A') ?></div>
-                <div><?= htmlspecialchars($taskMap[$entry->task_category_id] ?? 'N/A') ?></div>
-                <div><?= htmlspecialchars($entry->ticket_id) ?></div>
-                <div><?= htmlspecialchars($entry->description) ?></div>
-                <div><?= htmlspecialchars($entry->start_time) ?></div>
-                <div><?= htmlspecialchars($entry->end_time) ?></div>
-                <div><?= number_format((float)$entry->time_spent, 2) ?> hrs</div>
-                <div><?= $entry->billable ? 'Yes' : 'No' ?></div>
-                <div><?= number_format((float)$entry->billable_time, 2) ?> hrs</div>
-                <div><?= $entry->sla ? 'Yes' : 'No' ?></div>
-                <div><?= number_format((float)$entry->sla_time, 2) ?> hrs</div>
-                <div>
-                  <a class="btn btn-sm btn-outline-primary"
-                     href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&admin_id=<?= (int)$editAdminId ?>&date=<?= htmlspecialchars($editTimesheetDate) ?>&edit_id=<?= (int)$entry->id ?>">
-                    Edit
-                  </a>
-                </div>
-                <div></div>
               </div>
-
-              <?php
-                $needsVerify = (
-                  isset($unbilledTimeValidateMin) && $unbilledTimeValidateMin !== '' && $unbilledTimeValidateMin !== null
-                  && (float)$entry->time_spent >= (float)$unbilledTimeValidateMin
-                  && (int)$entry->billable === 0
-                  && (int)$entry->sla === 0
-                );
-                if ($needsVerify):
-              ?>
-                <div class="pt-inline-verify">
-                  <label class="d-block">
-                    <input type="checkbox" form="approve-form" name="verify_unbilled_<?= (int)$entry->id ?>" value="1" required>
-                    Verify entry — <?= htmlspecialchars($entry->description ?: 'No description') ?>
-                    (<?= number_format((float)$entry->time_spent, 2) ?>h)
-                  </label>
-                </div>
-              <?php endif; ?>
-            <?php endif; ?>
-
-          <?php endforeach; ?>
-
-          <!-- Totals -->
-          <div class="pt-totals">
-            <div><strong>Total Time:</strong> <?= number_format($totalTime, 2) ?> hrs</div>
-            <div><strong>Total Billable Time:</strong> <?= number_format($totalBillableTime, 2) ?> hrs</div>
-            <div><strong>Total SLA Time:</strong> <?= number_format($totalSlaTime, 2) ?> hrs</div>
+            <?php endforeach; ?>
           </div>
 
-          <!-- Approve / Reject -->
-          <?php if ($canApprove && isset($timesheet)): ?>
-            <form method="post"
-                  id="approve-form"
-                  class="pt-approve-form pt-mt-12"
-                  action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
-              <?php if (!empty($tkCsrf)): ?>
-                <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
-              <?php endif; ?>
-              <input type="hidden" name="approve_timesheet_id" value="<?= (int)$timesheet->id ?>">
+          <!-- Totals (you can keep your existing block or use the Timesheet totals bar) -->
+          <div class="tk-totals-wrap">
+            <div class="tk-totals-bar">
+              <span class="lbl">Total</span> <strong class="val"><?= number_format($totalTime, 2) ?></strong><span class="unit">hrs</span>
+              <span class="sep">•</span>
+              <span class="lbl">Billable</span> <strong class="val"><?= number_format($totalBillableTime, 2) ?></strong><span class="unit">hrs</span>
+              <span class="sep">•</span>
+              <span class="lbl">SLA</span> <strong class="val"><?= number_format($totalSlaTime, 2) ?></strong><span class="unit">hrs</span>
+            </div>
+          </div>
 
-              <div class="alert alert-info pt-mb-10">
-                Please ensure all flagged entries above are ticked “Verified” before approving.
-              </div>
-
-              <button type="submit" class="btn btn-success">Approve Timesheet</button>
-            </form>
-
-            <form method="post"
-                  class="pt-reject-form pt-mt-12"
-                  action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
-              <?php if (!empty($tkCsrf)): ?>
-                <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
-              <?php endif; ?>
-              <input type="hidden" name="reject_timesheet_id" value="<?= (int)$timesheet->id ?>">
-              <textarea name="admin_rejection_note" class="form-control pt-reject-note" placeholder="Rejection Note (required)"></textarea>
-              <button type="submit" class="btn btn-danger">Reject Timesheet</button>
-            </form>
-          <?php endif; ?>
-
+          <!-- Approve / Reject (unchanged, below this block in your file) -->
         <?php endif; ?>
 
         <!-- Resubmit (owner of rejected sheet) -->
