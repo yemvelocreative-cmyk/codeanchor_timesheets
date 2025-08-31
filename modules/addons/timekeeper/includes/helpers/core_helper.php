@@ -70,7 +70,36 @@ namespace Timekeeper\Helpers {
         {
             return htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
         }
-    }
+
+/** Validate YYYY-MM-DD date strings */
+public static function isValidDate(?string $s): bool
+{
+    if (!is_string($s)) return false;
+    return (bool) preg_match('/^\d{4}-\d{2}-\d{2}$/', $s);
+}
+
+/**
+ * Require a helper file from either of two relative paths under $baseDir.
+ * Example: CoreHelper::requireEither($base, '/helpers/core_helper.php', '/includes/helpers/core_helper.php');
+ */
+public static function requireEither(string $baseDir, string $relA, string $relB): void
+{
+    $a = $baseDir . $relA;
+    $b = $baseDir . $relB;
+    if (is_file($a)) { require_once $a; return; }
+    if (is_file($b)) { require_once $b; return; }
+    throw new \RuntimeException("Missing helper: tried {$a} and {$b}");
+}
+
+/**
+ * Convenience: load a helper by basename (no extension), trying helpers/ and includes/helpers/.
+ * e.g. CoreHelper::requireHelper($base, 'approved_timesheets_helper')
+ */
+public static function requireHelper(string $baseDir, string $basename): void
+{
+    self::requireEither($baseDir, '/helpers/' . $basename . '.php', '/includes/helpers/' . $basename . '.php');
+}
+}
 }
 
 namespace {
@@ -79,21 +108,21 @@ namespace {
      */
     if (!function_exists('tk_normalize_page')) {
         function tk_normalize_page(string $s): string {
-            $s = preg_replace('/[^a-z0-9_]/i', '', strtolower($s));
+$s = preg_replace('/[^a-z0-9_]/i', '', strtolower($s));
             return $s !== '' ? $s : 'dashboard';
         }
     }
 
     /**
-     * Check if a page is visible for a given role.
-     * Sources:
+     * Role-based visibility: check if a page key is allowed for a role.
+     * Data sources (either/or):
      *  - table: mod_timekeeper_tab_visibility {role_id, page_key, visible}
      *  - settings: mod_timekeeper_settings (setting_key='tab_visibility_json') JSON map
      * Default: allow (true) on missing data or errors.
      */
     if (!function_exists('tk_isPageAllowedForRole')) {
         function tk_isPageAllowedForRole(int $roleId, string $pageKey): bool {
-            if ($roleId <= 0 || $pageKey === '') return true;
+if ($roleId <= 0 || $pageKey === '') return true;
 
             static $cache = [];
             $ck = $roleId . ':' . $pageKey;
@@ -126,37 +155,7 @@ namespace {
             } catch (\Throwable $e) {
                 // Swallow errors; allow by default
             }
-
             return $cache[$ck] = true;
-        
-        /** Validate YYYY-MM-DD date strings */
-        public static function isValidDate(?string $s): bool
-        {
-            if (!is_string($s)) return False;
-            return (bool) preg_match('/^\d{4}-\d{2}-\d{2}$/', $s);
         }
-
-        /**
-         * Require a helper file from either of two relative paths under $baseDir.
-         * Example: CoreHelper::requireEither($base, '/helpers/core_helper.php', '/includes/helpers/core_helper.php');
-         */
-        public static function requireEither(string $baseDir, string $relA, string $relB): void
-        {
-            $a = $baseDir . $relA;
-            $b = $baseDir . $relB;
-            if (is_file($a)) { require_once $a; return; }
-            if (is_file($b)) { require_once $b; return; }
-            throw new \RuntimeException("Missing helper: tried {$a} and {$b}");
-        }
-
-        /**
-         * Convenience: load a helper by basename (no extension), trying helpers/ and includes/helpers/.
-         * e.g. CoreHelper::requireHelper($base, 'approved_timesheets_helper')
-         */
-        public static function requireHelper(string $baseDir, string $basename): void
-        {
-            self::requireEither($baseDir, '/helpers/' . $basename . '.php', '/includes/helpers/' . $basename . '.php');
-        }
-}
     }
 }
