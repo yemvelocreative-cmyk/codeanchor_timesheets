@@ -1,7 +1,7 @@
 <?php if (!defined('WHMCS')) { die('Access Denied'); } ?>
 <?php $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); ?>
 
-<link rel="stylesheet" href="../modules/addons/timekeeper/css/approved_timesheets.css?v=9" />
+<link rel="stylesheet" href="../modules/addons/timekeeper/css/approved_timesheets.css?v=10" />
 <script defer src="../modules/addons/timekeeper/js/approved_timesheets.js?v=10"></script>
 
 <div class="timekeeper-root approved-timesheets">
@@ -12,12 +12,42 @@
     </div>
   </div>
 
-  <?php
-    // Listing mode: when no specific timesheet is opened
-    $isListing = empty($timesheet);
-  ?>
+  <?php $isListing = empty($timesheet); ?>
 
   <?php if ($isListing): ?>
+    <!-- Filters -->
+    <form method="get" action="addonmodules.php" class="tk-filters" role="search" aria-label="Filter approved timesheets">
+      <input type="hidden" name="module" value="timekeeper" />
+      <input type="hidden" name="timekeeperpage" value="approved_timesheets" />
+
+      <div class="tk-field">
+        <label for="flt-start">Start date</label>
+        <input type="date" id="flt-start" name="start_date" value="<?= $h($filters['start_date'] ?? '') ?>" />
+      </div>
+
+      <div class="tk-field">
+        <label for="flt-end">End date</label>
+        <input type="date" id="flt-end" name="end_date" value="<?= $h($filters['end_date'] ?? '') ?>" />
+      </div>
+
+      <div class="tk-field">
+        <label for="flt-admin">User</label>
+        <select id="flt-admin" name="filter_admin_id" <?= empty($canUseAdminFilter) ? 'disabled' : '' ?>>
+          <option value=""><?= $h($canUseAdminFilter ? 'All users' : 'Your timesheets') ?></option>
+          <?php foreach ($adminMap as $aid => $aname): ?>
+            <option value="<?= (int)$aid ?>" <?= (!empty($filters['filter_admin_id']) && (int)$filters['filter_admin_id'] === (int)$aid) ? 'selected' : '' ?>>
+              <?= $h($aname) ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+
+      <div class="tk-actions">
+        <button type="submit" class="tk-btn tk-btn-rounded">Apply</button>
+        <a class="tk-btn tk-btn-outline tk-btn-rounded" href="addonmodules.php?module=timekeeper&amp;timekeeperpage=approved_timesheets">Clear</a>
+      </div>
+    </form>
+
     <?php if (empty($approvedTimesheets)): ?>
       <div class="tk-alert tk-alert-success">No approved timesheets found.</div>
     <?php else: ?>

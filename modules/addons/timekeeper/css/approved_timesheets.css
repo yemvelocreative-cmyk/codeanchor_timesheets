@@ -24,6 +24,24 @@
 .timekeeper-root.approved-timesheets .tk-page-title .tk-h2 { margin:0; }
 .timekeeper-root.approved-timesheets .tk-subtitle { margin:4px 0 0; color:var(--tk-muted); }
 
+/* ------- Filters ------- */
+.timekeeper-root.approved-timesheets .tk-filters {
+  display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end;
+  margin: 0 0 12px 0;
+}
+.timekeeper-root.approved-timesheets .tk-filters .tk-field {
+  display:flex; flex-direction:column; gap:4px;
+}
+.timekeeper-root.approved-timesheets .tk-filters label {
+  font-size:12px; color:var(--tk-muted);
+}
+.timekeeper-root.approved-timesheets .tk-filters input[type="date"],
+.timekeeper-root.approved-timesheets .tk-filters select {
+  border:1px solid var(--tk-border); border-radius:8px; padding:8px 10px; min-width:160px; height:36px;
+  background:#fff; color:#111827;
+}
+.timekeeper-root.approved-timesheets .tk-filters .tk-actions { display:flex; gap:8px; }
+
 /* ------- Alerts ------- */
 .timekeeper-root.approved-timesheets .tk-alert {
   padding:12px 14px; border-radius:10px; border:1px solid transparent; margin-top:12px;

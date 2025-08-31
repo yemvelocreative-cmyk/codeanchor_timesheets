@@ -31,13 +31,13 @@ $tkCsrf = (string) $_SESSION['tk_csrf'];
 // ---- Permissions from Settings ----
 $viewAllRoleIds = ApprovedH::viewAllRoleIds();      // roles allowed to view ALL approved timesheets
 $canUnapprove   = ApprovedH::canUnapprove($roleId); // role can approve/unapprove?
+$canUseAdminFilter = in_array($roleId, $viewAllRoleIds, true);
 
 // ---- Handle POST actions (Unapprove) ----
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = (string) CoreH::post('tk_action', '');
     $csrf   = (string) CoreH::post('tk_csrf', '');
     if (!hash_equals($tkCsrf, $csrf)) {
-        // Invalid token: redirect safely
         header('Location: addonmodules.php?module=timekeeper&timekeeperpage=approved_timesheets');
         exit;
     }
@@ -58,16 +58,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($viewerCanSeeSheet) {
                     Capsule::table('mod_timekeeper_timesheets')
                         ->where('id', $tsId)
-                        ->update([
-                            'status' => 'pending',
-                            // Optional audit fields if present:
-                            // 'unapproved_by' => $adminId,
-                            // 'unapproved_at' => Capsule::raw('NOW()'),
-                        ]);
+                        ->update(['status' => 'pending']);
                 }
             }
         }
-        // PRG pattern
         header('Location: addonmodules.php?module=timekeeper&timekeeperpage=approved_timesheets');
         exit;
     }
@@ -83,12 +77,22 @@ $taskMap       = ApprovedH::taskMap();         // mod_timekeeper_task_categories
 $reqAdminId = CoreH::get('admin_id', null);
 $reqDate    = CoreH::get('date', null);
 
+// Filters (listing only)
+$fltStart   = CoreH::get('start_date', '');
+$fltEnd     = CoreH::get('end_date', '');
+$fltAdminId = CoreH::get('filter_admin_id', '');
+
+$isValidDate = function ($s) { return is_string($s) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $s); };
+$fltStart = $isValidDate($fltStart) ? $fltStart : '';
+$fltEnd   = $isValidDate($fltEnd)   ? $fltEnd   : '';
+$fltAdmin = ctype_digit((string)$fltAdminId) ? (int)$fltAdminId : 0;
+
 $approvedTimesheets = [];
 $timesheet          = null;
 $timesheetEntries   = [];
 $totalTime          = 0.0;
-$totalBillable      = 0.0; // NEW
-$totalSla           = 0.0; // NEW
+$totalBillable      = 0.0; // for single view totals bar
+$totalSla           = 0.0;
 
 if ($reqAdminId && $reqDate) {
     $reqAdminId = (int) $reqAdminId;
@@ -102,17 +106,38 @@ if ($reqAdminId && $reqDate) {
     if ($timesheet) {
         $timesheetEntries = ApprovedH::getTimesheetEntries((int) $timesheet->id);
         $totalTime        = ApprovedH::sumColumn($timesheetEntries, 'time_spent');
-        $totalBillable    = ApprovedH::sumColumn($timesheetEntries, 'billable_time'); // NEW
-        $totalSla         = ApprovedH::sumColumn($timesheetEntries, 'sla_time');      // NEW
+        $totalBillable    = ApprovedH::sumColumn($timesheetEntries, 'billable_time');
+        $totalSla         = ApprovedH::sumColumn($timesheetEntries, 'sla_time');
     }
 } else {
-    // List only the approved timesheets visible to this admin/role
-    $approvedTimesheets = ApprovedH::listVisibleApproved(
-        $adminId, $roleId, $viewAllRoleIds
-    );
+    // Build listing query with filters
+    $q = Capsule::table('mod_timekeeper_timesheets')
+        ->where('status', 'approved');
+
+    // Admin scope
+    if (!$canUseAdminFilter) {
+        $q->where('admin_id', $adminId);
+    } elseif ($fltAdmin > 0) {
+        $q->where('admin_id', $fltAdmin);
+    }
+
+    // Date range
+    if ($fltStart !== '') { $q->where('timesheet_date', '>=', $fltStart); }
+    if ($fltEnd   !== '') { $q->where('timesheet_date', '<=', $fltEnd); }
+
+    $approvedTimesheets = $q
+        ->orderBy('timesheet_date', 'desc')
+        ->orderBy('admin_id', 'asc')
+        ->get();
 }
 
 // ---- Pass to template ----
+$filters = [
+    'start_date'       => $fltStart,
+    'end_date'         => $fltEnd,
+    'filter_admin_id'  => $fltAdmin ? (string)$fltAdmin : '',
+];
+
 $vars = compact(
     'approvedTimesheets',
     'adminMap',
@@ -122,10 +147,12 @@ $vars = compact(
     'timesheet',
     'timesheetEntries',
     'totalTime',
-    'totalBillable', // NEW
-    'totalSla',      // NEW
+    'totalBillable',
+    'totalSla',
     'tkCsrf',
-    'canUnapprove'
+    'canUnapprove',
+    'canUseAdminFilter',
+    'filters'
 );
 
 extract($vars);
