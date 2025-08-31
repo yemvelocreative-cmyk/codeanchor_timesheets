@@ -27,7 +27,6 @@ function timekeeper_require_csrf() {
 /* -------------------------------
    Assets (prefer central loader in timekeeper.php)
 -------------------------------- */
-// If you prefer to load here, uncomment the next 3 lines.
 // echo '<link rel="stylesheet" href="../modules/addons/timekeeper/css/settings_tabs.css" />';
 // echo '<link rel="stylesheet" href="../modules/addons/timekeeper/css/settings.css" />';
 // echo '<script src="../modules/addons/timekeeper/js/settings.js" defer></script>';
@@ -50,18 +49,6 @@ $activeTab = (isset($_GET['subtab']) && array_key_exists($_GET['subtab'], $setti
 $success          = (isset($_GET['success']) && $_GET['success'] == '1');
 $approval_success = (isset($_GET['approval_success']) && $_GET['approval_success'] == '1');
 $tab_visibility   = (isset($_GET['tab_visibility']) && $_GET['tab_visibility'] == '1');
-
-/* -------------------------------
-   Render tab menu
--------------------------------- */
-//echo '<ul class="timekeeper-settings-tabs">';
-//foreach ($settingsTabs as $tabKey => $tabLabel) {
-//    $isActive = ($tabKey === $activeTab) ? 'active' : '';
-//    echo '<li class="' . $isActive . '">
-//            <a href="addonmodules.php?module=timekeeper&timekeeperpage=settings&subtab=' . $tabKey . '">' . htmlspecialchars($tabLabel, ENT_QUOTES, 'UTF-8') . '</a>
-//          </li>';
-//}
-//echo '</ul>';
 
 /* -------------------------------
    Tab-specific controllers
@@ -149,47 +136,63 @@ switch ($activeTab) {
             $validRoleIds = Capsule::table('tbladminroles')->pluck('id')->toArray();
             $validRoleIds = array_map('intval', $validRoleIds);
 
-            // Save "View" permissions
-            if (isset($_POST['pending_timesheets_roles'])) {
-                $selectedRoles = array_map('intval', (array)$_POST['pending_timesheets_roles']);
-                $selectedRoles = array_values(array_intersect($selectedRoles, $validRoleIds));
-                $roleList = implode(',', $selectedRoles);
+            /* ---- Save "View All" roles ---- */
+            $selectedRoles = isset($_POST['pending_timesheets_roles'])
+                ? array_map('intval', (array)$_POST['pending_timesheets_roles'])
+                : [];
+            $selectedRoles = array_values(array_intersect($selectedRoles, $validRoleIds));
+            $roleList = implode(',', $selectedRoles);
 
+            Capsule::table('mod_timekeeper_permissions')->updateOrInsert(
+                ['setting_key' => 'permission_pending_timesheets_view_all', 'role_id' => 0],
+                ['setting_value' => $roleList]
+            );
+
+            /* ---- Save "Approve/Unapprove" roles ---- */
+            $selectedApprovalRoles = isset($_POST['pending_timesheets_approval_roles'])
+                ? array_map('intval', (array)$_POST['pending_timesheets_approval_roles'])
+                : [];
+            $selectedApprovalRoles = array_values(array_intersect($selectedApprovalRoles, $validRoleIds));
+            $approvalRoleList = implode(',', $selectedApprovalRoles);
+
+            Capsule::table('mod_timekeeper_permissions')->updateOrInsert(
+                ['setting_key' => 'permission_pending_timesheets_approve', 'role_id' => 0],
+                ['setting_value' => $approvalRoleList]
+            );
+
+            /* ---- Save Validate Minimum Task Time ---- */
+            if (array_key_exists('unbilled_time_validate_min', $_POST)) {
+                $raw = trim((string)($_POST['unbilled_time_validate_min'] ?? ''));
+                $minTime = ($raw === '') ? 0.0 : (is_numeric($raw) ? max(0, (float)$raw) : 0.0);
                 Capsule::table('mod_timekeeper_permissions')->updateOrInsert(
-                    ['setting_key' => 'permission_pending_timesheets_view_all', 'role_id' => 0],
-                    ['setting_value' => $roleList]
+                    ['setting_key' => 'unbilled_time_validate_min', 'role_id' => 0],
+                    ['setting_value' => (string)$minTime] // never NULL
                 );
-
-                $redir = 'addonmodules.php?module=timekeeper&timekeeperpage=settings&subtab=approval&success=1';
-                if (!headers_sent()) { header('Location: ' . $redir); exit; }
-                echo '<script>window.location.replace(' . json_encode($redir) . ');</script>'; return;
             }
 
-            // Save "Approve" permissions and Validate Time Spent
-            if (isset($_POST['pending_timesheets_approval_roles']) || array_key_exists('unbilled_time_validate_min', $_POST)) {
-                $selectedApprovalRoles = isset($_POST['pending_timesheets_approval_roles'])
-                    ? array_map('intval', (array)$_POST['pending_timesheets_approval_roles'])
-                    : [];
-                $selectedApprovalRoles = array_values(array_intersect($selectedApprovalRoles, $validRoleIds));
-                $approvalRoleList = implode(',', $selectedApprovalRoles);
+            /* ---- Save Pagination Value (optional) ---- */
+            $rawPag = trim((string)($_POST['pagination_value'] ?? ''));
+            if ($rawPag === '') {
+                // Blank: remove any stored pagination value so default applies
+                Capsule::table('mod_timekeeper_permissions')
+                    ->where('setting_key', 'pagination value')
+                    ->where('role_id', 0)
+                    ->delete();
+            } else {
+                // Accept only numeric; coerce and enforce min=1
+                $n = ctype_digit($rawPag) ? (int)$rawPag : (int)floor((float)$rawPag);
+                if ($n < 1) { $n = 1; }
 
                 Capsule::table('mod_timekeeper_permissions')->updateOrInsert(
-                    ['setting_key' => 'permission_pending_timesheets_approve', 'role_id' => 0],
-                    ['setting_value' => $approvalRoleList]
+                    ['setting_key' => 'pagination value', 'role_id' => 0],
+                    ['setting_value' => (string)$n]
                 );
-
-                if (array_key_exists('unbilled_time_validate_min', $_POST)) {
-                    $raw = trim((string)($_POST['unbilled_time_validate_min'] ?? ''));
-                    $minTime = ($raw === '') ? 0.0 : (is_numeric($raw) ? max(0, (float)$raw) : 0.0);
-                    Capsule::table('mod_timekeeper_permissions')->updateOrInsert(
-                        ['setting_key' => 'unbilled_time_validate_min', 'role_id' => 0],
-                        ['setting_value' => (string)$minTime] // never NULL
-                    );
-                }
-                $redir = 'addonmodules.php?module=timekeeper&timekeeperpage=settings&subtab=approval&approval_success=1';
-                if (!headers_sent()) { header('Location: ' . $redir); exit; }
-                echo '<script>window.location.replace(' . json_encode($redir) . ');</script>'; return;
             }
+
+            // Single redirect after saving everything
+            $redir = 'addonmodules.php?module=timekeeper&timekeeperpage=settings&subtab=approval&approval_success=1';
+            if (!headers_sent()) { header('Location: ' . $redir); exit; }
+            echo '<script>window.location.replace(' . json_encode($redir) . ');</script>'; return;
         }
 
         // Fetch saved roles/settings
@@ -209,6 +212,12 @@ switch ($activeTab) {
             ->where('setting_key', 'unbilled_time_validate_min')
             ->where('role_id', 0)
             ->value('setting_value');
+
+        // Load current Pagination value (string or '')
+        $paginationValue = (string) (Capsule::table('mod_timekeeper_permissions')
+            ->where('setting_key', 'pagination value')
+            ->where('role_id', 0)
+            ->value('setting_value') ?? '');
 
         $tkCsrf = $_SESSION['timekeeper_csrf'];
         break;
