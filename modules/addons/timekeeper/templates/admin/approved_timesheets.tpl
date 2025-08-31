@@ -1,14 +1,14 @@
 <?php if (!defined('WHMCS')) { die('Access Denied'); } ?>
 <?php $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); ?>
 
-<link rel="stylesheet" href="../modules/addons/timekeeper/css/approved_timesheets.css?v=3" />
-<script defer src="../modules/addons/timekeeper/js/approved_timesheets.js?v=3"></script>
+<link rel="stylesheet" href="../modules/addons/timekeeper/css/approved_timesheets.css?v=4" />
+<script defer src="../modules/addons/timekeeper/js/approved_timesheets.js?v=4"></script>
 
 <div class="timekeeper-root approved-timesheets">
   <div class="tk-page-header">
     <div class="tk-page-title">
       <h2 class="tk-h2">Approved Timesheets</h2>
-      <p class="tk-subtitle">Timesheets that have been approved and are ready for view/export.</p>
+      <p class="tk-subtitle">Timesheets that have been approved.</p>
     </div>
   </div>
 
@@ -62,10 +62,20 @@
           </p>
         </div>
         <div class="tk-card-actions">
-          <a class="tk-btn tk-btn-rounded"
-             href="addonmodules.php?module=timekeeper&timekeeperpage=reports&report=timesheet&admin_id=<?= (int)$timesheet->admin_id ?>&date=<?= $h($timesheet->timesheet_date) ?>">
-            Export
+          <a class="tk-btn tk-btn-rounded tk-btn-outline"
+             href="addonmodules.php?module=timekeeper&timekeeperpage=approved_timesheets">
+            Back
           </a>
+          <?php if (!empty($canUnapprove)): ?>
+            <form method="post" class="tk-unapprove-form">
+              <input type="hidden" name="tk_csrf" value="<?= $h($tkCsrf) ?>">
+              <input type="hidden" name="tk_action" value="unapprove">
+              <input type="hidden" name="ts_id" value="<?= (int)$timesheet->id ?>">
+              <button type="submit" class="tk-btn tk-btn-rounded tk-btn-warning">
+                Unapprove
+              </button>
+            </form>
+          <?php endif; ?>
         </div>
       </div>
 
