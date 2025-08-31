@@ -286,3 +286,50 @@
 }
 .timekeeper-root .pending-root .pt-reject-panel.is-open{ display:block; }
 .timekeeper-root .pending-root .pt-reject-actions{ display:flex; gap:10px; align-items:center; margin-top:8px; flex-wrap:wrap; }
+
+
+/* === Compact Listing (match Approved) === */
+.timekeeper-root .pending-root .tk-card {
+  background:#fff; border:1px solid #e5e5e5; border-radius:16px; padding:16px;
+  box-shadow:0 1px 2px rgba(16,24,40,0.04); margin-bottom:16px;
+}
+.timekeeper-root .pending-root .tk-table { width:100%; }
+.timekeeper-root .pending-root .tk-table-grid .tk-row {
+  display:flex; flex-wrap:nowrap; gap:8px; align-items:center;
+  border-bottom:1px solid #eee; padding:8px 0;
+}
+.timekeeper-root .pending-root .tk-table-grid .tk-thead {
+  font-weight:600; border-bottom:2px solid #ccc; padding:10px 0;
+}
+.timekeeper-root .pending-root .tk-table-compact .tk-row { padding:8px 0; }
+.timekeeper-root .pending-root .tk-col { min-width:0; }
+.timekeeper-root .pending-root .tk-w-120{width:120px}
+.timekeeper-root .pending-root .tk-w-150{width:150px}
+.timekeeper-root .pending-root .tk-w-180{width:180px}
+.timekeeper-root .pending-root .tk-w-200{width:200px}
+.timekeeper-root .pending-root .tk-text-right { text-align:right; }
+.timekeeper-root .pending-root .tk-muted { color:#6b7280; }
+.timekeeper-root .pending-root .tk-pill {
+  display:inline-block; padding:4px 10px; border-radius:999px; font-size:.875rem; line-height:1;
+  border:1px solid #E5E7EB; background:#F9FAFB; color:#374151; white-space:nowrap;
+}
+.timekeeper-root .pending-root .tk-actions { display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; }
+.timekeeper-root .pending-root .tk-btn {
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:6px 12px; line-height:1; font-weight:600; font-size:14px;
+  border:1px solid #0d6efd; background:#0d6efd; color:#fff;
+  border-radius:999px; text-decoration:none; cursor:pointer;
+  transition: transform .06s ease, filter .15s ease, box-shadow .15s ease;
+  box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+.timekeeper-root .pending-root .tk-btn:hover { filter:brightness(0.97); color:#fff; text-decoration:none; }
+.timekeeper-root .pending-root .tk-btn:active { transform: translateY(1px); }
+
+@media (max-width: 920px) {
+  .timekeeper-root .pending-root .tk-table-grid .tk-row { flex-wrap:wrap; }
+  .timekeeper-root .pending-root .tk-w-200,
+  .timekeeper-root .pending-root .tk-w-180,
+  .timekeeper-root .pending-root .tk-w-150,
+  .timekeeper-root .pending-root .tk-w-120 { width:100%; }
+  .timekeeper-root .pending-root .tk-actions { justify-content:flex-start; }
+}
