@@ -39,6 +39,11 @@ if (!isset($_GET['subtab'])) {
     );
 }
 
+// Selected sub-tab (default cron)
+$activeTab = (isset($_GET['subtab']) && array_key_exists($_GET['subtab'], $settingsTabs))
+    ? $_GET['subtab']
+    : 'cron';
+
 // Success flags consumed by wrapper
 $success          = (isset($_GET['success']) && $_GET['success'] == '1');
 $approval_success = (isset($_GET['approval_success']) && $_GET['approval_success'] == '1');
