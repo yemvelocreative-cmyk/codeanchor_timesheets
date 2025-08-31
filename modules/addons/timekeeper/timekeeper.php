@@ -40,6 +40,13 @@ function timekeeper_output($vars)
     $rawPage = isset($_GET['timekeeperpage']) ? (string)$_GET['timekeeperpage'] : 'dashboard';
     $page    = tk_normalize_page($rawPage);
 
+    // After: $page = TkH::resolvePageAlias(\tk_normalize_page($rawPage));
+    $title = 'Timekeeper — ' . ucwords(str_replace('_',' ', $page));
+    $GLOBALS['pagetitle'] = $title;              // WHMCS expects this to be a string
+    // (Optional niceties)
+    $GLOBALS['helplink'] = '';                   // or a doc URL if you have one
+    $GLOBALS['breadcrumbnav'] = 'Home > ' . $title;
+
     // RBAC via Hide Tabs config
     if (!TkH::isPageAllowedForRole($roleId, $page)) {
         echo '<div class="alert alert-danger" style="margin-top:8px">'
