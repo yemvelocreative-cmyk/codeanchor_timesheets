@@ -1,5 +1,5 @@
 <?php
-// Option A: Permission-centric stacked cards
+// Option B: Role-centric cards (mirrors hide-tabs UX)
 if (!defined('WHMCS')) { die('Access Denied'); }
 
 $allowedRoles            = (isset($allowedRoles) && is_array($allowedRoles)) ? $allowedRoles : [];
@@ -25,87 +25,76 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
     <input type="hidden" name="tk_csrf" value="<?= $h($tkCsrf) ?>">
     <input type="hidden" name="tk_action" value="save_approvals">
 
-    <!-- Card 1: View All -->
-    <div class="tk-approvals-card">
+    <!-- Global toolbar (toggle-all + counts) -->
+    <div class="tk-card tk-card--padded" style="margin-bottom:12px;">
       <div class="tk-role-head">
         <div class="tk-role-head-left">
-          <h5 class="tk-role-title">Roles that can View All Timesheets</h5>
-          <span class="tk-role-sub">Tick to allow viewing every admin’s timesheets</span>
+          <h5 class="tk-role-title">Timesheet Permissions</h5>
+          <span class="tk-role-sub">Apply permissions per role, or use Select All controls</span>
         </div>
-        <div class="tk-role-head-right">
-          <label class="tk-role-toggle-all">
-            <input type="checkbox" class="js-approvals-viewall-toggleall">
-            <span>Select all</span>
-          </label>
-          <span class="tk-approvals-count js-approvals-viewall-count">Selected: 0</span>
-        </div>
-      </div>
-
-      <div class="tk-approvals-body">
-        <div class="tk-approvals-rolegrid">
-          <?php foreach ($roles as $r):
-            $rid   = (int)($r->id ?? $r['id'] ?? 0);
-            $rname = (string)($r->name ?? $r['name'] ?? '');
-            $isSel = in_array($rid, $allowedRoles, true);
-          ?>
-            <label class="tk-approvals-chip">
-              <input type="checkbox"
-                     class="js-approvals-viewall"
-                     name="pending_timesheets_roles[]"
-                     value="<?= $rid ?>"
-                     <?= $isSel ? 'checked' : '' ?>>
-              <span><?= $h($rname) ?></span>
+        <div class="tk-role-head-right" style="gap:18px;">
+          <div>
+            <label class="tk-role-toggle-all">
+              <input type="checkbox" class="js-approvals-viewall-toggleall">
+              <span>View All — Select all</span>
             </label>
-          <?php endforeach; ?>
+            <span class="tk-approvals-count js-approvals-viewall-count">Selected: 0</span>
+          </div>
+          <div>
+            <label class="tk-role-toggle-all">
+              <input type="checkbox" class="js-approvals-approve-toggleall">
+              <span>Approve — Select all</span>
+            </label>
+            <span class="tk-approvals-count js-approvals-approve-count">Selected: 0</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Card 2: Approve / Unapprove -->
-    <div class="tk-approvals-card">
-      <div class="tk-role-head">
-        <div class="tk-role-head-left">
-          <h5 class="tk-role-title">Roles that can Approve / Unapprove</h5>
-          <span class="tk-role-sub">Tick to allow approving and unapproving timesheets</span>
-        </div>
-        <div class="tk-role-head-right">
-          <label class="tk-role-toggle-all">
-            <input type="checkbox" class="js-approvals-approve-toggleall">
-            <span>Select all</span>
-          </label>
-          <span class="tk-approvals-count js-approvals-approve-count">Selected: 0</span>
-        </div>
-      </div>
+    <!-- Role cards -->
+    <div class="tk-roles-stack">
+      <?php foreach ($roles as $r): $rid = (int)($r->id ?? $r['id'] ?? 0); $rname = (string)($r->name ?? $r['name'] ?? ''); ?>
+        <div class="tk-role-card" data-role-id="<?= $rid ?>">
+          <div class="tk-role-head">
+            <div class="tk-role-head-left">
+              <h5 class="tk-role-title"><?= $h($rname) ?></h5>
+              <span class="tk-role-sub">Grant timesheet permissions for this role</span>
+            </div>
+          </div>
 
-      <div class="tk-approvals-body">
-        <div class="tk-approvals-rolegrid">
-          <?php foreach ($roles as $r):
-            $rid   = (int)($r->id ?? $r['id'] ?? 0);
-            $rname = (string)($r->name ?? $r['name'] ?? '');
-            $isSel = in_array($rid, $allowedApprovalRoles, true);
-          ?>
-            <label class="tk-approvals-chip">
-              <input type="checkbox"
-                     class="js-approvals-approve"
-                     name="pending_timesheets_approval_roles[]"
-                     value="<?= $rid ?>"
-                     <?= $isSel ? 'checked' : '' ?>>
-              <span><?= $h($rname) ?></span>
+          <div class="tk-tabs-list" role="group" aria-label="Timesheet permissions for <?= $h($rname) ?>">
+            <label class="tk-tab-toggle">
+              <span class="tk-tab-name">View All Timesheets</span>
+              <input
+                type="checkbox"
+                class="js-approvals-viewall"
+                name="pending_timesheets_roles[]"
+                value="<?= $rid ?>"
+                <?= in_array($rid, $allowedRoles, true) ? 'checked' : '' ?>>
             </label>
-          <?php endforeach; ?>
+
+            <label class="tk-tab-toggle">
+              <span class="tk-tab-name">Approve / Unapprove</span>
+              <input
+                type="checkbox"
+                class="js-approvals-approve"
+                name="pending_timesheets_approval_roles[]"
+                value="<?= $rid ?>"
+                <?= in_array($rid, $allowedApprovalRoles, true) ? 'checked' : '' ?>>
+            </label>
+          </div>
         </div>
-      </div>
+      <?php endforeach; ?>
     </div>
 
-    <!-- Card 3: Display Settings -->
-    <div class="tk-approvals-card">
+    <!-- Display Settings -->
+    <div class="tk-approvals-card" style="margin-top:12px;">
       <div class="tk-role-head">
         <div class="tk-role-head-left">
           <h5 class="tk-role-title">Display Settings</h5>
-          <span class="tk-role-sub">Affects Pending and Approved Timesheets lists</span>
+          <span class="tk-role-sub">Applies to Pending/Approved Timesheets listings</span>
         </div>
       </div>
-
       <div class="tk-approvals-body">
         <div class="tk-acc-grid">
           <div class="tk-field">
