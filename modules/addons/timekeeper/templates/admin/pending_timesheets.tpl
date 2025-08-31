@@ -1,4 +1,4 @@
-<div class="pending-root">
+<div class="timekeeper-root pending-root">
 
   <h2>Pending Timesheets</h2>
 
@@ -437,7 +437,48 @@
             </div>
           </div>
 
-          <!-- Approve / Reject (unchanged, below this block in your file) -->
+          <?php if ($canApprove && isset($timesheet)): ?>
+
+            <div class="pt-sectionbar">Approve / Reject Actions</div>
+
+            <!-- APPROVE -->
+            <form method="post"
+                  id="approve-form"
+                  class="pt-approve-form pt-mt-12"
+                  action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
+              <?php if (!empty($tkCsrf)): ?>
+                <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
+              <?php endif; ?>
+              <input type="hidden" name="approve_timesheet_id" value="<?= (int)$timesheet->id ?>">
+
+              <div class="alert alert-info pt-mb-10">
+                Please ensure all flagged entries above are ticked “Verified” before approving.
+              </div>
+
+              <button type="submit" class="btn btn-success">Approve Timesheet</button>
+            </form>
+
+            <!-- REJECT -->
+            <form method="post"
+                  class="pt-reject-form pt-mt-12"
+                  action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
+              <?php if (!empty($tkCsrf)): ?>
+                <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
+              <?php endif; ?>
+              <input type="hidden" name="reject_timesheet_id" value="<?= (int)$timesheet->id ?>">
+
+              <label for="rej-note-<?= (int)$timesheet->id ?>" class="pt-fw-600">Rejection Reason</label>
+              <textarea id="rej-note-<?= (int)$timesheet->id ?>"
+                        name="admin_rejection_note"
+                        class="form-control pt-reject-note"
+                        placeholder="Explain why this timesheet is being rejected"></textarea>
+              <div class="pt-note">This note will be visible to the timesheet owner.</div>
+
+              <button type="submit" class="btn btn-danger">Reject Timesheet</button>
+            </form>
+
+          <?php endif; ?>
+
         <?php endif; ?>
 
         <!-- Resubmit (owner of rejected sheet) -->
@@ -456,5 +497,4 @@
       </div>
     </div>
   <?php endif; ?>
-
 </div>
