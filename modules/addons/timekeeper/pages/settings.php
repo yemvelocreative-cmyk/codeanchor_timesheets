@@ -108,11 +108,25 @@ switch ($activeTab) {
             $currentCronDays[$row->setting_key] = $row->setting_value;
         }
 
-        // Load all active admins
+        // Load all active admins (robust to NULL/strings)
         $allAdmins = Capsule::table('tbladmins')
-            ->where('disabled', 0)
+            ->where(function ($q) {
+                $q->where('disabled', 0)
+                ->orWhereNull('disabled')        // handle NULLs
+                ->orWhere('disabled', '0')       // handle string '0'
+                ->orWhere('disabled', false);    // handle boolean false
+            })
             ->orderBy('firstname')
+            ->orderBy('lastname')
             ->get();
+
+        // Fallback: if nothing matched, fetch all to avoid UI dead-end and aid diagnosis
+        if ($allAdmins->isEmpty()) {
+            $allAdmins = Capsule::table('tbladmins')
+                ->orderBy('firstname')
+                ->orderBy('lastname')
+                ->get();
+        }
 
         // Load assigned users
         $cronUsers = Capsule::table('mod_timekeeper_assigned_users')->pluck('admin_id')->toArray();

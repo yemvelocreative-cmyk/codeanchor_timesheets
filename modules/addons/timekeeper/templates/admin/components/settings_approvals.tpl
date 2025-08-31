@@ -1,10 +1,11 @@
 <?php
-// File: templates/admin/components/settings_approvals.tpl
+// File: templates/admin/components/settings_approvals.tpl (Option 1: Dual Cards + Utility Rail)
 if (!defined('WHMCS')) { die('Access Denied'); }
 
 $allowedRoles            = (isset($allowedRoles) && is_array($allowedRoles)) ? $allowedRoles : [];
 $allowedApprovalRoles    = (isset($allowedApprovalRoles) && is_array($allowedApprovalRoles)) ? $allowedApprovalRoles : [];
 $unbilledTimeValidateMin = isset($unbilledTimeValidateMin) ? $unbilledTimeValidateMin : '';
+$paginationValue         = isset($paginationValue) ? $paginationValue : '';
 $tkCsrf                  = isset($tkCsrf) ? (string)$tkCsrf : '';
 
 if (isset($roles) && $roles instanceof \Illuminate\Support\Collection) { $roles = $roles->all(); }
@@ -24,10 +25,11 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
     <input type="hidden" name="tk_csrf" value="<?= $h($tkCsrf) ?>">
     <input type="hidden" name="tk_action" value="save_approvals">
 
+    <!-- Grid: View All | Approve/Unapprove | Utility rail -->
     <div class="tk-approvals-grid">
-      <!-- Card A -->
-      <div class="tk-approvals-card" data-scope="viewall">
-        <div class="tk-approvals-head">
+      <!-- Card A: View All -->
+      <section class="tk-approvals-card" data-scope="viewall">
+        <header class="tk-approvals-head">
           <h5 class="tk-approvals-title">Roles that can View All Timesheets</h5>
           <div class="tk-approvals-actions">
             <label class="tk-approvals-toggleall">
@@ -36,7 +38,7 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
             </label>
             <span class="tk-approvals-count js-approvals-viewall-count">Selected: 0</span>
           </div>
-        </div>
+        </header>
 
         <div class="tk-approvals-body">
           <div class="tk-approvals-rolegrid">
@@ -46,17 +48,21 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
               $isSel = in_array($rid, $allowedRoles, true);
             ?>
               <label class="tk-approvals-chip">
-                <input type="checkbox" name="pending_timesheets_roles[]" value="<?= $rid ?>" <?= $isSel ? 'checked' : '' ?> class="js-approvals-viewall">
+                <input type="checkbox"
+                       name="pending_timesheets_roles[]"
+                       value="<?= $rid ?>"
+                       <?= $isSel ? 'checked' : '' ?>
+                       class="js-approvals-viewall">
                 <span><?= $h($rname) ?></span>
               </label>
             <?php endforeach; ?>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Card B -->
-      <div class="tk-approvals-card" data-scope="approve">
-        <div class="tk-approvals-head">
+      <!-- Card B: Approve / Unapprove -->
+      <section class="tk-approvals-card" data-scope="approve">
+        <header class="tk-approvals-head">
           <h5 class="tk-approvals-title">Roles that can Approve / Unapprove</h5>
           <div class="tk-approvals-actions">
             <label class="tk-approvals-toggleall">
@@ -65,7 +71,7 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
             </label>
             <span class="tk-approvals-count js-approvals-approve-count">Selected: 0</span>
           </div>
-        </div>
+        </header>
 
         <div class="tk-approvals-body">
           <div class="tk-approvals-rolegrid">
@@ -75,53 +81,56 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
               $isSel = in_array($rid, $allowedApprovalRoles, true);
             ?>
               <label class="tk-approvals-chip">
-                <input type="checkbox" name="pending_timesheets_approval_roles[]" value="<?= $rid ?>" <?= $isSel ? 'checked' : '' ?> class="js-approvals-approve">
+                <input type="checkbox"
+                       name="pending_timesheets_approval_roles[]"
+                       value="<?= $rid ?>"
+                       <?= $isSel ? 'checked' : '' ?>
+                       class="js-approvals-approve">
                 <span><?= $h($rname) ?></span>
               </label>
             <?php endforeach; ?>
           </div>
-
-          <!-- Validate Minimum Task Time -->
-          <div class="tk-validate-row">
-            <h6 class="mb-1" style="font-weight:600;">Validate Minimum Task Time</h6>
-            <small id="unbilledHelp" class="text-muted">
-              Set the minimum hours for tasks marked as Not Billable. If the time entered meets
-              or exceeds this value, the approver must confirm whether the task should be Billable
-              or assigned to SLA (e.g., 0.5 = 30 minutes).
-            </small>
-            <div class="d-flex align-items-center gap-2">
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                name="unbilled_time_validate_min"
-                id="unbilled_time_validate_min"
-                class="form-control d-inline-block tk-input-w-80"
-                value="<?= $h((string)$unbilledTimeValidateMin) ?>"
-                aria-describedby="unbilledHelp">
-            </div>
-          </div>
-          <div class="tk-validate-row">
-            <h6 class="mb-1" style="font-weight:600;">Pagination</h6>
-            <small id="paginationHelp" class="text-muted">
-              Set the number of Pending/Approved Timesheets to list per page.
-              Leave blank to use the system default.
-            </small>
-            <div class="d-flex align-items-center gap-2">
-              <input
-                type="number"
-                step="1"
-                min="1"
-                name="pagination_value"
-                id="pagination_value"
-                class="form-control d-inline-block tk-input-w-80"
-                value="<?= $h($paginationValue) ?>"
-                aria-describedby="paginationHelp"
-                inputmode="numeric" pattern="[0-9]*">
-            </div>
-          </div>
         </div>
-      </div>
+      </section>
+
+      <!-- Card C: Utility Rail (Display & Validation) -->
+      <aside class="tk-approvals-card" data-scope="utility">
+        <h5 class="tk-approvals-title">Display Settings</h5>
+
+        <div class="tk-validate-row">
+          <label for="pagination_value" class="form-label">Pagination</label>
+          <small id="paginationHelp" class="text-muted d-block">
+            Set the number of Pending/Approved Timesheets to list per page. Leave blank to use the system default.
+          </small>
+          <input
+            type="number"
+            step="1"
+            min="1"
+            name="pagination_value"
+            id="pagination_value"
+            class="form-control tk-input-w-80"
+            value="<?= $h($paginationValue) ?>"
+            aria-describedby="paginationHelp"
+            inputmode="numeric" pattern="[0-9]*">
+        </div>
+
+        <div class="tk-validate-row">
+          <label for="unbilled_time_validate_min" class="form-label">Validate Minimum Task Time (hrs)</label>
+          <small id="unbilledHelp" class="text-muted d-block">
+            Set the minimum hours for tasks marked as Not Billable. If the time entered meets or exceeds this value,
+            the approver must confirm whether the task should be Billable or assigned to SLA (e.g., 0.5 = 30 minutes).
+          </small>
+          <input
+            type="number"
+            step="0.1"
+            min="0"
+            name="unbilled_time_validate_min"
+            id="unbilled_time_validate_min"
+            class="form-control tk-input-w-80"
+            value="<?= $h((string)$unbilledTimeValidateMin) ?>"
+            aria-describedby="unbilledHelp">
+        </div>
+      </aside>
     </div>
 
     <!-- One submit for everything -->
