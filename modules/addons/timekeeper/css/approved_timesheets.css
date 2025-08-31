@@ -146,3 +146,61 @@
   .timekeeper-root.approved-timesheets .tk-w-250 { width:100%; }
   .timekeeper-root.approved-timesheets .tk-actions { justify-content:flex-start; }
 }
+
+/* ===== Saved Entries: Compact Table-Card (match timesheet.css) ===== */
+.timekeeper-root.approved-timesheets .tk-row--table .tk-row-grid {
+  display: grid;
+  grid-template-columns:
+    1.1fr  /* Client */
+    0.9fr  /* Dept */
+    1fr    /* Category */
+    2fr    /* Description */
+    1.4fr  /* Time window + total */
+    1.4fr  /* Flags/badges */
+    auto;  /* Actions */
+  align-items: center;
+  gap: 12px;
+}
+.timekeeper-root.approved-timesheets .tk-row--header {
+  background: #f9fafb; border: 1px solid #e5e7eb;
+}
+.timekeeper-root.approved-timesheets .tk-row--header .hdr {
+  font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .02em;
+}
+.timekeeper-root.approved-timesheets .tk-row--header .tk-row-grid .hdr:last-child { text-align: right; }
+
+.timekeeper-root.approved-timesheets .tk-row--table .cell-desc { overflow-wrap: anywhere; }
+.timekeeper-root.approved-timesheets .tk-row--table .cell-times {
+  font-size: 12px; color: #555; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap;
+}
+.timekeeper-root.approved-timesheets .tk-row--table .cell-flags { display: flex; gap: .5rem; flex-wrap: wrap; }
+.timekeeper-root.approved-timesheets .tk-row--table .cell-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.timekeeper-root.approved-timesheets .inline-form { display: inline-block; margin: 0; }
+
+/* Badges (same as timesheet.css) */
+.timekeeper-root.approved-timesheets .tk-badges { display: flex; gap: .5rem; align-items: center; }
+.timekeeper-root.approved-timesheets .tk-badge {
+  font-size: 12px; padding: .15rem .5rem; border: 1px solid #E5E7EB; border-radius: 999px;
+  background: #F9FAFB; color: #374151; white-space: nowrap;
+}
+.timekeeper-root.approved-timesheets .tk-badge--success { border-color: #C7F0D8; background: #ECFDF5; color: #065F46; }
+
+/* Totals bar */
+.timekeeper-root.approved-timesheets .tk-totals-wrap { margin: .25rem 0 .5rem; }
+.timekeeper-root.approved-timesheets .tk-totals-bar { display: inline-flex; align-items: center; gap: .35rem; font-size: 14px; }
+.timekeeper-root.approved-timesheets .tk-totals-bar .lbl,
+.timekeeper-root.approved-timesheets .tk-totals-bar .unit { color: #6B7280; }
+.timekeeper-root.approved-timesheets .tk-totals-bar .val { font-weight: 600; }
+.timekeeper-root.approved-timesheets .tk-totals-bar .sep { opacity: .5; margin: 0 .35rem; }
+
+/* Responsive stacking (match timesheet.css) */
+@media (max-width: 992px) {
+  .timekeeper-root.approved-timesheets .tk-row--table .tk-row-grid { grid-template-columns: 1fr 1fr; row-gap: 8px; }
+  .timekeeper-root.approved-timesheets .tk-row--header .tk-row-grid { grid-template-columns: 1fr 1fr; }
+  .timekeeper-root.approved-timesheets .tk-row--table .cell-desc { grid-column: 1 / -1; }
+  .timekeeper-root.approved-timesheets .tk-row--table .cell-actions { grid-column: 1 / -1; justify-content: flex-end; }
+}
+@media (max-width: 560px) {
+  .timekeeper-root.approved-timesheets .tk-row--table .cell-times,
+  .timekeeper-root.approved-timesheets .tk-row--table .cell-flags { grid-column: 1 / -1; }
+}

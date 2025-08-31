@@ -1,8 +1,8 @@
 <?php if (!defined('WHMCS')) { die('Access Denied'); } ?>
 <?php $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); ?>
 
-<link rel="stylesheet" href="../modules/addons/timekeeper/css/approved_timesheets.css?v=4" />
-<script defer src="../modules/addons/timekeeper/js/approved_timesheets.js?v=4"></script>
+<link rel="stylesheet" href="../modules/addons/timekeeper/css/approved_timesheets.css?v=5" />
+<script defer src="../modules/addons/timekeeper/js/approved_timesheets.js?v=5"></script>
 
 <div class="timekeeper-root approved-timesheets">
   <div class="tk-page-header">
@@ -40,9 +40,7 @@
                 <input type="hidden" name="tk_csrf" value="<?= $h($tkCsrf) ?>">
                 <input type="hidden" name="tk_action" value="unapprove">
                 <input type="hidden" name="ts_id" value="<?= (int)$ts->id ?>">
-                <button type="submit" class="tk-btn tk-btn-sm tk-btn-rounded tk-btn-warning">
-                  Unapprove
-                </button>
+                <button type="submit" class="tk-btn tk-btn-sm tk-btn-rounded tk-btn-warning">Unapprove</button>
               </form>
             <?php endif; ?>
           </div>
@@ -71,9 +69,7 @@
               <input type="hidden" name="tk_csrf" value="<?= $h($tkCsrf) ?>">
               <input type="hidden" name="tk_action" value="unapprove">
               <input type="hidden" name="ts_id" value="<?= (int)$timesheet->id ?>">
-              <button type="submit" class="tk-btn tk-btn-rounded tk-btn-warning">
-                Unapprove
-              </button>
+              <button type="submit" class="tk-btn tk-btn-rounded tk-btn-warning">Unapprove</button>
             </form>
           <?php endif; ?>
         </div>
@@ -82,45 +78,65 @@
       <?php if (empty($timesheetEntries)): ?>
         <div class="tk-alert tk-alert-info">No entries on this timesheet.</div>
       <?php else: ?>
-        <div class="tk-table tk-table-grid tk-mt-12">
-          <div class="tk-thead tk-row">
-            <div class="tk-col tk-w-200">Client</div>
-            <div class="tk-col tk-w-180">Department</div>
-            <div class="tk-col tk-w-180">Task</div>
-            <div class="tk-col tk-w-90 tk-text-right">Time</div>
-            <div class="tk-col tk-w-250">Notes</div>
-            <div class="tk-col tk-w-90 tk-text-center">Billable</div>
-            <div class="tk-col tk-w-90 tk-text-right">Bill Time</div>
-            <div class="tk-col tk-w-80 tk-text-center">SLA</div>
-            <div class="tk-col tk-w-90 tk-text-right">SLA Time</div>
+        <!-- Saved Entries — SAME STRUCTURE AS timesheet.tpl -->
+        <!-- Header row -->
+        <div class="tk-row tk-row--table tk-row--header">
+          <div class="tk-row-grid">
+            <div class="hdr">Client</div>
+            <div class="hdr">Department</div>
+            <div class="hdr">Task</div>
+            <div class="hdr">Description</div>
+            <div class="hdr">Time</div>
+            <div class="hdr">Flags</div>
+            <div class="hdr" style="text-align:right;">&nbsp;</div>
           </div>
+        </div>
 
-          <?php foreach ($timesheetEntries as $entry): ?>
-            <div class="tk-row">
-              <div class="tk-col tk-w-200"><?= $h($clientMap[$entry->client_id] ?? 'N/A') ?></div>
-              <div class="tk-col tk-w-180"><?= $h($departmentMap[$entry->department_id] ?? 'N/A') ?></div>
-              <div class="tk-col tk-w-180"><?= $h($taskMap[$entry->task_category_id] ?? 'N/A') ?></div>
-              <div class="tk-col tk-w-90 tk-text-right"><?= number_format((float)$entry->time_spent, 2) ?> hrs</div>
-              <div class="tk-col tk-w-250 tk-notes"><?= $h($entry->notes) ?></div>
-              <div class="tk-col tk-w-90 tk-text-center"><?= $entry->billable ? 'Yes' : 'No' ?></div>
-              <div class="tk-col tk-w-90 tk-text-right"><?= number_format((float)$entry->billable_time, 2) ?> hrs</div>
-              <div class="tk-col tk-w-80 tk-text-center"><?= $entry->sla ? 'Yes' : 'No' ?></div>
-              <div class="tk-col tk-w-90 tk-text-right"><?= number_format((float)$entry->sla_time, 2) ?> hrs</div>
+        <!-- Data rows -->
+        <?php foreach ($timesheetEntries as $entry): ?>
+          <div class="tk-row tk-row--table">
+            <div class="tk-row-grid">
+              <div><?= $h($clientMap[$entry->client_id] ?? 'N/A') ?></div>
+              <div><?= $h($departmentMap[$entry->department_id] ?? 'N/A') ?></div>
+              <div><?= $h($taskMap[$entry->task_category_id] ?? 'N/A') ?></div>
+
+              <div class="cell-desc"><?= $h($entry->notes) ?></div>
+
+              <div class="cell-times">
+                <?php
+                $start = isset($entry->start_time) ? (string)$entry->start_time : '';
+                $end   = isset($entry->end_time)   ? (string)$entry->end_time   : '';
+                ?>
+                <?php if ($start && $end): ?>
+                  <span><?= $h($start) ?>–<?= $h($end) ?></span>
+                <?php endif; ?>
+                <strong><?= number_format((float)$entry->time_spent, 2) ?> hrs</strong>
+              </div>
+
+              <div class="cell-flags">
+                <?php if (!empty($entry->billable)): ?>
+                  <span class="tk-badge tk-badge--success">Billable: <?= number_format((float)$entry->billable_time, 2) ?> hrs</span>
+                <?php else: ?>
+                  <span class="tk-badge">Non-billable</span>
+                <?php endif; ?>
+
+                <?php if (!empty($entry->sla)): ?>
+                  <span class="tk-badge">SLA: <?= number_format((float)$entry->sla_time, 2) ?> hrs</span>
+                <?php endif; ?>
+              </div>
+
+              <div class="cell-actions">&nbsp;</div>
             </div>
-          <?php endforeach; ?>
+          </div>
+        <?php endforeach; ?>
 
-          <div class="tk-row tk-row-total">
-            <div class="tk-col tk-w-200"></div>
-            <div class="tk-col tk-w-180"></div>
-            <div class="tk-col tk-w-180"></div>
-            <!-- Total under the Time column -->
-            <div class="tk-col tk-w-90 tk-text-right"><strong><?= number_format((float)$totalTime, 2) ?> hrs</strong></div>
-            <!-- Label in Notes column -->
-            <div class="tk-col tk-w-250 tk-text-right"><strong>Totals:</strong></div>
-            <div class="tk-col tk-w-90"></div>
-            <div class="tk-col tk-w-90"></div>
-            <div class="tk-col tk-w-80"></div>
-            <div class="tk-col tk-w-90"></div>
+        <!-- Totals (compact bar to match timesheet.css) -->
+        <div class="tk-totals-wrap">
+          <div class="tk-totals-bar">
+            <span class="lbl">Total</span>
+            <span class="sep">•</span>
+            <span class="val"><?= number_format((float)$totalTime, 2) ?></span>
+            <span class="unit">hrs</span>
           </div>
         </div>
       <?php endif; ?>
