@@ -74,7 +74,15 @@
   height: 18px;
 }
 
-/* Responsive */
+/* Islands + grid */
+.timekeeper-approvals-settings .tk-approvals-island { margin-bottom: 16px; }
+.timekeeper-approvals-settings .tk-approvals-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Responsive (consolidated) */
 @media (max-width: 900px) {
   .timekeeper-root .timekeeper-approvals-settings .tk-mx-row {
     grid-template-columns: 1fr;
@@ -85,13 +93,10 @@
   .timekeeper-root .timekeeper-approvals-settings .tk-mx-cell {
     border-radius: .6rem;
   }
+  .timekeeper-approvals-settings .tk-approvals-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.timekeeper-approvals-settings .tk-approvals-island { margin-bottom: 16px; }
-.timekeeper-approvals-settings .tk-approvals-grid {
-  display: grid; gap: 16px;
-  grid-template-columns: 1fr 1fr;
-}
-@media (max-width: 900px) {
-  .timekeeper-approvals-settings .tk-approvals-grid { grid-template-columns: 1fr; }
-}
+/* If you notice “double borders” inside islands, you can neutralize the inner card: */
+/* .timekeeper-approvals-settings .tk-approvals-island .tk-approvals-card { border:0; box-shadow:none; padding:0; } */

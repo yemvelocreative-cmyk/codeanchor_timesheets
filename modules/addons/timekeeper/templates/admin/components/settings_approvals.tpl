@@ -24,9 +24,8 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
     <input type="hidden" name="tk_csrf" value="<?= $h($tkCsrf) ?>">
     <input type="hidden" name="tk_action" value="save_approvals">
 
-    <!-- ===== Standalone island: Group 1 (separate card) ===== -->
+    <!-- ===== Island 1: Group 1 - View All ===== -->
     <div class="tk-approvals-island tk-card tk-card--padded">
-      <!-- Card A -->
       <div class="tk-approvals-card" data-scope="viewall">
         <div class="tk-approvals-head">
           <h5 class="tk-approvals-title">Roles that can View All Timesheets</h5>
@@ -60,9 +59,8 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
       </div>
     </div>
 
-    <!-- ===== Main grid: Group 2 and Group 3 ===== -->
-    <div class="tk-approvals-grid">
-      <!-- Group 2: Approve / Unapprove + Validate Minimum Task Time -->
+    <!-- ===== Island 2: Group 2 - Approve/Unapprove + Min Task Time ===== -->
+    <div class="tk-approvals-island tk-card tk-card--padded">
       <div class="tk-approvals-card" data-scope="approve">
         <div class="tk-approvals-head">
           <h5 class="tk-approvals-title">Roles that can Approve / Unapprove</h5>
@@ -108,8 +106,10 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Group 3: Pagination -->
+    <!-- ===== Island 3: Group 3 - Pagination ===== -->
+    <div class="tk-approvals-island tk-card tk-card--padded">
       <div class="tk-approvals-card" data-scope="display">
         <div class="tk-approvals-head">
           <h5 class="tk-approvals-title">Pagination</h5>
