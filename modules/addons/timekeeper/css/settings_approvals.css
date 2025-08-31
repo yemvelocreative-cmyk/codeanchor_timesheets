@@ -171,3 +171,30 @@
   line-height: 1.3;
   font-weight: 600;   /* bold */
 }
+
+/* === Approvals: stack spacing identical to Hide Tabs === */
+.timekeeper-root .timekeeper-approvals-settings .tk-approvals-stack {
+  display: grid;
+  gap: 1rem; /* same spacing as .tk-roles-stack */
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); /* responsive: 3→2→1 */
+}
+
+/* Islands participate in the grid; let gap control spacing (no margins needed) */
+.timekeeper-root .timekeeper-approvals-settings .tk-approvals-island {
+  margin: 0;
+}
+
+/* Make sure the action bar spans full width and aligns like Hide Tabs */
+.timekeeper-root .timekeeper-approvals-settings .tk-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px; /* same as hide tabs footer actions */
+}
+
+/* Titles — you’re using <h2 class="tk-approvals-title">, enforce compact bold */
+.timekeeper-root .timekeeper-approvals-settings h2.tk-approvals-title {
+  margin: 0;
+  font-size: 1rem;   /* matches hide-tabs .tk-role-title scale */
+  line-height: 1.3;
+  font-weight: 700;  /* same weight as hide tabs role title */
+}
