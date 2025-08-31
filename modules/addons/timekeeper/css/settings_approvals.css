@@ -138,3 +138,36 @@
   line-height: 1.3;
   font-weight: 600;          /* ensure bold */
 }
+
+/* === Responsive islands: layout the three containers side-by-side === */
+.timekeeper-root .timekeeper-approvals-settings > form.tk-approvals-card-form {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;                 /* spacing between islands */
+  align-items: start;
+}
+
+/* Islands are grid items; spacing is handled by gap */
+.timekeeper-root .timekeeper-approvals-settings > form.tk-approvals-card-form .tk-approvals-island {
+  margin: 0 !important;
+}
+
+/* Fallback spacing if grid ever fails for any reason */
+.timekeeper-approvals-settings .tk-approvals-island + .tk-approvals-island {
+  margin-top: 16px;
+}
+
+/* Save actions: span full row and right-align */
+.timekeeper-root .timekeeper-approvals-settings > form.tk-approvals-card-form .tk-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Titles: you’re using <h2 class="tk-approvals-title"> but want compact, bold */
+.timekeeper-root .timekeeper-approvals-settings h2.tk-approvals-title {
+  margin: 0;
+  font-size: 1rem;    /* H5-ish scale */
+  line-height: 1.3;
+  font-weight: 600;   /* bold */
+}
