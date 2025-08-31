@@ -4,32 +4,24 @@ use WHMCS\Database\Capsule;
 
 if (!defined('WHMCS')) { die('Access Denied'); }
 
+// --- Load helpers (supports helpers/ or includes/helpers/) ---
+$base = dirname(__DIR__); // -> /modules/addons/timekeeper
+$try = function (string $relA, string $relB) use ($base) {
+    $a = $base . $relA; $b = $base . $relB;
+    if (is_file($a)) { require_once $a; return; }
+    if (is_file($b)) { require_once $b; return; }
+    throw new \RuntimeException("Missing helper: tried {$a} and {$b}");
+};
+$try('/helpers/core_helper.php', '/includes/helpers/core_helper.php');
+$try('/helpers/settings_helper.php', '/includes/helpers/settings_helper.php');
+
+use Timekeeper\Helpers\CoreHelper as CoreH;
+use Timekeeper\Helpers\SettingsHelper as SetH;
+
 /* -------------------------------
    CSRF (module-local, session-based)
 -------------------------------- */
-if (session_status() !== PHP_SESSION_ACTIVE) { @session_start(); }
-if (empty($_SESSION['timekeeper_csrf'])) {
-    $_SESSION['timekeeper_csrf'] = bin2hex(random_bytes(32));
-}
-$tkCsrf = $_SESSION['timekeeper_csrf'];
-
-function timekeeper_require_csrf() {
-    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
-        $posted = $_POST['tk_csrf'] ?? '';
-        $valid  = isset($_SESSION['timekeeper_csrf']) && hash_equals($_SESSION['timekeeper_csrf'], $posted);
-        if (!$valid) {
-            http_response_code(400);
-            die('Invalid request token.');
-        }
-    }
-}
-
-/* -------------------------------
-   Assets (prefer central loader in timekeeper.php)
--------------------------------- */
-// echo '<link rel="stylesheet" href="../modules/addons/timekeeper/css/settings_tabs.css" />';
-// echo '<link rel="stylesheet" href="../modules/addons/timekeeper/css/settings.css" />';
-// echo '<script src="../modules/addons/timekeeper/js/settings.js" defer></script>';
+$tkCsrf = SetH::initCsrf(); // ensures token and returns it
 
 /* -------------------------------
    Settings sub-tabs
@@ -60,7 +52,7 @@ switch ($activeTab) {
         $daysOfWeek = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
         if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
-            timekeeper_require_csrf();
+            SetH::requireCsrf();
 
             // Save Cron Days
             $cronDays = (isset($_POST['cron_days']) && is_array($_POST['cron_days'])) ? $_POST['cron_days'] : [];
@@ -94,8 +86,7 @@ switch ($activeTab) {
             }
 
             $redir = 'addonmodules.php?module=timekeeper&timekeeperpage=settings&subtab=cron&success=1';
-            if (!headers_sent()) { header('Location: ' . $redir); exit; }
-            echo '<script>window.location.replace(' . json_encode($redir) . ');</script>'; return;
+            SetH::redirect($redir);
         }
 
         // Load current day statuses (role_id = 0)
@@ -130,7 +121,7 @@ switch ($activeTab) {
         $roles = Capsule::table('tbladminroles')->orderBy('name')->get();
 
         if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
-            timekeeper_require_csrf();
+            SetH::requireCsrf();
 
             // Validate role IDs
             $validRoleIds = Capsule::table('tbladminroles')->pluck('id')->toArray();
@@ -191,8 +182,7 @@ switch ($activeTab) {
 
             // Single redirect after saving everything
             $redir = 'addonmodules.php?module=timekeeper&timekeeperpage=settings&subtab=approval&approval_success=1';
-            if (!headers_sent()) { header('Location: ' . $redir); exit; }
-            echo '<script>window.location.replace(' . json_encode($redir) . ');</script>'; return;
+            SetH::redirect($redir);
         }
 
         // Fetch saved roles/settings
@@ -240,8 +230,8 @@ switch ($activeTab) {
         // Load roles
         $roles = Capsule::table('tbladminroles')->select('id','name')->orderBy('name','asc')->get();
 
-        // Load current hidden map from settings JSON
-        $hiddenMap = tk_getHiddenPagesByRole();                  // ["1" => ["settings",...], ...]
+        // Load current hidden map from settings JSON (via helper)
+        $hiddenMap = SetH::getHiddenPagesByRole(); // ["1" => ["settings",...], ...]
         $hiddenTabsByRole = [];
         foreach ($hiddenMap as $ridStr => $pages) {
             $hiddenTabsByRole[(int)$ridStr] = array_values(array_map('tk_normalize_page', (array)$pages));
@@ -249,9 +239,9 @@ switch ($activeTab) {
 
         // Save
         if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['hidemenutabs_save'] ?? '') === '1') {
-            timekeeper_require_csrf();
+            SetH::requireCsrf();
 
-            $incoming = $_POST['hide_tabs'] ?? [];               // hide_tabs[<roleId>][] = <tabKey>
+            $incoming = $_POST['hide_tabs'] ?? []; // hide_tabs[<roleId>][] = <tabKey>
             $normalized = [];
 
             foreach ($roles as $r) {
@@ -267,12 +257,11 @@ switch ($activeTab) {
                 $normalized[(string)$rid] = $clean;
             }
 
-            $ok = tk_saveHiddenPagesByRole($normalized);
+            $ok = SetH::saveHiddenPagesByRole($normalized);
             $tab_visibility = $ok ? '1' : '0';
 
             $redir = 'addonmodules.php?module=timekeeper&timekeeperpage=settings&subtab=hide_tabs';
-            if (!headers_sent()) { header('Location: ' . $redir); exit; }
-            echo '<script>window.location.replace(' . json_encode($redir) . ');</script>'; return;
+            SetH::redirect($redir);
         }
 
         $tkCsrf = $_SESSION['timekeeper_csrf'];
