@@ -112,7 +112,7 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
     <div class="tk-approvals-island tk-card tk-card--padded">
       <div class="tk-approvals-card" data-scope="display">
         <div class="tk-approvals-head">
-          <h5 class="tk-approvals-title">Pagination</h5>
+          <h2 class="tk-approvals-title">Pagination</h2>
         </div>
 
         <div class="tk-validate-row">
