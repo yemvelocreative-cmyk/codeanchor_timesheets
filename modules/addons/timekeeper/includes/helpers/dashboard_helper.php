@@ -250,12 +250,35 @@ final class DashboardHelper
         if (!$canViewAll) $rejQ->where('admin_id', $currentAdminId);
         $rejectedCount = (int)$rejQ->count();
 
-        // Minimum task time
-        $minSetting = Capsule::table('mod_timekeeper_settings')
-            ->where('setting_key','unbilled_time_validate_min')
-            ->value('setting_value');
-        $minVal = is_numeric($minSetting) ? (float)$minSetting : 0.0;
+        // --- Minimum task time: read from settings OR fallback to permissions ---
+        $minVal = 0.0;
 
+        try {
+            $schema = Capsule::schema();
+
+            // Prefer mod_timekeeper_settings if the table exists
+            if ($schema->hasTable('mod_timekeeper_settings')) {
+                $raw = Capsule::table('mod_timekeeper_settings')
+                    ->where('setting_key','unbilled_time_validate_min')
+                    ->value('setting_value');
+                if (is_numeric($raw)) {
+                    $minVal = (float)$raw;
+                }
+            }
+            // Fallback: mod_timekeeper_permissions (keeps older installs working)
+            elseif ($schema->hasTable('mod_timekeeper_permissions')) {
+                $raw = Capsule::table('mod_timekeeper_permissions')
+                    ->where('setting_key','unbilled_time_validate_min')
+                    ->value('setting_value');
+                if (is_numeric($raw)) {
+                    $minVal = (float)$raw;
+                }
+            }
+        } catch (\Throwable $e) {
+            // If anything goes wrong, leave $minVal = 0.0 (disabled) and continue
+        }
+
+        // Count entries under minimum, only if a min value is actually configured
         $underMin = 0;
         if ($minVal > 0) {
             $umQ = Capsule::table('mod_timekeeper_timesheet_entries AS e')
