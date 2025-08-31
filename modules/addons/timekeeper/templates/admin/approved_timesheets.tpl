@@ -1,8 +1,8 @@
 <?php if (!defined('WHMCS')) { die('Access Denied'); } ?>
 <?php $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); ?>
 
-<link rel="stylesheet" href="../modules/addons/timekeeper/css/approved_timesheets.css?v=2" />
-<script defer src="../modules/addons/timekeeper/js/approved_timesheets.js?v=2"></script>
+<link rel="stylesheet" href="../modules/addons/timekeeper/css/approved_timesheets.css?v=3" />
+<script defer src="../modules/addons/timekeeper/js/approved_timesheets.js?v=3"></script>
 
 <div class="timekeeper-root approved-timesheets">
   <div class="tk-page-header">
@@ -36,11 +36,11 @@
             </a>
 
             <?php if (!empty($canUnapprove)): ?>
-              <form method="post" class="tk-inline-form tk-unapprove-form" style="display:inline;">
+              <form method="post" class="tk-unapprove-form">
                 <input type="hidden" name="tk_csrf" value="<?= $h($tkCsrf) ?>">
                 <input type="hidden" name="tk_action" value="unapprove">
                 <input type="hidden" name="ts_id" value="<?= (int)$ts->id ?>">
-                <button type="submit" class="tk-btn tk-btn-sm tk-btn-rounded tk-btn-warning js-unapprove">
+                <button type="submit" class="tk-btn tk-btn-sm tk-btn-rounded tk-btn-warning">
                   Unapprove
                 </button>
               </form>
@@ -56,7 +56,10 @@
       <div class="tk-card-header">
         <div>
           <h3 class="tk-h3">Timesheet</h3>
-          <p class="tk-muted">Admin: <?= $h($adminMap[$timesheet->admin_id] ?? 'Unknown') ?> · Date: <?= $h($timesheet->timesheet_date) ?></p>
+          <p class="tk-muted">
+            Admin: <?= $h($adminMap[$timesheet->admin_id] ?? 'Unknown') ?>
+            · Date: <?= $h($timesheet->timesheet_date) ?>
+          </p>
         </div>
         <div class="tk-card-actions">
           <a class="tk-btn tk-btn-rounded"
@@ -100,7 +103,9 @@
             <div class="tk-col tk-w-200"></div>
             <div class="tk-col tk-w-180"></div>
             <div class="tk-col tk-w-180"></div>
+            <!-- Total under the Time column -->
             <div class="tk-col tk-w-90 tk-text-right"><strong><?= number_format((float)$totalTime, 2) ?> hrs</strong></div>
+            <!-- Label in Notes column -->
             <div class="tk-col tk-w-250 tk-text-right"><strong>Totals:</strong></div>
             <div class="tk-col tk-w-90"></div>
             <div class="tk-col tk-w-90"></div>

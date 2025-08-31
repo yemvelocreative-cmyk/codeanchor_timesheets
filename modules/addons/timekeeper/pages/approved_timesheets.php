@@ -29,7 +29,7 @@ if (empty($_SESSION['tk_csrf'])) {
 $tkCsrf = (string) $_SESSION['tk_csrf'];
 
 // ---- Permissions from Settings ----
-$viewAllRoleIds = ApprovedH::viewAllRoleIds();     // roles allowed to view ALL approved timesheets
+$viewAllRoleIds = ApprovedH::viewAllRoleIds();      // roles allowed to view ALL approved timesheets
 $canUnapprove   = ApprovedH::canUnapprove($roleId); // role can approve/unapprove?
 
 // ---- Handle POST actions (Unapprove) ----
@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ->where('id', $tsId)
                         ->update([
                             'status' => 'pending',
-                            // Optional audit fields if you have them:
+                            // Optional audit fields if present:
                             // 'unapproved_by' => $adminId,
                             // 'unapproved_at' => Capsule::raw('NOW()'),
                         ]);
@@ -76,8 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // ---- Maps for template ----
 $adminMap      = ApprovedH::adminMap();
 $clientMap     = ApprovedH::clientMap();
-$departmentMap = ApprovedH::departmentMap();   // uses mod_timekeeper_departments
-$taskMap       = ApprovedH::taskMap();         // uses mod_timekeeper_task_categories
+$departmentMap = ApprovedH::departmentMap();   // mod_timekeeper_departments
+$taskMap       = ApprovedH::taskMap();         // mod_timekeeper_task_categories
 
 // ---- Listing vs. viewing a specific approved timesheet ----
 $reqAdminId = CoreH::get('admin_id', null);
@@ -124,5 +124,5 @@ $vars = compact(
 
 extract($vars);
 
-// Template file is singular per your project:
-include __DIR__ . '/../templates/admin/approved_timesheet.tpl';
+// Template is plural per your filenames:
+include __DIR__ . '/../templates/admin/approved_timesheets.tpl';
