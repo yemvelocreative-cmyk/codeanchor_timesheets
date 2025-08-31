@@ -272,7 +272,7 @@
                 <div class="pt-inline-verify alert alert-warning" style="margin:8px 0;">
                   <label class="d-block">
                     <input type="checkbox" name="verify_unbilled_<?= (int)$entry->id ?>" value="1" required>
-                    Verify entry #<?= (int)$entry->id ?> — <?= htmlspecialchars($entry->description ?: 'No description') ?>
+                    Verify entry — <?= htmlspecialchars($entry->description ?: 'No description') ?>
                     (<?= number_format((float)$entry->time_spent, 2) ?>h)
                   </label>
                 </div>
@@ -313,7 +313,7 @@
                 <div class="pt-inline-verify alert alert-warning" style="margin:8px 0;">
                   <label class="d-block">
                     <input type="checkbox" name="verify_unbilled_<?= (int)$entry->id ?>" value="1" required>
-                    Verify entry #<?= (int)$entry->id ?> — <?= htmlspecialchars($entry->description ?: 'No description') ?>
+                    Verify entry — <?= htmlspecialchars($entry->description ?: 'No description') ?>
                     (<?= number_format((float)$entry->time_spent, 2) ?>h)
                   </label>
                 </div>
