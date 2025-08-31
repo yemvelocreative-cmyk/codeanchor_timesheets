@@ -439,48 +439,53 @@
 
           <?php if ($canApprove && isset($timesheet)): ?>
 
-            <div class="pt-sectionbar">Approve / Reject Actions</div>
+  <?php if ($canApprove && isset($timesheet)): ?>
+  <div class="pt-sectionbar">Approve / Reject</div>
 
-            <div class="pt-approve-reject">
-              <!-- APPROVE -->
-              <form method="post"
-                    id="approve-form"
-                    class="pt-approve-form"
-                    action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
-                <?php if (!empty($tkCsrf)): ?>
-                  <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
-                <?php endif; ?>
-                <input type="hidden" name="approve_timesheet_id" value="<?= (int)$timesheet->id ?>">
+  <div class="pt-approve-toolbar">
+    <!-- APPROVE -->
+    <form method="post"
+          id="approve-form"
+          class="pt-approve-form"
+          action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
+      <?php if (!empty($tkCsrf)): ?>
+        <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
+      <?php endif; ?>
+      <input type="hidden" name="approve_timesheet_id" value="<?= (int)$timesheet->id ?>">
+      <button type="submit" class="btn btn-success">Approve Timesheet</button>
+    </form>
 
-                <button type="submit" class="btn btn-success">Approve Timesheet</button>
-              </form>
+    <!-- REJECT trigger (doesn't submit yet) -->
+    <button type="button" class="btn btn-danger" id="open-reject">Reject…</button>
+  </div>
 
-              <!-- REJECT -->
-              <form method="post"
-                    class="pt-reject-form"
-                    action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
-                <?php if (!empty($tkCsrf)): ?>
-                  <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
-                <?php endif; ?>
-                <input type="hidden" name="reject_timesheet_id" value="<?= (int)$timesheet->id ?>">
+  <!-- Collapsible Reject panel -->
+  <form method="post"
+        class="pt-reject-form"
+        id="reject-form"
+        action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">
+    <?php if (!empty($tkCsrf)): ?>
+      <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
+    <?php endif; ?>
+    <input type="hidden" name="reject_timesheet_id" value="<?= (int)$timesheet->id ?>">
 
-                <button type="submit" class="btn btn-danger">Reject Timesheet</button>
+    <div class="pt-reject-panel" id="reject-panel">
+      <label for="rej-note-<?= (int)$timesheet->id ?>" class="pt-fw-600">Rejection Reason</label>
+      <textarea id="rej-note-<?= (int)$timesheet->id ?>"
+                name="admin_rejection_note"
+                class="form-control pt-reject-note"
+                required
+                placeholder="Explain why this timesheet is being rejected"></textarea>
+      <div class="pt-note">This note will be visible to the timesheet owner.</div>
 
-                <!-- Rejection reason sits BELOW the buttons but is part of the same form -->
-                <label for="rej-note-<?= (int)$timesheet->id ?>" class="pt-fw-600" style="display:block;margin-top:8px;">Rejection Reason</label>
-                <textarea id="rej-note-<?= (int)$timesheet->id ?>"
-                          name="admin_rejection_note"
-                          class="form-control pt-reject-note"
-                          placeholder="Explain why this timesheet is being rejected"></textarea>
-                <div class="pt-note">This note will be visible to the timesheet owner.</div>
-              </form>
-            </div>
+      <div class="pt-reject-actions">
+        <button type="submit" class="btn btn-danger">Confirm Reject</button>
+        <button type="button" class="btn btn-default" id="cancel-reject">Cancel</button>
+      </div>
+    </div>
+  </form>
+<?php endif; ?>
 
-            <div class="alert alert-info pt-mb-10">
-              Please ensure all flagged entries above are ticked “Verified” before approving.
-            </div>
-
-          <?php endif; ?>
 
         <?php endif; ?>
 

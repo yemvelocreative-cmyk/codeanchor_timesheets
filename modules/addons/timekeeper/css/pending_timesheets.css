@@ -276,3 +276,13 @@
   margin: 8px 0;
   border-radius: 10px;
 }
+
+/* Toolbar + collapsible reject panel */
+.timekeeper-root .pending-root .pt-approve-toolbar{
+  display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px;
+}
+.timekeeper-root .pending-root .pt-reject-panel{
+  display:none; margin-top:10px; padding:12px; border:1px solid #e5e5e5; border-radius:8px; background:#fff;
+}
+.timekeeper-root .pending-root .pt-reject-panel.is-open{ display:block; }
+.timekeeper-root .pending-root .pt-reject-actions{ display:flex; gap:10px; align-items:center; margin-top:8px; flex-wrap:wrap; }
