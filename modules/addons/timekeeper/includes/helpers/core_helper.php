@@ -128,6 +128,35 @@ namespace {
             }
 
             return $cache[$ck] = true;
+        
+        /** Validate YYYY-MM-DD date strings */
+        public static function isValidDate(?string $s): bool
+        {
+            if (!is_string($s)) return False;
+            return (bool) preg_match('/^\d{4}-\d{2}-\d{2}$/', $s);
         }
+
+        /**
+         * Require a helper file from either of two relative paths under $baseDir.
+         * Example: CoreHelper::requireEither($base, '/helpers/core_helper.php', '/includes/helpers/core_helper.php');
+         */
+        public static function requireEither(string $baseDir, string $relA, string $relB): void
+        {
+            $a = $baseDir . $relA;
+            $b = $baseDir . $relB;
+            if (is_file($a)) { require_once $a; return; }
+            if (is_file($b)) { require_once $b; return; }
+            throw new \RuntimeException("Missing helper: tried {$a} and {$b}");
+        }
+
+        /**
+         * Convenience: load a helper by basename (no extension), trying helpers/ and includes/helpers/.
+         * e.g. CoreHelper::requireHelper($base, 'approved_timesheets_helper')
+         */
+        public static function requireHelper(string $baseDir, string $basename): void
+        {
+            self::requireEither($baseDir, '/helpers/' . $basename . '.php', '/includes/helpers/' . $basename . '.php');
+        }
+}
     }
 }

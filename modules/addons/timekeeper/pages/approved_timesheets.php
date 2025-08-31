@@ -4,16 +4,15 @@ use WHMCS\Database\Capsule;
 
 // --- Load helpers (supports either helpers/ or includes/helpers/) ---
 $base = dirname(__DIR__); // -> /modules/addons/timekeeper
-$try = function (string $relA, string $relB) use ($base) {
-    $a = $base . $relA;
-    $b = $base . $relB;
-    if (is_file($a)) { require_once $a; return; }
-    if (is_file($b)) { require_once $b; return; }
-    throw new \RuntimeException("Missing helper: tried {$a} and {$b}");
-};
-$try('/helpers/core_helper.php', '/includes/helpers/core_helper.php');
-$try('/helpers/approved_timesheets_helper.php', '/includes/helpers/approved_timesheets_helper.php');
-
+// Bootstrap: include CoreHelper itself (cannot call CoreHelper before it's loaded)
+(function($base){
+    $a = $base . '/helpers/core_helper.php';
+    $b = $base . '/includes/helpers/core_helper.php';
+    if (is_file($a)) { require_once $a; }
+    elseif (is_file($b)) { require_once $b; }
+    else { throw new \RuntimeException("Missing core_helper.php in helpers/ or includes/helpers/"); }
+})($base);
+CoreH::requireHelper($base, 'approved_timesheets_helper');
 use Timekeeper\Helpers\CoreHelper as CoreH;
 use Timekeeper\Helpers\ApprovedTimesheetsHelper as ApprovedH;
 
@@ -82,9 +81,8 @@ $fltStart   = CoreH::get('start_date', '');
 $fltEnd     = CoreH::get('end_date', '');
 $fltAdminId = CoreH::get('filter_admin_id', '');
 
-$isValidDate = function ($s) { return is_string($s) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $s); };
-$fltStart = $isValidDate($fltStart) ? $fltStart : '';
-$fltEnd   = $isValidDate($fltEnd)   ? $fltEnd   : '';
+$fltStart = CoreH::isValidDate($fltStart) ? $fltStart : '';
+$fltEnd   = CoreH::isValidDate($fltEnd)   ? $fltEnd   : '';
 $fltAdmin = ctype_digit((string)$fltAdminId) ? (int)$fltAdminId : 0;
 
 // Pagination settings (listing only)
