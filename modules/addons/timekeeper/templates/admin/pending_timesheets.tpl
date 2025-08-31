@@ -60,14 +60,14 @@
 
   <?php if ($editMode): ?>
     <div class="pt-detail">
-      <header>
-        <?php if ($editingEntryId): ?>
-          Editing Timesheet: <?= htmlspecialchars($editAdminName) ?> — <?= htmlspecialchars($editTimesheetDate) ?>
-        <?php else: ?>
-          Viewing Timesheet: <?= htmlspecialchars($editAdminName) ?> — <?= htmlspecialchars($editTimesheetDate) ?>
-        <?php endif; ?>
-      </header>
-      <div class="body">
+    <!-- Intentionally no visible header: we’ll show section headings below -->
+    <header aria-hidden="true"></header>
+    <div class="body">
+
+      <!-- Section: Add -->
+      <div class="tk-section-title">
+        Add New Entry to Timesheet for <?= htmlspecialchars($editAdminName) ?> — <?= htmlspecialchars($editTimesheetDate) ?>
+      </div>
 
         <!-- Rejection note (if applicable) -->
         <?php if (isset($timesheet) && $timesheet->status === 'rejected' && !empty($timesheet->admin_rejection_note)): ?>
@@ -202,6 +202,8 @@
 
 
         <!-- Existing entries -->
+            <!-- Section: View/Edit -->
+        <div class="tk-section-title">View/Edit Timesheet Entries</div>
         <?php if (empty($editTimesheetEntries)): ?>
           <div class="alert alert-warning">No entries found for this timesheet.</div>
         <?php else: ?>

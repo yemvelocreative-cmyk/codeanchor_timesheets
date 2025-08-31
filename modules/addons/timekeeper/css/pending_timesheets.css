@@ -237,3 +237,11 @@
   }
   .timekeeper-root .pending-root .cell-actions { justify-content: flex-start; }
 }
+
+/* Match Timesheet rounded controls on Pending page */
+.timekeeper-root .pending-root .btn { border-radius: 12px; white-space: nowrap; }
+.timekeeper-root .pending-root .form-control,
+.timekeeper-root .pending-root select,
+.timekeeper-root .pending-root input[type="text"],
+.timekeeper-root .pending-root input[type="time"],
+.timekeeper-root .pending-root textarea { border-radius: 10px; }
