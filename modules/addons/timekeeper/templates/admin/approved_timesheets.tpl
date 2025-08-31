@@ -1,8 +1,8 @@
 <?php if (!defined('WHMCS')) { die('Access Denied'); } ?>
 <?php $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); ?>
 
-<link rel="stylesheet" href="../modules/addons/timekeeper/css/approved_timesheets.css?v=5" />
-<script defer src="../modules/addons/timekeeper/js/approved_timesheets.js?v=5"></script>
+<link rel="stylesheet" href="../modules/addons/timekeeper/css/approved_timesheets.css?v=6" />
+<script defer src="../modules/addons/timekeeper/js/approved_timesheets.js?v=6"></script>
 
 <div class="timekeeper-root approved-timesheets">
   <div class="tk-page-header">
@@ -78,66 +78,72 @@
       <?php if (empty($timesheetEntries)): ?>
         <div class="tk-alert tk-alert-info">No entries on this timesheet.</div>
       <?php else: ?>
-        <!-- Saved Entries — SAME STRUCTURE AS timesheet.tpl -->
+        <!-- ===== Saved Entries (exact structure as Timesheet) ===== -->
+        <h4>Saved Entries</h4>
+        <div class="tk-totals-wrap">
+          <div class="tk-totals-bar" role="status" aria-label="Daily totals">
+            <span class="lbl">Total</span>
+            <strong class="val"><?= number_format((float)$totalTime, 2) ?></strong><span class="unit">hrs</span>
+            <span class="sep">•</span>
+            <span class="lbl">Billable</span>
+            <strong class="val"><?= number_format((float)$totalBillable, 2) ?></strong><span class="unit">hrs</span>
+            <span class="sep">•</span>
+            <span class="lbl">SLA</span>
+            <strong class="val"><?= number_format((float)$totalSla, 2) ?></strong><span class="unit">hrs</span>
+          </div>
+        </div>
+
         <!-- Header row -->
         <div class="tk-row tk-row--table tk-row--header">
           <div class="tk-row-grid">
             <div class="hdr">Client</div>
             <div class="hdr">Department</div>
-            <div class="hdr">Task</div>
+            <div class="hdr">Task Category</div>
             <div class="hdr">Description</div>
             <div class="hdr">Time</div>
             <div class="hdr">Flags</div>
-            <div class="hdr" style="text-align:right;">&nbsp;</div>
+            <div class="hdr">Actions</div>
           </div>
         </div>
 
         <!-- Data rows -->
-        <?php foreach ($timesheetEntries as $entry): ?>
-          <div class="tk-row tk-row--table">
-            <div class="tk-row-grid">
-              <div><?= $h($clientMap[$entry->client_id] ?? 'N/A') ?></div>
-              <div><?= $h($departmentMap[$entry->department_id] ?? 'N/A') ?></div>
-              <div><?= $h($taskMap[$entry->task_category_id] ?? 'N/A') ?></div>
+        <div class="tk-saved-list">
+          <?php foreach ($timesheetEntries as $entry): ?>
+            <div class="tk-row tk-card tk-row--table">
+              <div class="tk-row-grid">
+                <div class="cell cell-client"><?= $h($clientMap[$entry->client_id] ?? 'N/A') ?></div>
+                <div class="cell cell-dept"><?= $h($departmentMap[$entry->department_id] ?? 'N/A') ?></div>
+                <div class="cell cell-task"><?= $h($taskMap[$entry->task_category_id] ?? 'N/A') ?></div>
 
-              <div class="cell-desc"><?= $h($entry->notes) ?></div>
+                <div class="cell cell-desc"><?= $h($entry->notes) ?></div>
 
-              <div class="cell-times">
-                <?php
-                $start = isset($entry->start_time) ? (string)$entry->start_time : '';
-                $end   = isset($entry->end_time)   ? (string)$entry->end_time   : '';
-                ?>
-                <?php if ($start && $end): ?>
-                  <span><?= $h($start) ?>–<?= $h($end) ?></span>
-                <?php endif; ?>
-                <strong><?= number_format((float)$entry->time_spent, 2) ?> hrs</strong>
+                <div class="cell cell-times">
+                  <?php
+                    $start = isset($entry->start_time) ? (string)$entry->start_time : '';
+                    $end   = isset($entry->end_time)   ? (string)$entry->end_time   : '';
+                  ?>
+                  <?php if ($start && $end): ?>
+                    <span><?= $h($start) ?>–<?= $h($end) ?></span>
+                    <span class="sep">•</span>
+                  <?php endif; ?>
+                  <span><strong><?= number_format((float)$entry->time_spent, 2) ?></strong> hrs</span>
+                </div>
+
+                <div class="cell cell-flags">
+                  <?php if ((float)$entry->billable_time > 0): ?>
+                    <span class="tk-badge">Billable <?= number_format((float)$entry->billable_time, 2) ?>h</span>
+                  <?php else: ?>
+                    <span class="tk-badge">Non-billable</span>
+                  <?php endif; ?>
+                  <?php if ((float)$entry->sla_time > 0): ?>
+                    <span class="tk-badge">SLA <?= number_format((float)$entry->sla_time, 2) ?>h</span>
+                  <?php endif; ?>
+                </div>
+
+                <div class="cell cell-actions">&nbsp;</div>
               </div>
-
-              <div class="cell-flags">
-                <?php if (!empty($entry->billable)): ?>
-                  <span class="tk-badge tk-badge--success">Billable: <?= number_format((float)$entry->billable_time, 2) ?> hrs</span>
-                <?php else: ?>
-                  <span class="tk-badge">Non-billable</span>
-                <?php endif; ?>
-
-                <?php if (!empty($entry->sla)): ?>
-                  <span class="tk-badge">SLA: <?= number_format((float)$entry->sla_time, 2) ?> hrs</span>
-                <?php endif; ?>
-              </div>
-
-              <div class="cell-actions">&nbsp;</div>
             </div>
-          </div>
-        <?php endforeach; ?>
-
-        <!-- Totals (compact bar to match timesheet.css) -->
-        <div class="tk-totals-wrap">
-          <div class="tk-totals-bar">
-            <span class="lbl">Total</span>
-            <span class="sep">•</span>
-            <span class="val"><?= number_format((float)$totalTime, 2) ?></span>
-            <span class="unit">hrs</span>
-          </div>
+          <?php endforeach; ?>
         </div>
       <?php endif; ?>
     </div>

@@ -87,6 +87,8 @@ $approvedTimesheets = [];
 $timesheet          = null;
 $timesheetEntries   = [];
 $totalTime          = 0.0;
+$totalBillable      = 0.0; // NEW
+$totalSla           = 0.0; // NEW
 
 if ($reqAdminId && $reqDate) {
     $reqAdminId = (int) $reqAdminId;
@@ -100,6 +102,8 @@ if ($reqAdminId && $reqDate) {
     if ($timesheet) {
         $timesheetEntries = ApprovedH::getTimesheetEntries((int) $timesheet->id);
         $totalTime        = ApprovedH::sumColumn($timesheetEntries, 'time_spent');
+        $totalBillable    = ApprovedH::sumColumn($timesheetEntries, 'billable_time'); // NEW
+        $totalSla         = ApprovedH::sumColumn($timesheetEntries, 'sla_time');      // NEW
     }
 } else {
     // List only the approved timesheets visible to this admin/role
@@ -118,6 +122,8 @@ $vars = compact(
     'timesheet',
     'timesheetEntries',
     'totalTime',
+    'totalBillable', // NEW
+    'totalSla',      // NEW
     'tkCsrf',
     'canUnapprove'
 );
