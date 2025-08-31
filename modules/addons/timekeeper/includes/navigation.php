@@ -18,10 +18,8 @@ $roleId     = $admin ? (int)$admin->roleid : 0;
 $navPendingCount = PendingH::menuCount($navAdminId, $roleId);
 
 /** Per-user Approved & Rejected counts (adjust if you want view-all) */
+
 $navApprovedCount = ApprovedH::menuCount($navAdminId, $roleId);
-    ->where('status', 'approved')
-    ->where('admin_id', $navAdminId)
-    ->count();
 
 $navRejectedCount = (int) Capsule::table('mod_timekeeper_timesheets')
     ->where('status', 'rejected')
