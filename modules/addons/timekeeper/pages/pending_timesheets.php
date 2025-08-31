@@ -6,36 +6,7 @@ if (!defined('WHMCS')) {
     die('Access Denied');
 }
 
-// helper near the top (under use + die guard)
-// helper near the top (under use + die guard)
-if (!function_exists('tk_has_col')) {
-    function tk_has_col(string $table, string $col): bool {
-        try {
-            return Capsule::schema()->hasColumn($table, $col);
-        } catch (\Throwable $e) {
-            try {
-                $cols = Capsule::select("SHOW COLUMNS FROM `$table`");
-                foreach ($cols as $c) {
-                    $f = is_object($c) ? ($c->Field ?? null) : ($c['Field'] ?? null);
-                    if ($f === $col) return true;
-                }
-            } catch (\Throwable $e2) {}
-            return false;
-        }
-    }
-}
-
-if (!function_exists('tk_parse_id_list')) {
-    function tk_parse_id_list(?string $csv): array {
-        if (!$csv) return [];
-        $out = [];
-        foreach (explode(',', $csv) as $p) {
-            $v = (int) trim($p);
-            if ($v > 0) $out[] = $v;
-        }
-        return $out;
-    }
-}
+require_once __DIR__ . '/../includes/helper_pending_timesheets.php';
 
 // ---- Session / admin ----
 $adminId = isset($_SESSION['adminid']) ? (int) $_SESSION['adminid'] : 0;
@@ -257,17 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reject_timesheet_id']
 // GET: list + optional detail context
 // ======================================================================
 
-$today = date('Y-m-d');
-
-$pendingTimesheetsQuery = Capsule::table('mod_timekeeper_timesheets')
-    ->whereIn('status', ['pending', 'rejected'])
-    ->where('timesheet_date', '<', $today);
-
-if (!in_array($adminRoleId, $allowedViewRoles, true)) {
-    $pendingTimesheetsQuery->where('admin_id', $adminId);
-}
-
-$pendingTimesheets = $pendingTimesheetsQuery
+$pendingTimesheets = tk_pending_timesheets_base_query($adminId, $adminRoleId)
     ->orderBy('timesheet_date', 'desc')
     ->get();
 
@@ -313,15 +274,7 @@ if (!empty($_GET['admin_id']) && !empty($_GET['date'])) {
         ->first();
 
     if ($timesheet) {
-        // Sort: start_time ASC, then end_time ASC, blanks last, then id ASC for stability
-        $editTimesheetEntries = Capsule::table('mod_timekeeper_timesheet_entries')
-            ->where('timesheet_id', $timesheet->id)
-            ->orderByRaw("CASE WHEN start_time IS NULL OR start_time = '' THEN 1 ELSE 0 END ASC")
-            ->orderByRaw("STR_TO_DATE(start_time, '%H:%i') ASC")
-            ->orderByRaw("CASE WHEN end_time IS NULL OR end_time = '' THEN 1 ELSE 0 END ASC")
-            ->orderByRaw("STR_TO_DATE(end_time,  '%H:%i') ASC")
-            ->orderBy('id', 'asc')
-            ->get();
+        $editTimesheetEntries = tk_entries_sorted((int)$timesheet->id);
     }
 }
 

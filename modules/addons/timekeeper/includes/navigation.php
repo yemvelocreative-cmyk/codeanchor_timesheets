@@ -1,11 +1,17 @@
 <?php
 if (!defined('WHMCS')) { die('Access Denied'); }
 
+require_once __DIR__ . '/helper_pending_timesheets.php';
+
 use WHMCS\Database\Capsule;
 
 /** Current admin + role **/
 $navAdminId = (int)($_SESSION['adminid'] ?? 0);
-$roleId     = tk_getAdminRoleId($navAdminId);
+$admin      = Capsule::table('tbladmins')->where('id', $navAdminId)->first();
+$roleId     = $admin ? (int)$admin->roleid : 0;
+
+// This is the badge shown next to “Pending”
+$navPendingCount = tk_menu_pending_count($navAdminId, $roleId);
 
 /** 1) Dismiss banner (session + cookie) **/
 if (isset($_GET['dismiss_rejected_banner']) && $_GET['dismiss_rejected_banner'] === '1') {
