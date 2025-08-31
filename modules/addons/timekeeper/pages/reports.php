@@ -1,31 +1,31 @@
 <?php
-if (!defined("WHMCS")) {
-    die("Access Denied");
-}
+if (!defined("WHMCS")) { die("Access Denied"); }
 
-/**
- * Reports Container
- * - Left nav of available reports
- * - Includes selected report component (no Smarty)
- */
+// --- Load helpers (supports helpers/ or includes/helpers/) ---
+$base = dirname(__DIR__); // -> /modules/addons/timekeeper
+$try = function (string $relA, string $relB) use ($base) {
+    $a = $base . $relA; $b = $base . $relB;
+    if (is_file($a)) { require_once $a; return; }
+    if (is_file($b)) { require_once $b; return; }
+    throw new \RuntimeException("Missing helper: tried {$a} and {$b}");
+};
+$try('/helpers/core_helper.php', '/includes/helpers/core_helper.php');
+$try('/helpers/reports_helper.php', '/includes/helpers/reports_helper.php');
 
-$availableReports = [
-    'timesheet_audit' => [
-        'label' => 'Detailed Audit Report',
-        'php'   => __DIR__ . '/../components/report_timesheet_audit.php',
-    ],
-    'summary' => [
-        'label' => 'Summary Report',
-        'php'   => __DIR__ . '/../components/report_summary.php',
-    ],
-    // Add future reports here...
-];
+use Timekeeper\Helpers\CoreHelper as CoreH;
+use Timekeeper\Helpers\ReportsHelper as RepH;
 
-$reportKey = isset($_GET['r']) ? preg_replace('/[^a-z0-9_]/i', '', $_GET['r']) : 'timesheet_audit';
-if (!array_key_exists($reportKey, $availableReports)) {
-    $reportKey = 'timesheet_audit';
-}
-$reportMeta = $availableReports[$reportKey];
+// Catalog + active key
+$availableReports = RepH::availableReports();
+$reportKey        = RepH::resolveReportKey($_GET['r'] ?? null, $availableReports);
+
+// URLs
+$baseLink = 'addonmodules.php?module=timekeeper&timekeeperpage=reports';
+
+// Build menu & content
+$menuHtml    = RepH::buildMenu($availableReports, $reportKey, $baseLink);
+$reportMeta  = $availableReports[$reportKey];
+$contentHtml = RepH::renderReport($reportMeta);
 ?>
 <div class="timekeeper-fullwidth timekeeper-root">
   <link rel="stylesheet" href="/modules/addons/timekeeper/css/reports.css">
@@ -34,33 +34,11 @@ $reportMeta = $availableReports[$reportKey];
 
   <div class="timekeeper-report-container">
     <!-- Left Menu -->
-    <div class="timekeeper-report-menu">
-      <div class="timekeeper-report-menu-header">Available Reports</div>
-      <ul>
-        <?php foreach ($availableReports as $key => $meta):
-          $active = ($key === $reportKey);
-          $url = 'addonmodules.php?module=timekeeper&timekeeperpage=reports&r=' . urlencode($key);
-        ?>
-          <li>
-            <a href="<?= htmlspecialchars($url, ENT_QUOTES, 'UTF-8') ?>" class="<?= $active ? 'active' : '' ?>">
-              <?= htmlspecialchars($meta['label'], ENT_QUOTES, 'UTF-8') ?>
-            </a>
-          </li>
-        <?php endforeach; ?>
-      </ul>
-    </div>
+    <?= $menuHtml ?>
 
     <!-- Report Content -->
     <div class="timekeeper-report-content">
-      <?php
-      if (empty($reportMeta['php']) || !file_exists($reportMeta['php'])) {
-          echo '<div class="tk-alert tk-alert--error">
-                  Report component not found: <code>' . htmlspecialchars((string)($reportMeta['php'] ?? ''), ENT_QUOTES, 'UTF-8') . '</code>
-                </div>';
-      } else {
-          include $reportMeta['php'];
-      }
-      ?>
+      <?= $contentHtml ?>
     </div>
   </div>
 </div>
