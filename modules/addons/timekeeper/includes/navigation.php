@@ -17,9 +17,13 @@ $roleId     = $admin ? (int)$admin->roleid : 0;
 /** Canonical Pending badge (matches Pending page exactly) */
 $navPendingCount = PendingH::menuCount($navAdminId, $roleId);
 
-/** Per-user Approved & Rejected counts (adjust if you want view-all) */
-
+/** Approved & Rejected counts (Approved respects view-all via helper) */
 $navApprovedCount = ApprovedH::menuCount($navAdminId, $roleId);
+
+$navRejectedCount = (int) Capsule::table('mod_timekeeper_timesheets')
+    ->where('status', 'rejected')
+    ->where('admin_id', $navAdminId)
+    ->count();
 
 /** 1) Dismiss banner (session + cookie) **/
 if (isset($_GET['dismiss_rejected_banner']) && $_GET['dismiss_rejected_banner'] === '1') {
