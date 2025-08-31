@@ -306,8 +306,13 @@ if (!empty($_GET['admin_id']) && !empty($_GET['date'])) {
         ->first();
 
     if ($timesheet) {
+        // Sort: start_time ASC, then end_time ASC, blanks last, then id ASC for stability
         $editTimesheetEntries = Capsule::table('mod_timekeeper_timesheet_entries')
             ->where('timesheet_id', $timesheet->id)
+            ->orderByRaw("CASE WHEN start_time IS NULL OR start_time = '' THEN 1 ELSE 0 END ASC")
+            ->orderByRaw("STR_TO_DATE(start_time, '%H:%i') ASC")
+            ->orderByRaw("CASE WHEN end_time IS NULL OR end_time = '' THEN 1 ELSE 0 END ASC")
+            ->orderByRaw("STR_TO_DATE(end_time,  '%H:%i') ASC")
             ->orderBy('id', 'asc')
             ->get();
     }
