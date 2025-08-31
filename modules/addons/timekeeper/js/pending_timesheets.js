@@ -189,3 +189,14 @@
     }
   });
 })();
+
+// Compact toolbar reject panel toggling
+var openBtn = document.getElementById('open-reject');
+var panel   = document.getElementById('reject-panel');
+var cancel  = document.getElementById('cancel-reject');
+if (openBtn && panel) {
+  openBtn.addEventListener('click', function(){ panel.classList.add('is-open'); });
+}
+if (cancel && panel) {
+  cancel.addEventListener('click', function(){ panel.classList.remove('is-open'); });
+}
