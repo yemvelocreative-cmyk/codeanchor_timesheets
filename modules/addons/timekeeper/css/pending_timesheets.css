@@ -256,3 +256,23 @@
   margin: 16px -12px 12px;
   padding: 10px 12px;
 }
+
+/* Buttons row for Approve/Reject */
+.timekeeper-root .pending-root .pt-approve-reject {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+.timekeeper-root .pending-root .pt-approve-reject form { margin: 0; }
+
+.timekeeper-root .pending-root .pt-reject-form .pt-reject-note {
+  display: block;
+  width: 100%;
+  max-width: 560px; /* feel free to adjust */
+  height: 60px;
+  margin: 8px 0;
+  border-radius: 10px;
+}

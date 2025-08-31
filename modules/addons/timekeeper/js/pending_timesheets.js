@@ -6,25 +6,72 @@
   function qn(form, name) { return form ? form.querySelector('[name="' + name + '"]') : null; }
 
   // Toggle a time input & optional header by checkbox
+  // ENHANCED: also auto-fill the time field from time_spent when checked,
+  // and keep it in sync when time_spent changes (unless user edits manually).
   function toggleTimeField(form, chkName, inputName, headerEl) {
-    const chk = qn(form, chkName);
-    const inp = qn(form, inputName);
+    const chk   = qn(form, chkName);
+    const inp   = qn(form, inputName);
+    const spent = qn(form, 'time_spent'); // visible in Add, hidden in Edit
+
     if (!chk || !inp) return;
-    function apply() {
-      const show = !!chk.checked;
-      inp.classList.toggle('col-hidden', !show);
-      inp.classList.toggle('col-show', show);
-      if (!show) inp.value = '';
-      if (headerEl) {
-        headerEl.classList.toggle('col-hidden', !show);
-        headerEl.classList.toggle('col-show', show);
+
+    // user-edited detection
+    function markManual() { inp.dataset.autofill = '0'; }
+    inp.addEventListener('input', markManual);
+
+    function getSpent() {
+      // prefer value in this form; fallback to global (Add form might be a separate form)
+      if (spent && spent.value) return spent.value;
+      // last resort: global name (avoid if possible)
+      const g = document.querySelector('form#pt-add-form [name="time_spent"]');
+      return g ? g.value : '';
+    }
+
+    function showField() {
+      inp.classList.remove('col-hidden'); inp.classList.add('col-show');
+      if (headerEl) { headerEl.classList.remove('col-hidden'); headerEl.classList.add('col-show'); }
+    }
+    function hideField() {
+      inp.classList.remove('col-show'); inp.classList.add('col-hidden');
+      if (headerEl) { headerEl.classList.remove('col-show'); headerEl.classList.add('col-hidden'); }
+      inp.value = '';
+      inp.dataset.autofill = '1'; // if re-enabled, we’ll re-autofill
+    }
+
+    function maybeAutofill() {
+      if (!chk.checked) return;
+      const ts = getSpent();
+      // Autofill if empty OR previously autofilled
+      if (inp.value.trim() === '' || inp.dataset.autofill !== '0') {
+        inp.value = ts || '';
+        inp.dataset.autofill = '1';
       }
     }
+
+    function apply() {
+      const show = !!chk.checked;
+      if (show) { showField(); maybeAutofill(); }
+      else { hideField(); }
+    }
+
     chk.addEventListener('change', apply);
+
+    // Keep in sync if time_spent changes
+    const spentEl = spent;
+    if (spentEl) {
+      // if bindTimeCalc sets value programmatically, listen to change & input
+      function syncFromSpent() { maybeAutofill(); }
+      spentEl.addEventListener('change', syncFromSpent);
+      spentEl.addEventListener('input',  syncFromSpent);
+    }
+
+    // initial state
+    // If already checked on load, ensure field is visible and populated
     apply();
   }
 
   // Calculate time_spent for a form with start/end/time_spent fields
+  // ENHANCED: dispatch a 'change' event when time_spent updates so dependent logic can react.
   function bindTimeCalc(scope) {
     const start = scope.querySelector('[name="start_time"]');
     const end   = scope.querySelector('[name="end_time"]');
@@ -33,15 +80,19 @@
 
     function calc() {
       const s = start.value, e = end.value;
-      if (!s || !e) { spent.value = ''; return; }
+      if (!s || !e) { spent.value = ''; spent.dispatchEvent(new Event('change')); return; }
       const [sh, sm] = s.split(':').map(Number);
       const [eh, em] = e.split(':').map(Number);
       const diff = (eh * 60 + em) - (sh * 60 + sm);
-      if (diff <= 0) { alert('End time must be later than start time.'); end.value = ''; spent.value = ''; return; }
-      spent.value = (Math.round((diff / 60) * 100) / 100).toFixed(2);
+      if (diff <= 0) { alert('End time must be later than start time.'); end.value = ''; spent.value = ''; spent.dispatchEvent(new Event('change')); return; }
+      const val = (Math.round((diff / 60) * 100) / 100).toFixed(2);
+      spent.value = val;
+      spent.dispatchEvent(new Event('change')); // notify any listeners
     }
     start.addEventListener('change', calc);
     end.addEventListener('change', calc);
+    // run once if both are filled on load
+    if (start.value && end.value) calc();
   }
 
   // Filter task categories by department (works for add + edit forms)
@@ -68,26 +119,32 @@
       const form = deptSel.closest('form');
       const taskSel = form ? form.querySelector('.pending-edit-task-category') : null;
       if (taskSel) bindDeptTaskFilter(deptSel, taskSel);
-      if (form) bindTimeCalc(form);
+      if (form) {
+        bindTimeCalc(form);
+        // NEW: live toggle + auto-fill for Billable/SLA in EDIT rows
+        toggleTimeField(form, 'billable', 'billable_time');
+        toggleTimeField(form, 'sla', 'sla_time');
+      }
     });
   }
 
-  // Approve form: copy verify_unbilled_* checkboxes into the form on submit
-  // Approve form: only inject verify_unbilled_* if those checkboxes are OUTSIDE the form
-    function bindApproveInjection() {
-      var approveForm = document.getElementById('approve-form');
-      if (!approveForm) return;
-      approveForm.addEventListener('submit', function () {
-        document.querySelectorAll('input[type="checkbox"][name^="verify_unbilled_"]').forEach(function (chk) {
-          if (chk.form === approveForm || approveForm.contains(chk)) return; // already in form
-          var hidden = document.createElement('input');
-          hidden.type = 'hidden';
-          hidden.name = chk.name;
-          hidden.value = chk.checked ? '1' : '0';
-          approveForm.appendChild(hidden);
-        });
+  // Approve form: (kept for compatibility; no-op when using form="approve-form")
+  function bindApproveInjection() {
+    var approveForm = document.getElementById('approve-form');
+    if (!approveForm) return;
+    approveForm.addEventListener('submit', function () {
+      // If any verify checkboxes are outside the form and lack form attribute (legacy),
+      // inject hidden inputs so values submit reliably.
+      document.querySelectorAll('input[type="checkbox"][name^="verify_unbilled_"]').forEach(function (chk) {
+        if (chk.form === approveForm || approveForm.contains(chk)) return;
+        var hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = chk.name;
+        hidden.value = chk.checked ? '1' : '0';
+        approveForm.appendChild(hidden);
       });
-    }
+    });
+  }
 
   // Optional confirms (only fire if you add these classes in the template later)
   function bindConfirms() {
@@ -118,22 +175,17 @@
     bindApproveInjection();
     bindConfirms();
 
-    // Add-row bindings (use your current IDs from the template)
+    // Add-row bindings (use the actual Add form to avoid cross-form collisions)
+    var addForm = document.getElementById('pt-add-form');
     var addDept = document.getElementById('pending-add-department');
     var addTask = document.getElementById('pending-add-task-category');
-    var addRowScope = document; // inputs have unique IDs, so scope can be document
 
     if (addDept && addTask) bindDeptTaskFilter(addDept, addTask);
-    // Time calc for the add row uses the named fields within the same "row" (IDs exist so this works)
-    bindTimeCalc(addRowScope);
-
-    // Optional: show/hide billable/sla inputs in Add row if you want dynamic visibility
-    var billHdr = document.getElementById('pt-billable-header'); // add these spans if desired
-    var slaHdr  = document.getElementById('pt-sla-header');
-    var addForm = document.querySelector('form[action*="timekeeperpage=pending_timesheets"]'); // first form on the add row
     if (addForm) {
-      toggleTimeField(addForm, 'billable', 'billable_time', billHdr);
-      toggleTimeField(addForm, 'sla', 'sla_time', slaHdr);
+      bindTimeCalc(addForm);
+      // NEW: live toggle + auto-fill for Billable/SLA in ADD row
+      toggleTimeField(addForm, 'billable', 'billable_time');
+      toggleTimeField(addForm, 'sla', 'sla_time');
     }
   });
 })();
