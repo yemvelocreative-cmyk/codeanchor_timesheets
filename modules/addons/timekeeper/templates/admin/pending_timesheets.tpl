@@ -25,36 +25,59 @@
   <?php if (empty($pendingTimesheets)): ?>
     <div class="alert alert-info">No pending timesheets found.</div>
   <?php else: ?>
-    <div class="pt-list">
-      <header>Awaiting Action</header>
-
-      <!-- Header row -->
-      <div class="pt-row pt-row-head">
-        <div>Admin</div>
-        <div>Date</div>
-        <div>Status</div>
-        <div></div>
-        <div class="pt-actions">Actions</div>
-      </div>
-
-      <?php foreach ($pendingTimesheets as $ts): ?>
-        <div class="pt-row">
-          <div><?= htmlspecialchars($adminMap[$ts->admin_id] ?? 'Unknown') ?></div>
-          <div class="muted"><?= htmlspecialchars($ts->timesheet_date) ?></div>
-          <div>
-            <span class="pt-badge <?= htmlspecialchars($ts->status) ?>">
-              <?= ucfirst($ts->status) ?>
-            </span>
-          </div>
-          <div></div>
-          <div class="pt-actions">
-            <a class="btn btn-sm btn-primary"
-               href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&admin_id=<?= (int)$ts->admin_id ?>&date=<?= htmlspecialchars($ts->timesheet_date) ?>">
-              View Timesheet
-            </a>
-          </div>
+    <!-- Compact listing (match Approved) -->
+    <div class="tk-card tk-listing">
+      <div class="tk-table tk-table-grid tk-table-compact">
+        <div class="tk-row tk-thead">
+          <div class="tk-col tk-w-200">Admin</div>
+          <div class="tk-col tk-w-120">Date</div>
+          <div class="tk-col tk-w-120">Status</div>
+          <div class="tk-col">Actions</div>
         </div>
-      <?php endforeach; ?>
+
+        <?php foreach ($pendingTimesheets as $ts): ?>
+          <div class="tk-row">
+            <div class="tk-col tk-w-200">
+              <?= htmlspecialchars($adminMap[$ts->admin_id] ?? 'Unknown') ?>
+            </div>
+            <div class="tk-col tk-w-120">
+              <span class="tk-muted"><?= htmlspecialchars($ts->timesheet_date) ?></span>
+            </div>
+            <div class="tk-col tk-w-120">
+              <!-- include both tk-pill and pt-badge for full CSS coverage -->
+              <span class="tk-pill pt-badge <?= htmlspecialchars($ts->status) ?>">
+                <?= ucfirst($ts->status) ?>
+              </span>
+            </div>
+            <div class="tk-col">
+              <div class="tk-actions">
+                <!-- View -->
+                <a class="tk-btn tk-btn-outline tk-btn-sm"
+                   href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&admin_id=<?= (int)$ts->admin_id ?>&date=<?= htmlspecialchars($ts->timesheet_date) ?>">
+                  View
+                </a>
+
+                <!-- Approve -->
+                <form method="post" action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets" style="display:inline">
+                  <?php if (!empty($tkCsrf)): ?>
+                    <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
+                  <?php endif; ?>
+                  <input type="hidden" name="tk_action" value="approve">
+                  <input type="hidden" name="admin_id" value="<?= (int)$ts->admin_id ?>">
+                  <input type="hidden" name="timesheet_date" value="<?= htmlspecialchars($ts->timesheet_date) ?>">
+                  <button type="submit" class="tk-btn tk-btn-sm">Approve</button>
+                </form>
+
+                <!-- Reject (goes to panel in detail view via anchor) -->
+                <a class="tk-btn tk-btn-warning tk-btn-sm"
+                   href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&admin_id=<?= (int)$ts->admin_id ?>&date=<?= htmlspecialchars($ts->timesheet_date) ?>#reject">
+                  Reject
+                </a>
+              </div>
+            </div>
+          </div>
+        <?php endforeach; ?>
+      </div>
     </div>
   <?php endif; ?>
 
