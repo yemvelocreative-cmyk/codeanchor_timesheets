@@ -74,23 +74,35 @@
 
   // Approve form: copy verify_unbilled_* checkboxes into the form on submit
   // Approve form: only inject verify_unbilled_* if those checkboxes are OUTSIDE the form
-  function bindApproveInjection() {
-    var approveForm = document.getElementById('approve-form');
-    if (!approveForm) return;
+    function bindApproveInjection() {
+      var approveForm = document.getElementById('approve-form');
+      if (!approveForm) return;
 
-    approveForm.addEventListener('submit', function () {
-      // Find any verify checkboxes that are NOT descendants of #approve-form
-      document.querySelectorAll('input[type="checkbox"][name^="verify_unbilled_"]').forEach(function (chk) {
-        if (!approveForm.contains(chk)) {
-          var hidden = document.createElement('input');
-          hidden.type = 'hidden';
-          hidden.name = chk.name;
-          hidden.value = chk.checked ? '1' : '0';
-          approveForm.appendChild(hidden);
+      approveForm.addEventListener('submit', function (e) {
+        var boxes = Array.from(document.querySelectorAll('input[type="checkbox"][name^="verify_unbilled_"]'));
+        if (boxes.length) {
+          var unchecked = boxes.filter(function (b) { return !b.checked; });
+          if (unchecked.length) {
+            e.preventDefault();
+            alert('Please verify all flagged entries before approving.');
+            try { unchecked[0].scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (err) {}
+            unchecked[0].focus();
+            return;
+          }
         }
+
+        // Inject values for any verify checkboxes that are OUTSIDE the approve form
+        boxes.forEach(function (chk) {
+          if (!approveForm.contains(chk)) {
+            var hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = chk.name;
+            hidden.value = chk.checked ? '1' : '0';
+            approveForm.appendChild(hidden);
+          }
+        });
       });
-    });
-  }
+    }
 
   // Optional confirms (only fire if you add these classes in the template later)
   function bindConfirms() {
