@@ -5,51 +5,76 @@ use WHMCS\Database\Capsule;
 
 class ApprovedTimesheetsHelper
 {
-    /** Roles that can view ALL approved timesheets */
+    /** Roles that can view ALL approved timesheets (from Settings) */
     public static function viewAllRoleIds(): array
     {
-        // Try canonical keys; fall back for older installs.
+        // Canonical key first; fallbacks for older installs
         $keys = [
-            'permission_timesheets_view_all',
             'permission_approved_timesheets_view_all',
+            'permission_timesheets_view_all',
             'permission_view_all_timesheets',
         ];
         foreach ($keys as $k) {
             $ids = CoreHelper::rolesFromSetting($k);
-            if (!empty($ids)) return $ids;
+            if (!empty($ids)) {
+                return $ids;
+            }
         }
         return [];
     }
 
+    /** Roles that can Approve / Unapprove timesheets (from Settings) */
+    public static function canUnapproveRoles(): array
+    {
+        // Canonical key first; fallback if older key is used
+        $keys = [
+            'permission_timesheets_approve_unapprove',
+            'permission_timesheets_approve',
+        ];
+        foreach ($keys as $k) {
+            $ids = CoreHelper::rolesFromSetting($k);
+            if (!empty($ids)) {
+                return $ids;
+            }
+        }
+        return [];
+    }
+
+    /** Check if a given role can unapprove */
     public static function canUnapprove(int $roleId): bool
     {
         return in_array($roleId, self::canUnapproveRoles(), true);
     }
 
+    /** Admin map: id => "Firstname Lastname" */
     public static function adminMap(): array
     {
         $rows = Capsule::table('tbladmins')->select(['id', 'firstname', 'lastname'])->get();
         $map = [];
-        foreach ($rows as $r) { $map[(int)$r->id] = trim($r->firstname.' '.$r->lastname); }
+        foreach ($rows as $r) {
+            $map[(int) $r->id] = trim(($r->firstname ?? '') . ' ' . ($r->lastname ?? '')) ?: ('Admin ' . (int) $r->id);
+        }
         return $map;
     }
 
+    /** Client map: id => company or fullname */
     public static function clientMap(): array
     {
         $rows = Capsule::table('tblclients')->select(['id','companyname','firstname','lastname'])->get();
         $map = [];
         foreach ($rows as $r) {
-            $name = $r->companyname ?: trim($r->firstname.' '.$r->lastname);
-            $map[(int)$r->id] = $name ?: 'N/A';
+            $name = $r->companyname ?: trim(($r->firstname ?? '') . ' ' . ($r->lastname ?? ''));
+            $map[(int) $r->id] = $name ?: ('Client ' . (int) $r->id);
         }
         return $map;
     }
 
+    /** Department map (canonical table) */
     public static function departmentMap(): array
     {
         $map = [];
         try {
-            $rows = \WHMCS\Database\Capsule::table('mod_timekeeper_departments')
+            $rows = Capsule::table('mod_timekeeper_departments')
                 ->select(['id', 'name'])
                 ->orderBy('name', 'asc')
                 ->get();
@@ -58,17 +83,18 @@ class ApprovedTimesheetsHelper
                 $map[(int) $r->id] = (string) ($r->name ?? ('Department ' . (int) $r->id));
             }
         } catch (\Throwable $e) {
-            // Graceful: return empty map if table missing/misconfigured.
+            // Graceful: return empty map if table missing/misconfigured
             return [];
         }
         return $map;
     }
 
+    /** Task category map (canonical table) */
     public static function taskMap(): array
     {
         $map = [];
         try {
-            $rows = \WHMCS\Database\Capsule::table('mod_timekeeper_task_categories')
+            $rows = Capsule::table('mod_timekeeper_task_categories')
                 ->select(['id', 'name'])
                 ->orderBy('name', 'asc')
                 ->get();
@@ -116,6 +142,7 @@ class ApprovedTimesheetsHelper
             ->first();
     }
 
+    /** Entries for a given timesheet */
     public static function getTimesheetEntries(int $timesheetId)
     {
         return Capsule::table('mod_timekeeper_timesheet_entries')
@@ -124,14 +151,19 @@ class ApprovedTimesheetsHelper
             ->get();
     }
 
+    /** Sum a numeric column from an iterable of row objects */
     public static function sumColumn($entries, string $column): float
     {
         $sum = 0.0;
-        foreach ($entries as $e) { $sum += (float)($e->{$column} ?? 0); }
+        if (is_iterable($entries)) {
+            foreach ($entries as $e) {
+                $sum += (float) ($e->{$column} ?? 0);
+            }
+        }
         return $sum;
     }
 
-    /** Navigation/menu count for Approved (fixes “5 but there is 8”) */
+    /** Navigation/menu count for Approved (respects view-all) */
     public static function menuCount(int $adminId, int $roleId): int
     {
         $viewAllRoleIds = self::viewAllRoleIds();
