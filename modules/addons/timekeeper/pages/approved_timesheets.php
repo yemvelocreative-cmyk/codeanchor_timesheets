@@ -1,14 +1,14 @@
 <?php
 
-use WHMCS\Database\Capsule;
-use Timekeeper\Helpers\CoreHelper as CoreH;
-use Timekeeper\Helpers\ApprovedTimesheetsHelper as ApprovedH;
-
 if (!defined("WHMCS")) { die("Access Denied"); }
 
 // --- Load helpers ---
 require_once __DIR__ . '/../helpers/core_helper.php';
 require_once __DIR__ . '/../helpers/approved_timesheets_helper.php';
+
+use WHMCS\Database\Capsule;
+use Timekeeper\Helpers\CoreHelper as CoreH;
+use Timekeeper\Helpers\ApprovedTimesheetsHelper as ApprovedH;
 
 // Context admin + role
 $adminId = isset($_SESSION['adminid']) ? (int) $_SESSION['adminid'] : 0;
