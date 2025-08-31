@@ -1,10 +1,8 @@
 <?php if (!defined('WHMCS')) { die('Access Denied'); } ?>
-<?php
-$h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
-?>
+<?php $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); ?>
 
 <link rel="stylesheet" href="../modules/addons/timekeeper/css/approved_timesheets.css?v=2" />
-<script defer src="../modules/addons/timekeeper/js/approved_timesheets.js?v=1"></script>
+<script defer src="../modules/addons/timekeeper/js/approved_timesheets.js?v=2"></script>
 
 <div class="timekeeper-root approved-timesheets">
   <div class="tk-page-header">
@@ -29,18 +27,24 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
         <div class="tk-row">
           <div class="tk-col tk-w-200"><?= $h($adminMap[$ts->admin_id] ?? 'Unknown') ?></div>
           <div class="tk-col tk-w-150"><?= $h($ts->timesheet_date) ?></div>
-          <div class="tk-col tk-w-120">
-            <span class="tk-pill tk-pill-success">Approved</span>
-          </div>
+          <div class="tk-col tk-w-120"><span class="tk-pill tk-pill-success">Approved</span></div>
+
           <div class="tk-col tk-w-220 tk-actions">
             <a class="tk-btn tk-btn-sm tk-btn-rounded tk-btn-outline"
                href="addonmodules.php?module=timekeeper&timekeeperpage=approved_timesheets&admin_id=<?= (int)$ts->admin_id ?>&date=<?= $h($ts->timesheet_date) ?>">
               View
             </a>
-            <a class="tk-btn tk-btn-sm tk-btn-rounded"
-               href="addonmodules.php?module=timekeeper&timekeeperpage=reports&report=timesheet&admin_id=<?= (int)$ts->admin_id ?>&date=<?= $h($ts->timesheet_date) ?>">
-              Export
-            </a>
+
+            <?php if (!empty($canUnapprove)): ?>
+              <form method="post" class="tk-inline-form tk-unapprove-form" style="display:inline;">
+                <input type="hidden" name="tk_csrf" value="<?= $h($tkCsrf) ?>">
+                <input type="hidden" name="tk_action" value="unapprove">
+                <input type="hidden" name="ts_id" value="<?= (int)$ts->id ?>">
+                <button type="submit" class="tk-btn tk-btn-sm tk-btn-rounded tk-btn-warning js-unapprove">
+                  Unapprove
+                </button>
+              </form>
+            <?php endif; ?>
           </div>
         </div>
       <?php endforeach; ?>
@@ -96,9 +100,7 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
             <div class="tk-col tk-w-200"></div>
             <div class="tk-col tk-w-180"></div>
             <div class="tk-col tk-w-180"></div>
-            <!-- Total under the Time column -->
             <div class="tk-col tk-w-90 tk-text-right"><strong><?= number_format((float)$totalTime, 2) ?> hrs</strong></div>
-            <!-- Label in Notes column -->
             <div class="tk-col tk-w-250 tk-text-right"><strong>Totals:</strong></div>
             <div class="tk-col tk-w-90"></div>
             <div class="tk-col tk-w-90"></div>

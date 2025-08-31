@@ -8,10 +8,23 @@ class ApprovedTimesheetsHelper
     /** Roles that can view ALL approved timesheets */
     public static function viewAllRoleIds(): array
     {
-        // Single source of truth: read from settings table
-        return \Timekeeper\Helpers\CoreHelper::rolesFromSetting('permission_approved_timesheets_view_all');
+        // Try canonical keys; fall back for older installs.
+        $keys = [
+            'permission_timesheets_view_all',
+            'permission_approved_timesheets_view_all',
+            'permission_view_all_timesheets',
+        ];
+        foreach ($keys as $k) {
+            $ids = CoreHelper::rolesFromSetting($k);
+            if (!empty($ids)) return $ids;
+        }
+        return [];
     }
 
+    public static function canUnapprove(int $roleId): bool
+    {
+        return in_array($roleId, self::canUnapproveRoles(), true);
+    }
 
     public static function adminMap(): array
     {
@@ -72,7 +85,7 @@ class ApprovedTimesheetsHelper
     /** List approved timesheets visible to the current admin/role */
     public static function listVisibleApproved(int $viewerAdminId, int $viewerRoleId, array $viewAllRoleIds)
     {
-        $q = \WHMCS\Database\Capsule::table('mod_timekeeper_timesheets')
+        $q = Capsule::table('mod_timekeeper_timesheets')
             ->where('status', 'approved')
             ->orderBy('timesheet_date', 'desc')
             ->orderBy('admin_id', 'asc');
@@ -96,7 +109,7 @@ class ApprovedTimesheetsHelper
             return null;
         }
 
-        return \WHMCS\Database\Capsule::table('mod_timekeeper_timesheets')
+        return Capsule::table('mod_timekeeper_timesheets')
             ->where('admin_id', $tsAdminId)
             ->where('timesheet_date', $date)
             ->where('status', 'approved')

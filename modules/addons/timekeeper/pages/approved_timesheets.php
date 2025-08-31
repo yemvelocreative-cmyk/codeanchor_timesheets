@@ -3,7 +3,6 @@ use WHMCS\Database\Capsule;
 
 // --- Load helpers (supports either helpers/ or includes/helpers/) ---
 $base = dirname(__DIR__); // -> /modules/addons/timekeeper
-
 $try = function(string $relA, string $relB) use ($base) {
     $a = $base . $relA;
     $b = $base . $relB;
@@ -11,12 +10,8 @@ $try = function(string $relA, string $relB) use ($base) {
     if (is_file($b)) { require_once $b; return; }
     throw new \RuntimeException("Missing helper: tried {$a} and {$b}");
 };
-
 $try('/helpers/core_helper.php', '/includes/helpers/core_helper.php');
 $try('/helpers/approved_timesheets_helper.php', '/includes/helpers/approved_timesheets_helper.php');
-
-// If you also need Pending on this page in the future, add:
-// $try('/helpers/pending_timesheet_helper.php', '/includes/helpers/pending_timesheet_helper.php');
 
 use Timekeeper\Helpers\CoreHelper as CoreH;
 use Timekeeper\Helpers\ApprovedTimesheetsHelper as ApprovedH;
@@ -26,15 +21,63 @@ $adminId = isset($_SESSION['adminid']) ? (int) $_SESSION['adminid'] : 0;
 $admin   = Capsule::table('tbladmins')->where('id', $adminId)->first();
 $roleId  = $admin ? (int) $admin->roleid : 0;
 
-// ---- Permission: roles that may view ALL approved timesheets ----
-// Single source of truth comes from settings via helper
-$viewAllRoleIds = ApprovedH::viewAllRoleIds();
+// ---- CSRF token for actions ----
+if (empty($_SESSION['tk_csrf'])) {
+    $_SESSION['tk_csrf'] = bin2hex(random_bytes(16));
+}
+$tkCsrf = (string) $_SESSION['tk_csrf'];
+
+// ---- Permissions from Settings ----
+$viewAllRoleIds  = ApprovedH::viewAllRoleIds();          // respects Settings “View All Timesheets”
+$canUnapprove    = ApprovedH::canUnapprove($roleId);     // respects Settings “Approve / Unapprove” roles
+
+// ---- Handle POST actions (Unapprove) ----
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = (string) CoreH::post('tk_action', '');
+    $csrf   = (string) CoreH::post('tk_csrf', '');
+    if (!hash_equals($tkCsrf, $csrf)) {
+        // Invalid token; ignore silently or handle as needed
+        header('Location: addonmodules.php?module=timekeeper&timekeeperpage=approved_timesheets');
+        exit;
+    }
+
+    if ($action === 'unapprove' && $canUnapprove) {
+        $tsId = (int) CoreH::post('ts_id', 0);
+        if ($tsId > 0) {
+            // Load the timesheet to check visibility/ownership
+            $ts = Capsule::table('mod_timekeeper_timesheets')
+                ->where('id', $tsId)
+                ->where('status', 'approved')
+                ->first();
+
+            if ($ts) {
+                $ownerId = (int) $ts->admin_id;
+                $viewerHasViewAll = in_array($roleId, $viewAllRoleIds, true);
+                $viewerCanSee = $viewerHasViewAll || ($ownerId === $adminId);
+
+                if ($viewerCanSee) {
+                    Capsule::table('mod_timekeeper_timesheets')
+                        ->where('id', $tsId)
+                        ->update([
+                            'status'     => 'pending',
+                            // Optional audit fields if you have them:
+                            // 'unapproved_by' => $adminId,
+                            // 'unapproved_at' => Capsule::raw('NOW()'),
+                        ]);
+                }
+            }
+        }
+        // PRG pattern
+        header('Location: addonmodules.php?module=timekeeper&timekeeperpage=approved_timesheets');
+        exit;
+    }
+}
 
 // ---- Maps for template ----
 $adminMap      = ApprovedH::adminMap();
 $clientMap     = ApprovedH::clientMap();
-$departmentMap = ApprovedH::departmentMap();   // uses mod_timekeeper_departments
-$taskMap       = ApprovedH::taskMap();         // uses mod_timekeeper_task_categories
+$departmentMap = ApprovedH::departmentMap();   // mod_timekeeper_departments
+$taskMap       = ApprovedH::taskMap();         // mod_timekeeper_task_categories
 
 // ---- Listing vs. viewing a specific approved timesheet ----
 $reqAdminId = CoreH::get('admin_id', null);
@@ -51,11 +94,7 @@ if ($reqAdminId && $reqDate) {
     $reqDate    = (string) $reqDate;
 
     $timesheet = ApprovedH::getApprovedTimesheet(
-        $reqAdminId,
-        $reqDate,
-        $adminId,
-        $roleId,
-        $viewAllRoleIds
+        $reqAdminId, $reqDate, $adminId, $roleId, $viewAllRoleIds
     );
 
     if ($timesheet) {
@@ -65,9 +104,7 @@ if ($reqAdminId && $reqDate) {
 } else {
     // List only the approved timesheets visible to this admin/role
     $approvedTimesheets = ApprovedH::listVisibleApproved(
-        $adminId,
-        $roleId,
-        $viewAllRoleIds
+        $adminId, $roleId, $viewAllRoleIds
     );
 }
 
@@ -80,9 +117,12 @@ $vars = compact(
     'taskMap',
     'timesheet',
     'timesheetEntries',
-    'totalTime'
+    'totalTime',
+    'tkCsrf',
+    'canUnapprove'
 );
 
 extract($vars);
 
-include __DIR__ . '/../templates/admin/approved_timesheets.tpl';
+// NOTE: template file name is singular per your project: approved_timesheet.tpl
+include __DIR__ . '/../templates/admin/approved_timesheet.tpl';

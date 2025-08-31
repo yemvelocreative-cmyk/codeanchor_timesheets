@@ -1,5 +1,12 @@
 (function () {
   'use strict';
-  // Reserved for page-specific interactions (e.g., row expand, future actions)
-  // Intentionally minimal to comply with “only what’s needed” principle.
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.tk-unapprove-form').forEach(function (f) {
+      f.addEventListener('submit', function (e) {
+        if (!confirm('Unapprove this timesheet? It will move back to Pending.')) {
+          e.preventDefault();
+        }
+      });
+    });
+  });
 })();
