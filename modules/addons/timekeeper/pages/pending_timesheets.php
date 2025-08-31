@@ -6,7 +6,11 @@ if (!defined('WHMCS')) {
     die('Access Denied');
 }
 
-require_once __DIR__ . '/../includes/helper_pending_timesheets.php';
+require_once __DIR__ . '/../includes/core_helper.php';
+require_once __DIR__ . '/../includes/pending_timesheet_helper.php';
+
+use Timekeeper\Helpers\Core;
+use Timekeeper\Helpers\Pending;
 
 // ---- Session / admin ----
 $adminId = isset($_SESSION['adminid']) ? (int) $_SESSION['adminid'] : 0;
@@ -24,13 +28,13 @@ $adminRoleId = $admin ? (int) $admin->roleid : 0;
 $allowedViewCsv = Capsule::table('mod_timekeeper_permissions')
     ->where('setting_key', 'permission_pending_timesheets_view_all')
     ->value('setting_value');
-$allowedViewRoles = tk_parse_id_list($allowedViewCsv);
+$allowedViewRoles    = Pending::viewAllRoles();
 
 // Who can approve/reject?
 $allowedApproveCsv = Capsule::table('mod_timekeeper_permissions')
     ->where('setting_key', 'permission_pending_timesheets_approve')
     ->value('setting_value');
-$allowedApprovalRoles = tk_parse_id_list($allowedApproveCsv);
+$allowedApprovalRoles = Pending::approveRoles();
 
 $canApprove = in_array($adminRoleId, $allowedApprovalRoles, true);
 
@@ -51,8 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['resubmit_timesheet_id
     $resubmitId = (int) $_POST['resubmit_timesheet_id'];
 
     $upd = ['status' => 'pending'];
-if (tk_has_col('mod_timekeeper_timesheets', 'updated_at')) {
-    $upd['updated_at'] = date('Y-m-d H:i:s');
+if (Core::hasCol('mod_timekeeper_timesheets', 'updated_at')) {
+    $update['updated_at'] = $now;
 }
     Capsule::table('mod_timekeeper_timesheets')
         ->where('id', $resubmitId)
@@ -172,7 +176,7 @@ $update = [
     'approved_at' => $now,
     'approved_by' => $adminId,
 ];
-    if (tk_has_col('mod_timekeeper_timesheets', 'updated_at')) {
+    if (Core::hasCol('mod_timekeeper_timesheets', 'updated_at')) {
         $update['updated_at'] = $now;
     }
         Capsule::table('mod_timekeeper_timesheets')
@@ -213,9 +217,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reject_timesheet_id']
         'rejected_at'          => $now,
         'rejected_by'          => $adminId
     ];
-        if (tk_has_col('mod_timekeeper_timesheets', 'updated_at')) {
+        if (Core::hasCol('mod_timekeeper_timesheets', 'updated_at')) {
             $update['updated_at'] = $now;
         }
+
             Capsule::table('mod_timekeeper_timesheets')
                 ->where('id', $timesheetId)
                 ->update($update);
@@ -228,7 +233,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reject_timesheet_id']
 // GET: list + optional detail context
 // ======================================================================
 
-$pendingTimesheets = tk_pending_timesheets_base_query($adminId, $adminRoleId)
+$pendingTimesheets = Pending::baseQuery($adminId, $adminRoleId)
     ->orderBy('timesheet_date', 'desc')
     ->get();
 
@@ -274,7 +279,7 @@ if (!empty($_GET['admin_id']) && !empty($_GET['date'])) {
         ->first();
 
     if ($timesheet) {
-        $editTimesheetEntries = tk_entries_sorted((int)$timesheet->id);
+        $editTimesheetEntries = Pending::entriesSorted((int)$timesheet->id);
     }
 }
 
