@@ -11,6 +11,20 @@ final class TimekeeperHelper
 {
     /* ===================== RBAC / Role ===================== */
 
+    /** Map UI aliases to canonical page keys (keeps old links working). */
+    public static function resolvePageAlias(string $pageKey): string
+    {
+        $p = strtolower(trim($pageKey));
+        $map = [
+            'approvals'  => 'approval',
+            'timesheets' => 'approval',   // plural alias
+            'cronsetup'  => 'cron',
+            'hide'       => 'hide_tabs',
+            'hidetabs'   => 'hide_tabs',
+        ];
+        return $map[$p] ?? $p;
+    }
+
     /** Current admin's role id (0 on failure) */
     public static function getAdminRoleId(int $adminId): int
     {

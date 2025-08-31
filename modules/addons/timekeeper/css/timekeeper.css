@@ -40,3 +40,21 @@
     outline: 2px solid #2a7ae2;
     outline-offset: 2px;
 }
+
+/* ===== Alerts & Utility Spacing ===== */
+.timekeeper-root .tk-alert {
+    padding: 10px 12px;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    background: #fff;
+    margin: 8px 0;
+}
+.timekeeper-root .tk-alert--error {
+    border-color: #f5c2c2;
+    background: #fff3cd;
+}
+.timekeeper-root .tk-alert--success {
+    border-color: #a2d28f;
+    background: #e2f0d9;
+}
+.timekeeper-root .tk-mt-8 { margin-top: 8px; }
