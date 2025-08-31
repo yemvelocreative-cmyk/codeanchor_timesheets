@@ -86,3 +86,11 @@
     border-radius: .6rem;
   }
 }
+
+.timekeeper-approvals-settings .tk-approvals-footer{
+  display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-top:12px;
+}
+.timekeeper-approvals-settings .tk-approvals-footer__fields{
+  display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap;
+}
+.timekeeper-approvals-settings .tk-field{ min-width:220px; }
