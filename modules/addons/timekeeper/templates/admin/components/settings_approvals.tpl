@@ -101,25 +101,7 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
                 aria-describedby="unbilledHelp">
             </div>
           </div>
-          <div class="tk-validate-row">
-            <h6 class="mb-1" style="font-weight:600;">Pagination</h6>
-            <small id="paginationHelp" class="text-muted">
-              Set the number of Pending/Approved Timesheets to list per page.
-              Leave blank to use the system default.
-            </small>
-            <div class="d-flex align-items-center gap-2">
-              <input
-                type="number"
-                step="1"
-                min="1"
-                name="pagination_value"
-                id="pagination_value"
-                class="form-control d-inline-block tk-input-w-80"
-                value="<?= $h($paginationValue) ?>"
-                aria-describedby="paginationHelp"
-                inputmode="numeric" pattern="[0-9]*">
-            </div>
-          </div>
+          
         </div>
       </div>
     </div>
