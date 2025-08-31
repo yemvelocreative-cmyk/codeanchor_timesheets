@@ -28,7 +28,7 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
     <div class="tk-approvals-island tk-card tk-card--padded">
       <div class="tk-approvals-card" data-scope="viewall">
         <div class="tk-approvals-head">
-          <h5 class="tk-approvals-title">Roles that can View All Timesheets</h5>
+          <h2 class="tk-approvals-title">Roles that can View All Timesheets</h2>
           <div class="tk-approvals-actions">
             <label class="tk-approvals-toggleall">
               <input type="checkbox" class="js-approvals-viewall-toggleall">
@@ -63,7 +63,7 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
     <div class="tk-approvals-island tk-card tk-card--padded">
       <div class="tk-approvals-card" data-scope="approve">
         <div class="tk-approvals-head">
-          <h5 class="tk-approvals-title">Roles that can Approve / Unapprove Timesheets</h5>
+          <h2 class="tk-approvals-title">Roles that can Approve / Unapprove Timesheets</h2>
           <div class="tk-approvals-actions">
             <label class="tk-approvals-toggleall">
               <input type="checkbox" class="js-approvals-approve-toggleall">
