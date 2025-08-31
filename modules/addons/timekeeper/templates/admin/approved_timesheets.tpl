@@ -1,8 +1,8 @@
 <?php if (!defined('WHMCS')) { die('Access Denied'); } ?>
 <?php $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); ?>
 
-<link rel="stylesheet" href="../modules/addons/timekeeper/css/approved_timesheets.css?v=6" />
-<script defer src="../modules/addons/timekeeper/js/approved_timesheets.js?v=6"></script>
+<link rel="stylesheet" href="../modules/addons/timekeeper/css/approved_timesheets.css?v=7" />
+<script defer src="../modules/addons/timekeeper/js/approved_timesheets.js?v=7"></script>
 
 <div class="timekeeper-root approved-timesheets">
   <div class="tk-page-header">
@@ -78,7 +78,6 @@
       <?php if (empty($timesheetEntries)): ?>
         <div class="tk-alert tk-alert-info">No entries on this timesheet.</div>
       <?php else: ?>
-        <!-- ===== Saved Entries (exact structure as Timesheet) ===== -->
         <h4>Saved Entries</h4>
         <div class="tk-totals-wrap">
           <div class="tk-totals-bar" role="status" aria-label="Daily totals">
@@ -93,8 +92,8 @@
           </div>
         </div>
 
-        <!-- Header row -->
-        <div class="tk-row tk-row--table tk-row--header">
+        <!-- Header row now matches card height/shape and has no "Actions" label -->
+        <div class="tk-row tk-card tk-row--table tk-row--header">
           <div class="tk-row-grid">
             <div class="hdr">Client</div>
             <div class="hdr">Department</div>
@@ -102,11 +101,10 @@
             <div class="hdr">Description</div>
             <div class="hdr">Time</div>
             <div class="hdr">Flags</div>
-            <div class="hdr">Actions</div>
           </div>
         </div>
 
-        <!-- Data rows -->
+        <!-- Data rows (no Actions column in Approved view) -->
         <div class="tk-saved-list">
           <?php foreach ($timesheetEntries as $entry): ?>
             <div class="tk-row tk-card tk-row--table">
@@ -139,8 +137,6 @@
                     <span class="tk-badge">SLA <?= number_format((float)$entry->sla_time, 2) ?>h</span>
                   <?php endif; ?>
                 </div>
-
-                <div class="cell cell-actions">&nbsp;</div>
               </div>
             </div>
           <?php endforeach; ?>
