@@ -211,7 +211,7 @@
                 <div class="cell cell-dept"><?= $h($departmentMap[$entry->department_id] ?? 'N/A') ?></div>
                 <div class="cell cell-task"><?= $h($taskMap[$entry->task_category_id] ?? 'N/A') ?></div>
 
-                <div class="cell cell-desc"><?= $h($entry->notes) ?></div>
+                <div class="cell cell-desc"><?= $h(($entry->notes ?? '') !== '' ? $entry->notes : ($entry->description ?? '')) ?></div>
 
                 <div class="cell cell-times">
                   <?php

@@ -76,7 +76,9 @@ class ApprovedTimesheetsHelper
     /** Admin map: id => "Firstname Lastname" */
     public static function adminMap(): array
     {
-        $rows = Capsule::table('tbladmins')->select(['id', 'firstname', 'lastname'])->get();
+        $rows = Capsule::table('tbladmins')->select([
+'id', 'firstname', 'lastname', Capsule::raw("COALESCE(tse.notes, tse.description, '') AS notes") ]
+])->get();
         $map = [];
         foreach ($rows as $r) {
             $map[(int)$r->id] = trim(($r->firstname ?? '') . ' ' . ($r->lastname ?? '')) ?: ('Admin ' . (int)$r->id);
@@ -87,7 +89,9 @@ class ApprovedTimesheetsHelper
     /** Client map: id => company or fullname */
     public static function clientMap(): array
     {
-        $rows = Capsule::table('tblclients')->select(['id','companyname','firstname','lastname'])->get();
+        $rows = Capsule::table('tblclients')->select([
+'id','companyname','firstname','lastname', Capsule::raw("COALESCE(tse.notes, tse.description, '') AS notes") ]
+])->get();
         $map = [];
         foreach ($rows as $r) {
             $name = $r->companyname ?: trim(($r->firstname ?? '') . ' ' . ($r->lastname ?? ''));
@@ -102,7 +106,9 @@ class ApprovedTimesheetsHelper
         $map = [];
         try {
             $rows = Capsule::table('mod_timekeeper_departments')
-                ->select(['id', 'name'])
+                ->select([
+'id', 'name', Capsule::raw("COALESCE(tse.notes, tse.description, '') AS notes") ]
+])
                 ->orderBy('name', 'asc')
                 ->get();
 
@@ -121,7 +127,9 @@ class ApprovedTimesheetsHelper
         $map = [];
         try {
             $rows = Capsule::table('mod_timekeeper_task_categories')
-                ->select(['id', 'name'])
+                ->select([
+'id', 'name', Capsule::raw("COALESCE(tse.notes, tse.description, '') AS notes") ]
+])
                 ->orderBy('name', 'asc')
                 ->get();
 
