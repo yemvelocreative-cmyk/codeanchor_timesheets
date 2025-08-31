@@ -22,22 +22,47 @@ if (isset($_GET['dismiss_rejected_banner']) && $_GET['dismiss_rejected_banner'] 
     }
 }
 
-/** 2) Rejected count for current admin **/
-$navRejectedCount = Capsule::table('mod_timekeeper_timesheets')
-    ->where('admin_id', $navAdminId)
-    ->where('status', 'rejected')
-    ->count();
+// Counts to show badges in nav (canonical to pending_timesheets.php)
 
-// Counts to show badges in nav
-$navPendingCount = Capsule::table('mod_timekeeper_timesheets')
-  ->where('admin_id', $navAdminId)
-  ->where('status', 'pending')
-  ->count();
+/* helper: parse role ID CSV safely (define once) */
+if (!function_exists('tk_parse_id_list')) {
+    function tk_parse_id_list(?string $csv): array {
+        if (!$csv) return [];
+        $out = [];
+        foreach (explode(',', $csv) as $p) {
+            $v = (int) trim($p);
+            if ($v > 0) $out[] = $v;
+        }
+        return $out;
+    }
+}
 
-$navApprovedCount = Capsule::table('mod_timekeeper_timesheets')
-  ->where('admin_id', $navAdminId)
-  ->where('status', 'approved')
-  ->count();
+/* roles allowed to view all pending/rejected */
+$allowedViewCsv   = Capsule::table('mod_timekeeper_permissions')
+    ->where('setting_key', 'permission_pending_timesheets_view_all')
+    ->value('setting_value');
+$allowedViewRoles = tk_parse_id_list($allowedViewCsv);
+
+$today = date('Y-m-d');
+
+/* PENDING badge = pending + rejected, < today, filtered by role */
+$pendingQ = Capsule::table('mod_timekeeper_timesheets')
+    ->whereIn('status', ['pending', 'rejected'])
+    ->where('timesheet_date', '<', $today);
+
+if (!in_array($roleId, $allowedViewRoles, true)) {
+    $pendingQ->where('admin_id', $navAdminId);
+}
+$navPendingCount = (int) $pendingQ->count();
+
+/* APPROVED badge — leave per-admin unless you want it to honor view-all too */
+$approvedQ = Capsule::table('mod_timekeeper_timesheets')
+    ->where('status', 'approved');
+
+if (!in_array($roleId, $allowedViewRoles, true)) {
+    $approvedQ->where('admin_id', $navAdminId);
+}
+$navApprovedCount = (int) $approvedQ->count();
 
 /** 3) Should we show the banner? **/
 $hideViaSession = !empty($_SESSION['timekeeper_hide_rejected_banner']);
