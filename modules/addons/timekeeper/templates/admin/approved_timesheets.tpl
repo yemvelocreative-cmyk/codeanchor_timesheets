@@ -1,116 +1,110 @@
-<h2>Approved Timesheets</h2>
-<?php if (empty($approvedTimesheets)): ?>
-    <div style="margin-top: 20px; background-color: #e2f0d9; padding: 10px; border: 1px solid #a2d28f;">
-        No approved timesheets found.
-    </div>
-<?php else: ?>
-    <div style="display: flex; font-weight: bold; gap: 8px; border-bottom: 2px solid #ccc; padding: 10px 0;">
-        <div style="width: 200px;">Admin</div>
-        <div style="width: 150px;">Date</div>
-        <div style="width: 100px;">Status</div>
-        <div style="width: 100px;">Actions</div>
-    </div>
-    <?php foreach ($approvedTimesheets as $ts): ?>
-        <div style="display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #eee;">
-            <div style="width: 200px;"><?= htmlspecialchars($adminMap[$ts->admin_id] ?? 'Unknown') ?></div>
-            <div style="width: 150px;"><?= htmlspecialchars($ts->timesheet_date) ?></div>
-            <div style="width: 100px;">Approved</div>
-            <div style="width: 100px; display: flex; gap: 4px; align-items: center;">
-                <a href="addonmodules.php?module=timekeeper&timekeeperpage=approved_timesheets&admin_id=<?= $ts->admin_id ?>&date=<?= $ts->timesheet_date ?>"
-                   class="btn btn-sm btn-primary"
-                   style="display: inline-block; vertical-align: middle; margin-right: 2px;">View Timesheet</a>
-                <?php if ($canApprove): ?>
-                    <form method="post"
-                          action="addonmodules.php?module=timekeeper&timekeeperpage=approved_timesheets"
-                          style="display: inline-block; vertical-align: middle; margin: 0; padding: 0;">
-                        <input type="hidden" name="unapprove_id" value="<?= $ts->id ?>">
-                        <button type="submit"
-                                class="btn btn-sm btn-danger"
-                                onclick="return confirm('Are you sure you want to unapprove this timesheet?');"
-                                style="display: inline-block; vertical-align: middle; margin: 0;">Unapprove</button>
-                    </form>
-                <?php endif; ?>
-            </div>
+<?php if (!defined('WHMCS')) { die('Access Denied'); } ?>
+<?php
+$h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
+?>
 
+<link rel="stylesheet" href="../modules/addons/timekeeper/css/approved_timesheets.css?v=1" />
+<script defer src="../modules/addons/timekeeper/js/approved_timesheets.js?v=1"></script>
+
+<div class="timekeeper-root approved-timesheets">
+  <div class="tk-page-header">
+    <div class="tk-page-title">
+      <h2 class="tk-h2">Approved Timesheets</h2>
+      <p class="tk-subtitle">Timesheets that have been approved and are ready for view/export.</p>
+    </div>
+  </div>
+
+  <?php if (empty($approvedTimesheets)): ?>
+    <div class="tk-alert tk-alert-success">No approved timesheets found.</div>
+  <?php else: ?>
+    <div class="tk-table tk-table-grid tk-table-compact">
+      <div class="tk-thead tk-row">
+        <div class="tk-col tk-w-200">Admin</div>
+        <div class="tk-col tk-w-150">Date</div>
+        <div class="tk-col tk-w-120">Status</div>
+        <div class="tk-col tk-w-220 tk-text-right">Actions</div>
+      </div>
+
+      <?php foreach ($approvedTimesheets as $ts): ?>
+        <div class="tk-row">
+          <div class="tk-col tk-w-200"><?= $h($adminMap[$ts->admin_id] ?? 'Unknown') ?></div>
+          <div class="tk-col tk-w-150"><?= $h($ts->timesheet_date) ?></div>
+          <div class="tk-col tk-w-120">
+            <span class="tk-pill tk-pill-success">Approved</span>
+          </div>
+          <div class="tk-col tk-w-220 tk-actions">
+            <a class="tk-btn tk-btn-rounded tk-btn-outline"
+               href="addonmodules.php?module=timekeeper&timekeeperpage=approved_timesheets&admin_id=<?= (int)$ts->admin_id ?>&date=<?= $h($ts->timesheet_date) ?>">
+              View
+            </a>
+            <a class="tk-btn tk-btn-rounded"
+               href="addonmodules.php?module=timekeeper&timekeeperpage=reports&report=timesheet&admin_id=<?= (int)$ts->admin_id ?>&date=<?= $h($ts->timesheet_date) ?>">
+              Export
+            </a>
+          </div>
         </div>
-    <?php endforeach; ?>
-
-<?php endif; ?>
-
-<?php if (isset($_GET['unapproved']) && $_GET['unapproved'] == 1): ?>
-    <div style="background: #fff3cd; padding: 10px; border: 1px solid #ffeeba; color: #856404; margin-bottom: 16px;">
-        Timesheet successfully unapproved.
+      <?php endforeach; ?>
     </div>
-<?php endif; ?>
+  <?php endif; ?>
 
-<?php if ($editMode): ?>
-    <div style="margin-top: 30px;">
-        <h4>Viewing Approved Timesheet: <?= $editAdminName ?> — <?= $editTimesheetDate ?></h4>
+  <?php if (!empty($timesheet)): ?>
+    <div class="tk-card tk-mt-24">
+      <div class="tk-card-header">
+        <div>
+          <h3 class="tk-h3">Timesheet</h3>
+          <p class="tk-muted">Admin: <?= $h($adminMap[$timesheet->admin_id] ?? 'Unknown') ?> · Date: <?= $h($timesheet->timesheet_date) ?></p>
+        </div>
+        <div class="tk-card-actions">
+          <a class="tk-btn tk-btn-rounded"
+             href="addonmodules.php?module=timekeeper&timekeeperpage=reports&report=timesheet&admin_id=<?= (int)$timesheet->admin_id ?>&date=<?= $h($timesheet->timesheet_date) ?>">
+            Export
+          </a>
+        </div>
+      </div>
 
-        <?php if (empty($editTimesheetEntries)): ?>
-            <div style="background: #fff3cd; padding: 10px; border: 1px solid #ffeeba;">
-                No entries found for this timesheet.
+      <?php if (empty($timesheetEntries)): ?>
+        <div class="tk-alert tk-alert-info">No entries on this timesheet.</div>
+      <?php else: ?>
+        <div class="tk-table tk-table-grid tk-mt-12">
+          <div class="tk-thead tk-row">
+            <div class="tk-col tk-w-200">Client</div>
+            <div class="tk-col tk-w-180">Department</div>
+            <div class="tk-col tk-w-180">Task</div>
+            <div class="tk-col tk-w-90 tk-text-right">Time</div>
+            <div class="tk-col tk-w-250">Notes</div>
+            <div class="tk-col tk-w-90 tk-text-center">Billable</div>
+            <div class="tk-col tk-w-90 tk-text-right">Bill Time</div>
+            <div class="tk-col tk-w-80 tk-text-center">SLA</div>
+            <div class="tk-col tk-w-90 tk-text-right">SLA Time</div>
+          </div>
+
+          <?php foreach ($timesheetEntries as $entry): ?>
+            <div class="tk-row">
+              <div class="tk-col tk-w-200"><?= $h($clientMap[$entry->client_id] ?? 'N/A') ?></div>
+              <div class="tk-col tk-w-180"><?= $h($departmentMap[$entry->department_id] ?? 'N/A') ?></div>
+              <div class="tk-col tk-w-180"><?= $h($taskMap[$entry->task_category_id] ?? 'N/A') ?></div>
+              <div class="tk-col tk-w-90 tk-text-right"><?= number_format((float)$entry->time_spent, 2) ?> hrs</div>
+              <div class="tk-col tk-w-250 tk-notes"><?= $h($entry->notes) ?></div>
+              <div class="tk-col tk-w-90 tk-text-center"><?= $entry->billable ? 'Yes' : 'No' ?></div>
+              <div class="tk-col tk-w-90 tk-text-right"><?= number_format((float)$entry->billable_time, 2) ?> hrs</div>
+              <div class="tk-col tk-w-80 tk-text-center"><?= $entry->sla ? 'Yes' : 'No' ?></div>
+              <div class="tk-col tk-w-90 tk-text-right"><?= number_format((float)$entry->sla_time, 2) ?> hrs</div>
             </div>
-        <?php else: ?>
-            <!-- Calculate Totals -->
-            <?php
-            $totalTime = 0;
-            $totalBillableTime = 0;
-            $totalSlaTime = 0;
-            foreach ($editTimesheetEntries as $entry) {
-                $totalTime += (float)$entry->time_spent;
-                $totalBillableTime += (float)$entry->billable_time;
-                $totalSlaTime += (float)$entry->sla_time;
-            }
-            ?>
-            <!-- Label Headings Row -->
-            <div style="display: flex; font-weight: bold; gap: 8px; border-bottom: 2px solid #ccc; padding: 10px 0; margin-top: 8px;">
-                <div style="width: 200px;">Client</div>
-                <div style="width: 180px;">Department</div>
-                <div style="width: 180px;">Task Category</div>
-                <div style="width: 90px;">Ticket ID</div>
-                <div style="width: 250px;">Description</div>
-                <div style="width: 90px;">Start</div>
-                <div style="width: 90px;">End</div>
-                <div style="width: 80px;">Time Spent</div>
-                <div style="width: 50px;">Billable</div>
-                <div style="width: 90px;">Billable Time</div>
-                <div style="width: 50px;">SLA</div>
-                <div style="width: 90px;">SLA Time</div>
-            </div>
+          <?php endforeach; ?>
 
-            <?php foreach ($editTimesheetEntries as $entry): ?>
-                <div style="display: flex; gap: 8px; padding: 6px 0; border-bottom: 1px solid #eee; align-items: center;">
-                    <div style="width: 200px;"><?= $clientMap[$entry->client_id] ?? 'N/A' ?></div>
-                    <div style="width: 180px;"><?= $departmentMap[$entry->department_id] ?? 'N/A' ?></div>
-                    <div style="width: 180px;"><?= $taskMap[$entry->task_category_id] ?? 'N/A' ?></div>
-                    <div style="width: 90px;"><?= htmlspecialchars($entry->ticket_id) ?></div>
-                    <div style="width: 250px;"><?= htmlspecialchars($entry->description) ?></div>
-                    <div style="width: 90px;"><?= $entry->start_time ?></div>
-                    <div style="width: 90px;"><?= $entry->end_time ?></div>
-                    <div style="width: 80px;"><?= number_format($entry->time_spent, 2) ?> hrs</div>
-                    <div style="width: 50px;"><?= $entry->billable ? 'Yes' : 'No' ?></div>
-                    <div style="width: 90px;"><?= number_format($entry->billable_time, 2) ?> hrs</div>
-                    <div style="width: 50px;"><?= $entry->sla ? 'Yes' : 'No' ?></div>
-                    <div style="width: 90px;"><?= number_format($entry->sla_time, 2) ?> hrs</div>
-                </div>
-            <?php endforeach; ?>
-
-            <!-- Totals Row -->
-            <div style="display: flex; gap: 8px; padding: 10px 0; border-top: 2px solid #ccc; font-weight: bold; background: #f5f5f5;">
-                <div style="width: 200px;"></div>
-                <div style="width: 180px;"></div>
-                <div style="width: 180px;"></div>
-                <div style="width: 90px;"></div>
-                <div style="width: 250px; text-align: right;">Totals:</div>
-                <div style="width: 90px;"><?= number_format($totalTime, 2) ?> hrs</div>
-                <div style="width: 90px;"></div>
-                <div style="width: 80px;"></div>
-                <div style="width: 50px;"></div>
-                <div style="width: 90px;"><?= number_format($totalBillableTime, 2) ?> hrs</div>
-                <div style="width: 50px;"></div>
-                <div style="width: 90px;"><?= number_format($totalSlaTime, 2) ?> hrs</div>
-            </div>
-        <?php endif; ?>
+          <div class="tk-row tk-row-total">
+            <div class="tk-col tk-w-200"></div>
+            <div class="tk-col tk-w-180"></div>
+            <div class="tk-col tk-w-180"></div>
+            <div class="tk-col tk-w-90"></div>
+            <div class="tk-col tk-w-250 tk-text-right"><strong>Totals:</strong></div>
+            <div class="tk-col tk-w-90 tk-text-right"><strong><?= number_format((float)$totalTime, 2) ?> hrs</strong></div>
+            <div class="tk-col tk-w-90"></div>
+            <div class="tk-col tk-w-80"></div>
+            <div class="tk-col tk-w-90"></div>
+          </div>
+        </div>
+      <?php endif; ?>
     </div>
-<?php endif; ?>
+  <?php endif; ?>
+</div>

@@ -3,8 +3,10 @@ if (!defined('WHMCS')) { die('Access Denied'); }
 
 require_once __DIR__ . '/helpers/core_helper.php';
 require_once __DIR__ . '/helpers/pending_timesheet_helper.php';
+require_once __DIR__ . '/helpers/approved_timesheets_helper.php';
 
 use Timekeeper\Helpers\PendingTimesheetHelper as PendingH;
+use Timekeeper\Helpers\ApprovedTimesheetsHelper as ApprovedH;
 use WHMCS\Database\Capsule;
 
 /** Current admin + role **/
@@ -16,7 +18,7 @@ $roleId     = $admin ? (int)$admin->roleid : 0;
 $navPendingCount = PendingH::menuCount($navAdminId, $roleId);
 
 /** Per-user Approved & Rejected counts (adjust if you want view-all) */
-$navApprovedCount = (int) Capsule::table('mod_timekeeper_timesheets')
+$navApprovedCount = ApprovedH::menuCount($navAdminId, $roleId);
     ->where('status', 'approved')
     ->where('admin_id', $navAdminId)
     ->count();

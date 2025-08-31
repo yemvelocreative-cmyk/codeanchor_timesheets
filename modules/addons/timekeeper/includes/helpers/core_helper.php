@@ -47,3 +47,21 @@ final class CoreHelper
         }
     }
 }
+
+<?php
+namespace Timekeeper\Helpers;
+
+class CoreHelper
+{
+    public static function get(string $key, $default = null) {
+        return isset($_GET[$key]) ? $_GET[$key] : $default;
+    }
+
+    public static function post(string $key, $default = null) {
+        return isset($_POST[$key]) ? $_POST[$key] : $default;
+    }
+
+    public static function e(string $v): string {
+        return htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
+    }
+}

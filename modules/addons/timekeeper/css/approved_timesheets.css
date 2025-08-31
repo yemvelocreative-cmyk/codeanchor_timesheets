@@ -1,0 +1,44 @@
+/* Approved Timesheets — extracted styles to match Pending Timesheet UI */
+
+.timekeeper-root .tk-page-header { display:flex; align-items:flex-end; justify-content:space-between; margin: 12px 0 16px; }
+.timekeeper-root .tk-page-title .tk-h2 { margin:0; }
+.timekeeper-root .tk-subtitle { margin: 4px 0 0; color:#6c757d; }
+
+.tk-alert { padding:12px 14px; border-radius:10px; border:1px solid transparent; margin-top:12px; }
+.tk-alert-success { background:#e7f7ec; border-color:#b7e1c3; }
+.tk-alert-info { background:#eef6ff; border-color:#c9e1ff; }
+
+.tk-table { width:100%; }
+.tk-table-grid .tk-row { display:flex; gap:8px; align-items:center; border-bottom:1px solid #eee; padding:8px 0; }
+.tk-table-grid .tk-thead { font-weight:600; border-bottom:2px solid #ccc; padding:10px 0; }
+.tk-table-compact .tk-row { padding:8px 0; }
+
+.tk-col { min-width:0; }
+.tk-w-80{width:80px} .tk-w-90{width:90px} .tk-w-120{width:120px} .tk-w-150{width:150px}
+.tk-w-180{width:180px} .tk-w-200{width:200px} .tk-w-220{width:220px} .tk-w-250{width:250px}
+
+.tk-text-right { text-align:right; }
+.tk-text-center { text-align:center; }
+.tk-muted { color:#6c757d; }
+
+.tk-actions { display:flex; gap:8px; justify-content:flex-end; }
+
+.tk-btn { display:inline-flex; align-items:center; justify-content:center; padding:8px 14px; border:1px solid #0d6efd; background:#0d6efd; color:#fff; text-decoration:none; line-height:1; transition:all .15s ease; }
+.tk-btn:hover { filter:brightness(0.95); text-decoration:none; color:#fff; }
+.tk-btn-outline { background:#fff; color:#0d6efd; }
+.tk-btn-outline:hover { background:#eaf2ff; }
+.tk-btn-rounded { border-radius:999px; }
+
+.tk-pill { display:inline-block; padding:4px 10px; border-radius:999px; font-size:.875rem; line-height:1; border:1px solid transparent; }
+.tk-pill-success { background:#e7f7ec; color:#18794e; border-color:#b7e1c3; }
+
+.tk-card { background:#fff; border:1px solid #eee; border-radius:16px; box-shadow:0 1px 2px rgba(0,0,0,.03); }
+.tk-card-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:14px 16px; border-bottom:1px solid #eee; }
+.tk-card-actions { display:flex; gap:8px; }
+.tk-h3 { margin:0; }
+
+.tk-mt-12 { margin-top:12px; }
+.tk-mt-24 { margin-top:24px; }
+
+.tk-row-total { border-top:2px solid #ccc; font-weight:600; background:#f8f9fa; }
+.tk-notes { white-space:pre-line; }
