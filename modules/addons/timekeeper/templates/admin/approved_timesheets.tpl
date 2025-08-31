@@ -3,7 +3,7 @@
 $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 ?>
 
-<link rel="stylesheet" href="../modules/addons/timekeeper/css/approved_timesheets.css?v=1" />
+<link rel="stylesheet" href="../modules/addons/timekeeper/css/approved_timesheets.css?v=2" />
 <script defer src="../modules/addons/timekeeper/js/approved_timesheets.js?v=1"></script>
 
 <div class="timekeeper-root approved-timesheets">

@@ -1,65 +1,148 @@
-/* —— Unified Button System (match Pending Timesheets) —— */
+/* Approved Timesheets — self-contained UI (scoped to this page) */
+
+/* CSS variables with safe fallbacks to match Pending */
 :root {
-  --tk-primary: #0d6efd;
-  --tk-primary-600: #0b5ed7;
-  --tk-primary-700: #0a58ca;
-  --tk-text: #111827;
-  --tk-muted: #6b7280;
-  --tk-border: #e5e7eb;
-  --tk-bg: #ffffff;
+  --tk-primary:      #0d6efd;
+  --tk-primary-600:  #0b5ed7;
+  --tk-primary-700:  #0a58ca;
+  --tk-text:         #111827;
+  --tk-muted:        #6b7280;
+  --tk-border:       #e5e7eb;
+  --tk-bg:           #ffffff;
+  --tk-success-bg:   #e7f7ec;
+  --tk-success-bdr:  #b7e1c3;
+  --tk-success-txt:  #18794e;
+  --tk-info-bg:      #eef6ff;
+  --tk-info-bdr:     #c9e1ff;
 }
 
-.tk-actions { display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; }
+/* ------- Page header & basic text ------- */
+.timekeeper-root.approved-timesheets .tk-page-header {
+  display:flex; align-items:flex-end; justify-content:space-between;
+  margin: 12px 0 16px;
+}
+.timekeeper-root.approved-timesheets .tk-page-title .tk-h2 { margin:0; }
+.timekeeper-root.approved-timesheets .tk-subtitle { margin:4px 0 0; color:var(--tk-muted); }
 
-.tk-btn {
+/* ------- Alerts ------- */
+.timekeeper-root.approved-timesheets .tk-alert {
+  padding:12px 14px; border-radius:10px; border:1px solid transparent; margin-top:12px;
+}
+.timekeeper-root.approved-timesheets .tk-alert-success { background:var(--tk-success-bg); border-color:var(--tk-success-bdr); }
+.timekeeper-root.approved-timesheets .tk-alert-info { background:var(--tk-info-bg); border-color:var(--tk-info-bdr); }
+
+/* ------- Table grid layout (prevents stacking) ------- */
+.timekeeper-root.approved-timesheets .tk-table { width:100%; }
+.timekeeper-root.approved-timesheets .tk-table-grid .tk-row {
+  display:flex; flex-wrap:nowrap; gap:8px; align-items:center;
+  border-bottom:1px solid #eee; padding:8px 0;
+}
+.timekeeper-root.approved-timesheets .tk-table-grid .tk-thead {
+  font-weight:600; border-bottom:2px solid #ccc; padding:10px 0;
+}
+.timekeeper-root.approved-timesheets .tk-table-compact .tk-row { padding:8px 0; }
+.timekeeper-root.approved-timesheets .tk-col { min-width:0; }
+
+/* Fixed width utilities to match Pending */
+.timekeeper-root.approved-timesheets .tk-w-80{width:80px}
+.timekeeper-root.approved-timesheets .tk-w-90{width:90px}
+.timekeeper-root.approved-timesheets .tk-w-120{width:120px}
+.timekeeper-root.approved-timesheets .tk-w-150{width:150px}
+.timekeeper-root.approved-timesheets .tk-w-180{width:180px}
+.timekeeper-root.approved-timesheets .tk-w-200{width:200px}
+.timekeeper-root.approved-timesheets .tk-w-220{width:220px}
+.timekeeper-root.approved-timesheets .tk-w-250{width:250px}
+
+.timekeeper-root.approved-timesheets .tk-text-right { text-align:right; }
+.timekeeper-root.approved-timesheets .tk-text-center { text-align:center; }
+.timekeeper-root.approved-timesheets .tk-muted { color:var(--tk-muted); }
+
+/* Wrap long notes nicely */
+.timekeeper-root.approved-timesheets .tk-notes { white-space:pre-line; overflow-wrap: anywhere; }
+
+/* Totals row */
+.timekeeper-root.approved-timesheets .tk-row-total {
+  border-top:2px solid #ccc; font-weight:600; background:#f8f9fa;
+}
+
+/* ------- Pills ------- */
+.timekeeper-root.approved-timesheets .tk-pill {
+  display:inline-block; padding:4px 10px; border-radius:999px; font-size:.875rem; line-height:1;
+  border:1px solid transparent;
+}
+.timekeeper-root.approved-timesheets .tk-pill-success {
+  background:var(--tk-success-bg); color:var(--tk-success-txt); border-color:var(--tk-success-bdr);
+}
+
+/* ------- Card ------- */
+.timekeeper-root.approved-timesheets .tk-card {
+  background:#fff; border:1px solid #eee; border-radius:16px;
+  box-shadow:0 1px 2px rgba(0,0,0,.03);
+}
+.timekeeper-root.approved-timesheets .tk-card-header {
+  display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+  padding:14px 16px; border-bottom:1px solid #eee;
+}
+.timekeeper-root.approved-timesheets .tk-card-actions { display:flex; gap:8px; }
+.timekeeper-root.approved-timesheets .tk-h3 { margin:0; }
+.timekeeper-root.approved-timesheets .tk-mt-12 { margin-top:12px; }
+.timekeeper-root.approved-timesheets .tk-mt-24 { margin-top:24px; }
+
+/* ------- Actions bar in table rows ------- */
+.timekeeper-root.approved-timesheets .tk-actions {
+  display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;
+}
+
+/* ------- Unified Button System (matches Pending) ------- */
+.timekeeper-root.approved-timesheets .tk-btn {
   display:inline-flex; align-items:center; justify-content:center;
-  padding: 8px 14px; line-height:1; font-weight:600; font-size:14px;
+  padding:8px 14px; line-height:1; font-weight:600; font-size:14px;
   border:1px solid var(--tk-primary); background:var(--tk-primary); color:#fff;
   border-radius:999px; text-decoration:none; cursor:pointer;
   transition: transform .06s ease, filter .15s ease, box-shadow .15s ease;
   box-shadow: 0 1px 1px rgba(0,0,0,.04);
 }
-.tk-btn:hover { filter:brightness(0.97); color:#fff; text-decoration:none; }
-.tk-btn:active { transform: translateY(1px); }
-.tk-btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(13,110,253,.25); }
-.tk-btn:disabled,
-.tk-btn[disabled] { opacity:.6; cursor:not-allowed; filter:none; transform:none; }
+.timekeeper-root.approved-timesheets .tk-btn:hover { filter:brightness(0.97); color:#fff; text-decoration:none; }
+.timekeeper-root.approved-timesheets .tk-btn:active { transform: translateY(1px); }
+.timekeeper-root.approved-timesheets .tk-btn:focus { outline:none; box-shadow:0 0 0 3px rgba(13,110,253,.25); }
+.timekeeper-root.approved-timesheets .tk-btn:disabled,
+.timekeeper-root.approved-timesheets .tk-btn[disabled] { opacity:.6; cursor:not-allowed; filter:none; transform:none; }
 
 /* Variants */
-.tk-btn-outline {
-  background: var(--tk-bg);
-  color: var(--tk-primary);
-  border-color: var(--tk-primary);
+.timekeeper-root.approved-timesheets .tk-btn-outline {
+  background: var(--tk-bg); color: var(--tk-primary); border-color: var(--tk-primary);
 }
-.tk-btn-outline:hover { background: #eef5ff; color: var(--tk-primary-700); }
+.timekeeper-root.approved-timesheets .tk-btn-outline:hover { background:#eef5ff; color:var(--tk-primary-700); }
 
-.tk-btn-secondary {
+.timekeeper-root.approved-timesheets .tk-btn-secondary {
   background:#f3f4f6; border-color:#d1d5db; color:#111827;
 }
-.tk-btn-secondary:hover { background:#e5e7eb; }
+.timekeeper-root.approved-timesheets .tk-btn-secondary:hover { background:#e5e7eb; }
 
-.tk-btn-ghost {
+.timekeeper-root.approved-timesheets .tk-btn-ghost {
   background:transparent; border-color:transparent; color: var(--tk-primary);
 }
-.tk-btn-ghost:hover { background:#eef5ff; }
+.timekeeper-root.approved-timesheets .tk-btn-ghost:hover { background:#eef5ff; }
 
-.tk-btn-danger {
+.timekeeper-root.approved-timesheets .tk-btn-danger {
   background:#ef4444; border-color:#ef4444; color:#fff;
 }
-.tk-btn-danger:hover { background:#dc2626; border-color:#dc2626; }
+.timekeeper-root.approved-timesheets .tk-btn-danger:hover { background:#dc2626; border-color:#dc2626; }
 
-.tk-btn-warning {
+.timekeeper-root.approved-timesheets .tk-btn-warning {
   background:#f59e0b; border-color:#f59e0b; color:#111827;
 }
-.tk-btn-warning:hover { background:#d97706; border-color:#d97706; color:#111827; }
+.timekeeper-root.approved-timesheets .tk-btn-warning:hover { background:#d97706; border-color:#d97706; color:#111827; }
 
 /* Sizes */
-.tk-btn-sm { padding:6px 12px; font-size:13px; }
-.tk-btn-xs { padding:5px 10px; font-size:12px; }
+.timekeeper-root.approved-timesheets .tk-btn-sm { padding:6px 12px; font-size:13px; }
+.timekeeper-root.approved-timesheets .tk-btn-xs { padding:5px 10px; font-size:12px; }
 
-/* Count badge (if you show counts on this page) */
-.tk-count {
-  display:inline-flex; align-items:center; justify-content:center;
-  min-width:18px; height:18px; padding:0 6px; margin-left:6px;
-  border-radius:999px; background:#111827; color:#fff; font-size:12px; line-height:1;
+/* ------- Responsive tweaks ------- */
+@media (max-width: 920px) {
+  .timekeeper-root.approved-timesheets .tk-table-grid .tk-row { flex-wrap:wrap; }
+  .timekeeper-root.approved-timesheets .tk-w-200,
+  .timekeeper-root.approved-timesheets .tk-w-220,
+  .timekeeper-root.approved-timesheets .tk-w-250 { width:100%; }
+  .timekeeper-root.approved-timesheets .tk-actions { justify-content:flex-start; }
 }
