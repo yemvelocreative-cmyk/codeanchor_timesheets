@@ -32,10 +32,12 @@ $settingsTabs = [
     'hide_tabs' => 'Hide Menu Tabs',
 ];
 
-// Selected sub-tab (default cron)
-$activeTab = (isset($_GET['subtab']) && array_key_exists($_GET['subtab'], $settingsTabs))
-    ? $_GET['subtab']
-    : 'cron';
+// Force a canonical subtab so layout/state are identical
+if (!isset($_GET['subtab'])) {
+    Timekeeper\Helpers\SettingsHelper::redirect(
+        'addonmodules.php?module=timekeeper&timekeeperpage=settings&subtab=cron'
+    );
+}
 
 // Success flags consumed by wrapper
 $success          = (isset($_GET['success']) && $_GET['success'] == '1');
