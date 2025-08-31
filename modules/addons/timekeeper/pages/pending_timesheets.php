@@ -7,27 +7,34 @@ if (!defined('WHMCS')) {
 }
 
 // helper near the top (under use + die guard)
-function tk_has_col(string $table, string $col): bool {
-    try { return Capsule::schema()->hasColumn($table, $col); } catch (\Throwable $e) {
+// helper near the top (under use + die guard)
+if (!function_exists('tk_has_col')) {
+    function tk_has_col(string $table, string $col): bool {
         try {
-            $cols = Capsule::select("SHOW COLUMNS FROM `$table`");
-            foreach ($cols as $c) {
-                $f = is_object($c) ? ($c->Field ?? null) : ($c['Field'] ?? null);
-                if ($f === $col) return true;
-            }
-        } catch (\Throwable $e2) {}
-        return false;
+            return Capsule::schema()->hasColumn($table, $col);
+        } catch (\Throwable $e) {
+            try {
+                $cols = Capsule::select("SHOW COLUMNS FROM `$table`");
+                foreach ($cols as $c) {
+                    $f = is_object($c) ? ($c->Field ?? null) : ($c['Field'] ?? null);
+                    if ($f === $col) return true;
+                }
+            } catch (\Throwable $e2) {}
+            return false;
+        }
     }
 }
 
-function tk_parse_id_list(?string $csv): array {
-    if (!$csv) return [];
-    $out = [];
-    foreach (explode(',', $csv) as $p) {
-        $v = (int) trim($p);
-        if ($v > 0) $out[] = $v;
+if (!function_exists('tk_parse_id_list')) {
+    function tk_parse_id_list(?string $csv): array {
+        if (!$csv) return [];
+        $out = [];
+        foreach (explode(',', $csv) as $p) {
+            $v = (int) trim($p);
+            if ($v > 0) $out[] = $v;
+        }
+        return $out;
     }
-    return $out;
 }
 
 // ---- Session / admin ----
