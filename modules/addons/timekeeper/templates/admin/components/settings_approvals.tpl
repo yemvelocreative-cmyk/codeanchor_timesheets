@@ -23,8 +23,11 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
   <form method="post" data-tk class="tk-approvals-card-form">
     <input type="hidden" name="tk_csrf" value="<?= $h($tkCsrf) ?>">
     <input type="hidden" name="tk_action" value="save_approvals">
+
+    <!-- Grid wrapper (like hide-tabs .tk-roles-stack) -->
     <div class="tk-approvals-stack">
-      <!-- ===== Island 1: Group 1 - View All ===== -->
+
+      <!-- ===== Island 1: View All ===== -->
       <div class="tk-approvals-island tk-card tk-card--padded">
         <div class="tk-approvals-card" data-scope="viewall">
           <div class="tk-approvals-head">
@@ -47,10 +50,10 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
               ?>
                 <label class="tk-approvals-chip">
                   <input type="checkbox"
-                        name="pending_timesheets_roles[]"
-                        value="<?= $rid ?>"
-                        <?= $isSel ? 'checked' : '' ?>
-                        class="js-approvals-viewall">
+                         name="pending_timesheets_roles[]"
+                         value="<?= $rid ?>"
+                         <?= $isSel ? 'checked' : '' ?>
+                         class="js-approvals-viewall">
                   <span><?= $h($rname) ?></span>
                 </label>
               <?php endforeach; ?>
@@ -59,7 +62,7 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
         </div>
       </div>
 
-      <!-- ===== Island 2: Group 2 - Approve/Unapprove + Min Task Time ===== -->
+      <!-- ===== Island 2: Approve/Unapprove + Min Task Time ===== -->
       <div class="tk-approvals-island tk-card tk-card--padded">
         <div class="tk-approvals-card" data-scope="approve">
           <div class="tk-approvals-head">
@@ -82,10 +85,10 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
               ?>
                 <label class="tk-approvals-chip">
                   <input type="checkbox"
-                        name="pending_timesheets_approval_roles[]"
-                        value="<?= $rid ?>"
-                        <?= $isSel ? 'checked' : '' ?>
-                        class="js-approvals-approve">
+                         name="pending_timesheets_approval_roles[]"
+                         value="<?= $rid ?>"
+                         <?= $isSel ? 'checked' : '' ?>
+                         class="js-approvals-approve">
                   <span><?= $h($rname) ?></span>
                 </label>
               <?php endforeach; ?>
@@ -108,29 +111,32 @@ $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
         </div>
       </div>
 
-      <!-- ===== Island 3: Group 3 - Pagination ===== -->
+      <!-- ===== Island 3: Pagination ===== -->
       <div class="tk-approvals-island tk-card tk-card--padded">
         <div class="tk-approvals-card" data-scope="display">
           <div class="tk-approvals-head">
             <h2 class="tk-approvals-title">Pagination</h2>
           </div>
 
-          <div class="tk-validate-row">
-            <label for="pagination_value" class="form-label">Timesheets per page</label>
-            <small id="paginationHelp" class="text-muted d-block">
-              Set the number of Pending/Approved Timesheets to list per page. Leave blank to use the system default.
-            </small>
-            <input
-              type="number" step="1" min="1"
-              name="pagination_value" id="pagination_value"
-              class="form-control tk-input-w-80"
-              value="<?= $h($paginationValue) ?>"
-              aria-describedby="paginationHelp"
-              inputmode="numeric" pattern="[0-9]*">
+          <div class="tk-approvals-body">
+            <div class="tk-validate-row">
+              <label for="pagination_value" class="form-label">Timesheets per page</label>
+              <small id="paginationHelp" class="text-muted d-block">
+                Set the number of Pending/Approved Timesheets to list per page. Leave blank to use the system default.
+              </small>
+              <input
+                type="number" step="1" min="1"
+                name="pagination_value" id="pagination_value"
+                class="form-control tk-input-w-80"
+                value="<?= $h($paginationValue) ?>"
+                aria-describedby="paginationHelp"
+                inputmode="numeric" pattern="[0-9]*">
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+    </div><!-- /.tk-approvals-stack -->
 
     <div class="tk-actions">
       <button type="submit" class="btn btn-primary">Save Timesheet Settings</button>
