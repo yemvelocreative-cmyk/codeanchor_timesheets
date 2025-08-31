@@ -2,7 +2,7 @@
 .timekeeper-root .pending-root {}
 
 /* Toolbar */
-.timekeeper-root .pt-toolbar {
+.timekeeper-root .pending-root .pt-toolbar {
   display: flex;
   gap: 10px;
   align-items: center;
@@ -12,67 +12,67 @@
 }
 
 /* Cards / Lists */
-.timekeeper-root .pt-list {
+.timekeeper-root .pending-root .pt-list {
   border: 1px solid #e5e5e5;
   background: #fff;
   border-radius: 8px;
   overflow: hidden;
 }
-.timekeeper-root .pt-list header {
+.timekeeper-root .pending-root .pt-list header {
   padding: 10px 12px;
   border-bottom: 1px solid #eee;
   font-weight: 600;
 }
 
 /* Top list of timesheets */
-.timekeeper-root .pt-row {
+.timekeeper-root .pending-root .pt-row {
   display: grid;
   grid-template-columns: 130px 1fr 120px 120px 120px;
   padding: 10px 12px;
   border-top: 1px solid #f2f2f2;
   align-items: center;
 }
-.timekeeper-root .pt-row:first-of-type { border-top: 0; }
-.timekeeper-root .pt-row .muted { color: #666; font-size: 13px; }
+.timekeeper-root .pending-root .pt-row:first-of-type { border-top: 0; }
+.timekeeper-root .pending-root .pt-row .muted { color: #666; font-size: 13px; }
 
 /* Header row style */
-.timekeeper-root .pt-row-head {
+.timekeeper-root .pending-root .pt-row-head {
   background: #fafafa;
   font-weight: 600;
 }
 
 /* Badges */
-.timekeeper-root .pt-badge {
+.timekeeper-root .pending-root .pt-badge {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 10px;
   font-size: 12px;
   border: 1px solid #ddd;
 }
-.timekeeper-root .pt-badge.pending { background: #fff; }
-.timekeeper-root .pt-badge.rejected { background: #fff3cd; border-color: #ffe8a1; }
-.timekeeper-root .pt-badge.approved { background: #e2f0d9; border-color: #a2d28f; }
+.timekeeper-root .pending-root .pt-badge.pending { background: #fff; }
+.timekeeper-root .pending-root .pt-badge.rejected { background: #fff3cd; border-color: #ffe8a1; }
+.timekeeper-root .pending-root .pt-badge.approved { background: #e2f0d9; border-color: #a2d28f; }
 
 /* Actions */
-.timekeeper-root .pt-actions { display: flex; gap: 8px; justify-content: flex-end; }
-.timekeeper-root .pt-actions .btn { white-space: nowrap; }
+.timekeeper-root .pending-root .pt-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.timekeeper-root .pending-root .pt-actions .btn { white-space: nowrap; }
 
 /* Detail card */
-.timekeeper-root .pt-detail {
+.timekeeper-root .pending-root .pt-detail {
   margin-top: 16px;
   background: #fff;
   border: 1px solid #e5e5e5;
   border-radius: 8px;
 }
-.timekeeper-root .pt-detail header {
+.timekeeper-root .pending-root .pt-detail header {
   padding: 10px 12px;
   border-bottom: 1px solid #eee;
   font-weight: 600;
 }
-.timekeeper-root .pt-detail .body { padding: 12px; overflow-x: auto; }
+.timekeeper-root .pending-root .pt-detail .body { padding: 12px; overflow-x: auto; }
 
-/* Edit/view entry rows (grid) */
-.timekeeper-root .pt-entry-row {
+/* --- Add-New row (kept) -------------------------------------------------- */
+.timekeeper-root .pending-root .pt-entry-row {
   display: grid;
   grid-template-columns:
     180px 180px 180px 100px 1fr 100px 100px 90px 70px 100px 70px 100px 90px 90px;
@@ -81,14 +81,14 @@
   padding: 8px 0;
   border-bottom: 1px solid #f2f2f2;
 }
-.timekeeper-root .pt-entry-row:last-of-type { border-bottom: 0; }
+.timekeeper-root .pending-root .pt-entry-row:last-of-type { border-bottom: 0; }
 
 /* Show/Hide helpers for conditional columns */
-.timekeeper-root .col-hidden { visibility: hidden; height: 0; }
-.timekeeper-root .col-show   { visibility: visible; height: auto; }
+.timekeeper-root .pending-root .col-hidden { visibility: hidden; height: 0; }
+.timekeeper-root .pending-root .col-show   { visibility: visible; height: auto; }
 
 /* Totals strip */
-.timekeeper-root .pt-totals {
+.timekeeper-root .pending-root .pt-totals {
   display: flex;
   gap: 20px;
   justify-content: flex-end;
@@ -97,7 +97,7 @@
 }
 
 /* Inline verification block under a row */
-.timekeeper-root .pt-inline-verify {
+.timekeeper-root .pending-root .pt-inline-verify {
   margin: 8px 0;
   border: 1px dashed #f3cc6a;
   background: #fff8e6;
@@ -107,21 +107,133 @@
 }
 
 /* Small utilities to avoid inline styles */
-.timekeeper-root .pt-fw-600 { font-weight: 600; }
-.timekeeper-root .pt-mb-16 { margin-bottom: 16px; }
-.timekeeper-root .pt-mt-12 { margin-top: 12px; }
-.timekeeper-root .pt-mb-10 { margin-bottom: 10px; }
-.timekeeper-root .pt-note  { font-size: 90%; color: #666; }
-.timekeeper-root .pt-reject-note { max-width: 420px; height: 60px; margin: 8px 0; }
+.timekeeper-root .pending-root .pt-fw-600 { font-weight: 600; }
+.timekeeper-root .pending-root .pt-mb-16 { margin-bottom: 16px; }
+.timekeeper-root .pending-root .pt-mt-12 { margin-top: 12px; }
+.timekeeper-root .pending-root .pt-mb-10 { margin-bottom: 10px; }
+.timekeeper-root .pending-root .pt-note  { font-size: 90%; color: #666; }
+.timekeeper-root .pending-root .pt-reject-note { max-width: 420px; height: 60px; margin: 8px 0; }
 
-/* Mobile: stack list header & rows nicely */
+/* ========================================================================
+   Timesheet-layout shim (scoped to Pending)
+   Makes the Pending edit section match the Timesheet module's table-card UI.
+   ======================================================================== */
+
+/* Card rows */
+.timekeeper-root .pending-root .tk-row { margin-bottom: 8px; }
+.timekeeper-root .pending-root .tk-card {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+}
+.timekeeper-root .pending-root .tk-row--table { padding: 10px 12px; }
+
+/* Grid columns: Client | Dept | Category | Description | Time | Flags | Actions */
+.timekeeper-root .pending-root .tk-row--table .tk-row-grid {
+  display: grid;
+  grid-template-columns:
+    1.1fr /* Client   */
+    0.9fr /* Dept     */
+    1fr   /* Category */
+    2fr   /* Desc     */
+    1.4fr /* Time     */
+    1.4fr /* Flags    */
+    auto; /* Actions  */
+  align-items: center;
+  gap: 12px;
+}
+
+/* Header look */
+.timekeeper-root .pending-root .tk-row--header { background: #fafafa; }
+.timekeeper-root .pending-root .tk-row--header .hdr { font-weight: 600; }
+
+/* Inputs inside edit grid */
+.timekeeper-root .pending-root .tk-row-select,
+.timekeeper-root .pending-root .tk-row-input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.timekeeper-root .pending-root .tk-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.timekeeper-root .pending-root .tk-inline-time-input {
+  width: 90px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.timekeeper-root .pending-root .tk-inline .sep { opacity: 0.6; }
+
+/* Flags area */
+.timekeeper-root .pending-root .cell-flags { display: flex; gap: 8px; flex-wrap: wrap; }
+.timekeeper-root .pending-root .cell-flags--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px 12px;
+  align-items: start;
+}
+.timekeeper-root .pending-root .flag-item .tk-flag-label { display: block; font-size: 12px; color: #555; margin-bottom: 4px; }
+.timekeeper-root .pending-root .tk-inline-check { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Badges group (read-only row) */
+.timekeeper-root .pending-root .tk-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.timekeeper-root .pending-root .tk-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  border: 1px solid #ddd;
+  background: #f8f8f8;
+}
+.timekeeper-root .pending-root .tk-badge--success { background: #e2f0d9; border-color: #a2d28f; }
+
+/* Actions cell */
+.timekeeper-root .pending-root .cell-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* Inline alerts used under rows (verify prompts) */
+.timekeeper-root .pending-root .ts-alert {
+  margin: 8px 0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+.timekeeper-root .pending-root .ts-alert-warning {
+  background: #fff8e6;
+  border: 1px dashed #f3cc6a;
+}
+
+/* Totals bar styled like Timesheet totals (optional, used if present) */
+.timekeeper-root .pending-root .tk-totals-wrap { margin-top: 10px; }
+.timekeeper-root .pending-root .tk-totals-bar {
+  display: inline-flex;
+  gap: 8px;
+  align-items: baseline;
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.timekeeper-root .pending-root .tk-totals-bar .sep { opacity: 0.6; }
+.timekeeper-root .pending-root .tk-totals-bar .lbl { color: #555; }
+.timekeeper-root .pending-root .tk-totals-bar .unit { color: #777; margin-left: 2px; }
+
+/* Mobile: stack list header & rows nicely; keep table-card readable */
 @media (max-width: 900px) {
-  .timekeeper-root .pt-row,
-  .timekeeper-root .pt-row-head {
+  .timekeeper-root .pending-root .pt-row,
+  .timekeeper-root .pending-root .pt-row-head {
     grid-template-columns: 1fr 1fr;
     row-gap: 4px;
   }
-  .timekeeper-root .pt-actions { justify-content: flex-start; }
-  .timekeeper-root .pt-detail .body { padding: 10px; }
-  /* Entry rows remain grid; rely on horizontal scroll if needed */
+  .timekeeper-root .pending-root .pt-actions { justify-content: flex-start; }
+  .timekeeper-root .pending-root .pt-detail .body { padding: 10px; }
+
+  /* Table-card grid compresses; description grows, flags wrap */
+  .timekeeper-root .pending-root .tk-row--table .tk-row-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .timekeeper-root .pending-root .cell-actions { justify-content: flex-start; }
 }
