@@ -1,6 +1,9 @@
 <?php
 // /modules/addons/timekeeper/pages/approved_timesheets.php
 use WHMCS\Database\Capsule;
+use Timekeeper\Helpers\CoreHelper as CoreH;
+use Timekeeper\Helpers\ApprovedTimesheetsHelper as ApprovedH;
+// /modules/addons/timekeeper/pages/approved_timesheets.php
 
 // --- Load helpers (supports either helpers/ or includes/helpers/) ---
 $base = dirname(__DIR__); // -> /modules/addons/timekeeper
@@ -13,8 +16,6 @@ $base = dirname(__DIR__); // -> /modules/addons/timekeeper
     else { throw new \RuntimeException("Missing core_helper.php in helpers/ or includes/helpers/"); }
 })($base);
 CoreH::requireHelper($base, 'approved_timesheets_helper');
-use Timekeeper\Helpers\CoreHelper as CoreH;
-use Timekeeper\Helpers\ApprovedTimesheetsHelper as ApprovedH;
 
 // ---- Context: current admin + role ----
 $adminId = isset($_SESSION['adminid']) ? (int) $_SESSION['adminid'] : 0;
