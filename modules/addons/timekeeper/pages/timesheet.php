@@ -6,6 +6,13 @@ if (!defined('WHMCS')) {
     die('Access Denied');
 }
 
+$base = dirname(__DIR__); // /modules/addons/timekeeper
+require_once $base . '/includes/helpers/core_helper.php';
+require_once $base . '/includes/helpers/timesheet_helper.php';
+
+use Timekeeper\Helpers\CoreHelper as CoreH;
+use Timekeeper\Helpers\TimesheetHelper as TSH;
+
 // ---- Auth / session ----
 $adminId = isset($_SESSION['adminid']) ? (int) $_SESSION['adminid'] : 0;
 if ($adminId <= 0) {
@@ -92,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
 // ADD / UPDATE entry
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_id'])) {
     // Ensure today's timesheet exists to attach entries to
-    $tsMeta = tk_load_or_create_today_timesheet($adminId, $today);
+    $tsMeta = TSH::loadOrCreateTodayTimesheet($adminId, $today);
     $timesheetId = $tsMeta['id'];
 
     $editId        = isset($_POST['edit_id']) ? (int) $_POST['edit_id'] : 0;
@@ -184,8 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_id'])) {
 // ======================================================================
 
 // Load-only for GET (do NOT create on visit)
-$tsMeta = tk_load_today_timesheet($adminId, $today);
-
+$tsMeta = TSH::loadTodayTimesheet($adminId, $today);
 if ($tsMeta) {
     $timesheetId     = $tsMeta['id'];
     $timesheetDate   = $tsMeta['date'];
