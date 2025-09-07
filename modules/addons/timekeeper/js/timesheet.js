@@ -2,13 +2,50 @@
 (function () {
   'use strict';
 
-  // Quick selector by name within a form
   function qn(form, name) {
     return form.querySelector('[name="' + name + '"]');
   }
 
-  // Show/hide billable/sla time inputs + (optional) headers using col-hidden/col-show
-  // headerId is optional; pass if you have a matching header element to toggle.
+  // --- AJAX helper
+  function fetchJSON(url) {
+    return fetch(url, { credentials: 'same-origin' }).then(r => r.ok ? r.json() : []);
+  }
+
+  // Populate a <select> with ticket options [{id, text}], optionally set initial value
+  function populateTicketSelect(selectEl, clientId, initialValue) {
+    if (!selectEl) return;
+    const url = 'addonmodules.php?module=timekeeper&timekeeperpage=timesheet&ajax=tickets&client_id=' + encodeURIComponent(clientId);
+    fetchJSON(url).then(items => {
+      // wipe
+      while (selectEl.options.length) selectEl.remove(0);
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = 'Select a ticket…';
+      selectEl.appendChild(placeholder);
+
+      items.forEach(it => {
+        const opt = document.createElement('option');
+        opt.value = String(it.id);
+        opt.textContent = it.text || ('Ticket ID ' + it.id);
+        selectEl.appendChild(opt);
+      });
+
+      if (initialValue) {
+        selectEl.value = String(initialValue);
+      } else {
+        // Optional: auto-select most recent ticket (first item) if desired.
+        // Commented out by default:
+        // if (items.length > 0) selectEl.value = String(items[0].id);
+      }
+
+      // Refresh Select2 if applied
+      if (window.jQuery && jQuery.fn && jQuery.fn.select2) {
+        jQuery(selectEl).trigger('change.select2');
+      }
+    }).catch(() => { /* ignore */ });
+  }
+
+  // Show/hide billable/sla time inputs
   function toggleTimeField(form, checkboxName, inputName, headerId) {
     const chk = qn(form, checkboxName);
     const inp = qn(form, inputName);
@@ -23,7 +60,6 @@
       if (!show) {
         inp.value = '';
       } else if (!inp.value) {
-        // Autofill from time_spent if available
         const spent = qn(form, 'time_spent');
         if (spent && spent.value) inp.value = spent.value;
       }
@@ -38,7 +74,6 @@
     apply();
   }
 
-  // Calculate time_spent within a form from start_time/end_time (both HH:MM)
   function bindTimeCalc(form) {
     const start = qn(form, 'start_time');
     const end = qn(form, 'end_time');
@@ -67,7 +102,6 @@
     end.addEventListener('change', calc);
   }
 
-  // Filter task_category by selected department (single form)
   function bindDeptTaskFilter(deptSel, taskSel) {
     if (!deptSel || !taskSel) return;
 
@@ -79,7 +113,6 @@
         opt.style.display = show ? 'block' : 'none';
       });
 
-      // Reset if current selection is now hidden
       if (taskSel.selectedOptions.length && taskSel.selectedOptions[0].style.display === 'none') {
         taskSel.value = '';
       }
@@ -89,7 +122,6 @@
     apply();
   }
 
-  // Confirm deletes
   function bindDeleteConfirms() {
     document.querySelectorAll('form.ts-delete-form').forEach(form => {
       form.addEventListener('submit', function (e) {
@@ -98,12 +130,12 @@
     });
   }
 
-  // Initialize Select2 on #client_id, if available
-  function initSelect2() {
+  // Initialize Select2 on elements by selector
+  function initSelect2For(selector, widthPx) {
     if (!window.jQuery || !jQuery.fn || !jQuery.fn.select2) return;
-    jQuery('#client_id').select2({
-      width: '200px',
-      placeholder: 'Select Client',
+    jQuery(selector).select2({
+      width: widthPx ? (widthPx + 'px') : 'resolve',
+      placeholder: 'Select…',
       matcher: function (params, data) {
         if (jQuery.trim(params.term) === '') return data;
         const term = params.term.toLowerCase();
@@ -113,18 +145,40 @@
     });
   }
 
-  // ------- Boot -------
   document.addEventListener('DOMContentLoaded', function () {
     // Add form behavior
     const addForm = document.getElementById('addTaskForm');
     if (addForm) {
-      toggleTimeField(addForm, 'billable', 'billable_time'); // headerId optional, omitted
-      toggleTimeField(addForm, 'sla', 'sla_time');           // headerId optional, omitted
+      toggleTimeField(addForm, 'billable', 'billable_time');
+      toggleTimeField(addForm, 'sla', 'sla_time');
       bindTimeCalc(addForm);
       bindDeptTaskFilter(
         document.getElementById('department_id'),
         document.getElementById('task_category_id')
       );
+
+      // Tickets: load when client changes (Add form)
+      const clientSel = document.getElementById('client_id');
+      const ticketSel = document.getElementById('ticket_id');
+      if (clientSel && ticketSel) {
+        // Initial (if editing an existing row in the add form context)
+        const initialTicket = parseInt(ticketSel.getAttribute('data-initial') || '0', 10) || null;
+        if (clientSel.value) {
+          populateTicketSelect(ticketSel, clientSel.value, initialTicket);
+        }
+        clientSel.addEventListener('change', function () {
+          if (clientSel.value) {
+            populateTicketSelect(ticketSel, clientSel.value, null);
+          } else {
+            // Clear
+            while (ticketSel.options.length) ticketSel.remove(0);
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = 'Select a ticket…';
+            ticketSel.appendChild(opt);
+          }
+        });
+      }
     }
 
     // Inline edit behavior (per-row)
@@ -135,9 +189,9 @@
       const taskSel = form.querySelector('.edit-task-category');
       if (deptSel && taskSel) bindDeptTaskFilter(deptSel, taskSel);
 
-      const spent = qn(form, 'time_spent'); // hidden (edit) or readonly (add)
+      const spent = qn(form, 'time_spent');
 
-      // Billable toggle + autofill
+      // Billable
       const billChk = form.querySelector('input[name="billable"]');
       const billInp = form.querySelector('input[name="billable_time"]');
       if (billChk && billInp) {
@@ -148,14 +202,14 @@
           if (!show) {
             billInp.value = '';
           } else if (!billInp.value && spent && spent.value) {
-            billInp.value = spent.value; // autofill from time_spent
+            billInp.value = spent.value;
           }
         }
         billChk.addEventListener('change', setBill);
         setBill();
       }
 
-      // SLA toggle + autofill
+      // SLA
       const slaChk = form.querySelector('input[name="sla"]');
       const slaInp = form.querySelector('input[name="sla_time"]');
       if (slaChk && slaInp) {
@@ -166,15 +220,39 @@
           if (!show) {
             slaInp.value = '';
           } else if (!slaInp.value && spent && spent.value) {
-            slaInp.value = spent.value; // autofill from time_spent
+            slaInp.value = spent.value;
           }
         }
         slaChk.addEventListener('change', setSla);
         setSla();
       }
+
+      // Tickets: load for edit row
+      const rowClient = form.querySelector('.js-row-client');
+      const rowTicket = form.querySelector('.js-ticket-select');
+      if (rowClient && rowTicket) {
+        const initial = parseInt(rowTicket.getAttribute('data-initial') || '0', 10) || null;
+
+        function loadRowTickets() {
+          if (rowClient.value) {
+            populateTicketSelect(rowTicket, rowClient.value, initial);
+          }
+        }
+        loadRowTickets();
+
+        // If client changes in edit mode, reload ticket list
+        rowClient.addEventListener('change', function () {
+          populateTicketSelect(rowTicket, rowClient.value, null);
+        });
+      }
     });
 
     bindDeleteConfirms();
-    initSelect2();
+
+    // Select2 init
+    initSelect2For('#client_id', 200);
+    initSelect2For('#ticket_id', 260);
+    initSelect2For('form.tk-row-edit .tk-row-select', 180);
+    initSelect2For('form.tk-row-edit .js-ticket-select', 240);
   });
 })();

@@ -6,13 +6,6 @@ if (!defined('WHMCS')) {
     die('Access Denied');
 }
 
-$base = dirname(__DIR__); // /modules/addons/timekeeper
-require_once $base . '/includes/helpers/core_helper.php';
-require_once $base . '/includes/helpers/timesheet_helper.php';
-
-use Timekeeper\Helpers\CoreHelper as CoreH;
-use Timekeeper\Helpers\TimesheetHelper as TSH;
-
 // ---- Auth / session ----
 $adminId = isset($_SESSION['adminid']) ? (int) $_SESSION['adminid'] : 0;
 if ($adminId <= 0) {
@@ -23,7 +16,49 @@ if ($adminId <= 0) {
 // ---- Date context (today) ----
 $today = date('Y-m-d');
 
-// Helper: ensure today's timesheet exists and return [id,status,date]
+/**
+ * AJAX: return tickets for a given client_id
+ * GET: ?ajax=tickets&client_id=NN
+ * Returns: [{id, tid, text}]
+ */
+if (($_GET['ajax'] ?? '') === 'tickets') {
+    header('Content-Type: application/json; charset=UTF-8');
+    $clientId = (int)($_GET['client_id'] ?? 0);
+    if ($clientId <= 0) {
+        echo json_encode([]);
+        exit;
+    }
+
+    // Pull recent tickets for this client (limit to reasonable number)
+    // Columns are consistent with WHMCS: id (PK), tid (public ticket number), title (subject), status, lastreply
+    $tickets = Capsule::table('tbltickets')
+        ->where('userid', $clientId)
+        ->orderBy('lastreply', 'desc')
+        ->orderBy('id', 'desc')
+        ->limit(50)
+        ->get(['id', 'tid', 'title']);
+
+    $out = [];
+    foreach ($tickets as $t) {
+        $tid   = (string)($t->tid ?? '');
+        $title = (string)($t->title ?? '');
+        $label = $tid !== '' ? "Ticket #{$tid}" : "Ticket ID {$t->id}";
+        if ($title !== '') {
+            $label .= " — " . mb_strimwidth($title, 0, 60, '…', 'UTF-8');
+        }
+        $out[] = [
+            'id'   => (int)$t->id,   // numeric PK, stored in our DB
+            'tid'  => $tid,          // human ticket number (display)
+            'text' => $label,
+        ];
+    }
+    echo json_encode($out);
+    exit;
+}
+
+// ---- Helpers (local) ----
+
+// Ensure today's timesheet exists and return [id,status,date]
 function tk_load_or_create_today_timesheet(int $adminId, string $today): array
 {
     $ts = Capsule::table('mod_timekeeper_timesheets')
@@ -55,7 +90,7 @@ function tk_load_or_create_today_timesheet(int $adminId, string $today): array
     ];
 }
 
-// Helper: load today's timesheet if it exists
+// Load today's timesheet if it exists
 function tk_load_today_timesheet(int $adminId, string $today): ?array
 {
     $ts = Capsule::table('mod_timekeeper_timesheets')
@@ -74,7 +109,7 @@ function tk_load_today_timesheet(int $adminId, string $today): ?array
 }
 
 // ======================================================================
-// POST HANDLERS FIRST (avoid headers already sent issues)
+// POST HANDLERS FIRST
 // ======================================================================
 
 // DELETE entry (guarded: must belong to today's timesheet for this admin)
@@ -98,8 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
 
 // ADD / UPDATE entry
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_id'])) {
-    // Ensure today's timesheet exists to attach entries to
-    $tsMeta = TSH::loadOrCreateTodayTimesheet($adminId, $today);
+    $tsMeta = tk_load_or_create_today_timesheet($adminId, $today);
     $timesheetId = $tsMeta['id'];
 
     $editId        = isset($_POST['edit_id']) ? (int) $_POST['edit_id'] : 0;
@@ -107,7 +141,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_id'])) {
     $departmentId  = isset($_POST['department_id']) ? (int) $_POST['department_id'] : 0;
     $subtaskId     = isset($_POST['task_category_id']) ? (int) $_POST['task_category_id'] : 0;
 
-    $ticketId      = isset($_POST['ticket_id']) ? trim((string) $_POST['ticket_id']) : '';
+    // ticket_id will be the numeric tbltickets.id (or empty)
+    $ticketId      = isset($_POST['ticket_id']) && $_POST['ticket_id'] !== '' ? (int) $_POST['ticket_id'] : null;
+
     $description   = isset($_POST['description']) ? trim((string) $_POST['description']) : '';
     $startTime     = isset($_POST['start_time']) ? (string) $_POST['start_time'] : '';
     $endTime       = isset($_POST['end_time']) ? (string) $_POST['end_time'] : '';
@@ -118,19 +154,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_id'])) {
     $sla           = isset($_POST['sla']) ? 1 : 0;
     $slaTime       = isset($_POST['sla_time']) ? (float) $_POST['sla_time'] : 0.0;
 
-    // --- Server-side defaults (JS mirrors this, but enforce here too)
+    // Server-side defaults
     if ($billable === 1 && $billableTime <= 0 && $timeSpent > 0) {
         $billableTime = $timeSpent;
     }
     if ($sla === 1 && $slaTime <= 0 && $timeSpent > 0) {
         $slaTime = $timeSpent;
     }
-
-    // Normalize dependent fields if checkboxes off
     if ($billable !== 1) { $billableTime = 0.0; }
     if ($sla !== 1)      { $slaTime      = 0.0; }
 
-    // --- Referential checks (lightweight)
+    // Referential checks
     $clientOk = $clientId > 0 && Capsule::table('tblclients')->where('id', $clientId)->exists();
     $deptOk   = $departmentId > 0 && Capsule::table('mod_timekeeper_departments')
                     ->where('id', $departmentId)->where('status', 'active')->exists();
@@ -140,7 +174,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_id'])) {
                     ->where('status', 'active')
                     ->exists();
 
-    if (!$clientOk || !$deptOk || !$tcOk) {
+    // If a ticket is supplied, ensure it belongs to the same client
+    $ticketOk = true;
+    if ($ticketId !== null) {
+        $ticketOk = Capsule::table('tbltickets')
+            ->where('id', $ticketId)
+            ->where('userid', $clientId)
+            ->exists();
+    }
+
+    if (!$clientOk || !$deptOk || !$tcOk || !$ticketOk) {
         header("Location: addonmodules.php?module=timekeeper&timekeeperpage=timesheet&error=invalid_refs");
         exit;
     }
@@ -150,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_id'])) {
         'client_id'        => $clientId,
         'department_id'    => $departmentId,
         'task_category_id' => $subtaskId,
-        'ticket_id'        => $ticketId,
+        'ticket_id'        => $ticketId,   // may be null
         'description'      => $description,
         'start_time'       => $startTime,
         'end_time'         => $endTime,
@@ -163,7 +206,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_id'])) {
     ];
 
     if ($editId > 0) {
-        // Guard: ensure entry belongs to this admin & today's timesheet
         $owned = Capsule::table('mod_timekeeper_timesheet_entries as e')
             ->join('mod_timekeeper_timesheets as t', 't.id', '=', 'e.timesheet_id')
             ->where('e.id', $editId)
@@ -175,13 +217,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_id'])) {
             Capsule::table('mod_timekeeper_timesheet_entries')->where('id', $editId)->update($data);
         }
     } else {
-        // Insert
         $data['timesheet_id'] = $timesheetId;
         $data['created_at']   = $now;
         Capsule::table('mod_timekeeper_timesheet_entries')->insert($data);
     }
 
-    // Prevent resubmission
     header("Location: addonmodules.php?module=timekeeper&timekeeperpage=timesheet");
     exit;
 }
@@ -190,24 +230,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_id'])) {
 // GET RENDER PATH
 // ======================================================================
 
-// Load-only for GET (do NOT create on visit)
-$tsMeta = TSH::loadTodayTimesheet($adminId, $today);
+$tsMeta = tk_load_today_timesheet($adminId, $today);
+
 if ($tsMeta) {
     $timesheetId     = $tsMeta['id'];
     $timesheetDate   = $tsMeta['date'];
     $timesheetStatus = $tsMeta['status'];
 
-    $existingTasks = Capsule::table('mod_timekeeper_timesheet_entries')
-        ->where('timesheet_id', $timesheetId)
-        ->orderBy('start_time', 'asc')
-        ->orderBy('end_time', 'asc')
-        ->get();
+    // Join tickets to fetch public ticket number (tid) for display
+    $existingTasks = Capsule::table('mod_timekeeper_timesheet_entries as e')
+        ->leftJoin('tbltickets as ti', 'ti.id', '=', 'e.ticket_id')
+        ->where('e.timesheet_id', $timesheetId)
+        ->orderBy('e.start_time', 'asc')
+        ->orderBy('e.end_time', 'asc')
+        ->get([
+            'e.*',
+            'ti.tid as ticket_tid',
+        ]);
 } else {
-    // No timesheet exists yet for today
     $timesheetId     = 0;
     $timesheetDate   = $today;
-    $timesheetStatus = 'not_assigned'; // template supports this
-    $existingTasks   = collect([]);    // empty collection
+    $timesheetStatus = 'not_assigned';
+    $existingTasks   = collect([]);
 }
 
 // Dropdown data

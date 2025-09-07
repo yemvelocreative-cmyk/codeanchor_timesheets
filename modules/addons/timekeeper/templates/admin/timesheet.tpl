@@ -94,12 +94,15 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
               </div>
             </div>
 
-            <!-- Support Ticket under Description -->
+            <!-- Support Ticket (auto-populated by selected client) -->
             <div class="tk-field">
               <div class="tk-label">Support Ticket</div>
               <div class="tk-input">
-                <input type="text" name="ticket_id" placeholder="e.g. 12345"
-                       value="<?= $isEditing ? htmlspecialchars($task->ticket_id ?? '', ENT_QUOTES, 'UTF-8') : '' ?>">
+                <select name="ticket_id" id="ticket_id" class="tk-ticket-select" data-initial="<?= $isEditing ? (int)($task->ticket_id ?? 0) : 0 ?>">
+                  <option value="">Select a ticket…</option>
+                  <!-- Options loaded dynamically via AJAX based on client -->
+                </select>
+                <small class="text-muted">Shows recent tickets for the selected client.</small>
               </div>
             </div>
           </div>
@@ -158,7 +161,6 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
             </div>
           </div>
 
-          <!-- Actions under the right block -->
           <div class="tk-actions-right">
             <button type="submit" class="btn btn-primary"><?= $isEditing ? 'Save Changes' : 'Add' ?></button>
             <a href="addonmodules.php?module=timekeeper&timekeeperpage=timesheet" class="btn btn-default">Cancel</a>
@@ -166,7 +168,6 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
         </section>
       </div>
 
-      <!-- Hidden fields required by your backend -->
       <input type="hidden" name="timesheet_id" value="<?= (int) $timesheetId ?>">
       <input type="hidden" name="admin_id" value="<?= (int) $adminId ?>">
     </form>
@@ -213,7 +214,7 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
           </div>
         </div>
 
-        <!-- Header row for alignment -->
+        <!-- Header row -->
         <div class="tk-row tk-card tk-row--table tk-row--header">
           <div class="tk-row-grid">
             <div class="hdr">Client</div>
@@ -232,14 +233,13 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
 
             <div class="tk-row tk-card tk-row--table">
               <?php if ($editing): ?>
-                <!-- Inline EDIT row (table-grid) -->
+                <!-- Inline EDIT row -->
                 <form method="post" class="tk-row-grid tk-row-edit">
                   <input type="hidden" name="edit_id" value="<?= (int) $task->id ?>">
-                  <!-- include time_spent so backend receives calculated value -->
                   <input type="hidden" name="time_spent" value="<?= number_format((float)$task->time_spent, 2) ?>">
 
                   <div class="cell cell-client">
-                    <select name="client_id" class="tk-row-select">
+                    <select name="client_id" class="tk-row-select js-row-client">
                       <?php foreach ($clients as $c): ?>
                         <option value="<?= (int) $c->id ?>" <?= ((int)$task->client_id === (int)$c->id) ? 'selected' : '' ?>>
                           <?= htmlspecialchars($c->companyname ?: ($c->firstname . ' ' . $c->lastname), ENT_QUOTES, 'UTF-8') ?>
@@ -283,11 +283,12 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
                     <!-- Ticket -->
                     <div class="flag-item">
                       <label class="tk-flag-label">Ticket</label>
-                      <input type="text"
-                            name="ticket_id"
-                            class="tk-row-input tk-ticket-input"
-                            placeholder="Ticket #"
-                            value="<?= htmlspecialchars($task->ticket_id ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                      <select name="ticket_id"
+                              class="tk-row-select js-ticket-select"
+                              data-client-id="<?= (int)$task->client_id ?>"
+                              data-initial="<?= (int)($task->ticket_id ?? 0) ?>">
+                        <option value="">Select a ticket…</option>
+                      </select>
                     </div>
 
                     <!-- Billable -->
@@ -317,10 +318,7 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
                             placeholder="0.00"
                             value="<?= number_format((float)$task->sla_time, 2) ?>">
                     </div>
-
-                    <!-- Future flags go here as more <div class="flag-item">...</div> -->
                   </div>
-
 
                   <div class="cell cell-actions">
                     <button type="submit" class="btn btn-success">Save</button>
@@ -328,7 +326,7 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
                   </div>
                 </form>
               <?php else: ?>
-                <!-- READ-ONLY row (table-grid) -->
+                <!-- READ-ONLY row -->
                 <div class="tk-row-grid">
                   <div class="cell cell-client">
                     <strong><?= htmlspecialchars($clientMap[$task->client_id] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></strong>
@@ -345,10 +343,15 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
 
                   <div class="cell cell-flags">
                     <?php if (!empty($task->ticket_id)): ?>
-                      <span class="tk-badge tk-badge--success">Ticket #<?= htmlspecialchars($task->ticket_id, ENT_QUOTES, 'UTF-8') ?></span>
+                      <?php if (!empty($task->ticket_tid)): ?>
+                        <span class="tk-badge tk-badge--success">Ticket #<?= htmlspecialchars($task->ticket_tid, ENT_QUOTES, 'UTF-8') ?></span>
+                      <?php else: ?>
+                        <span class="tk-badge tk-badge--success">Ticket ID <?= (int)$task->ticket_id ?></span>
+                      <?php endif; ?>
                     <?php else: ?>
                       <span class="tk-badge">No ticket</span>
                     <?php endif; ?>
+
                     <?php if ((float)$task->billable_time > 0): ?>
                       <span class="tk-badge">Billable <?= number_format((float)$task->billable_time, 2) ?>h</span>
                     <?php endif; ?>
