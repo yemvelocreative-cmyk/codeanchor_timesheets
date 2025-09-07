@@ -13,6 +13,14 @@ if ($adminId <= 0) {
     exit;
 }
 
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'tickets') {
+    while (ob_get_level() > 0) { ob_end_clean(); } // clear any buffered HTML
+    header('Content-Type: application/json; charset=UTF-8');
+    // ... query tbltickets by userid ...
+    echo json_encode($items);
+    exit;
+}
+
 // ---- Date context (today) ----
 $today = date('Y-m-d');
 
