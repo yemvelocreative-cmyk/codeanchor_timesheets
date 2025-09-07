@@ -5,24 +5,61 @@
   // --- helpers ---
   function qn(form, name) { return form ? form.querySelector('[name="' + name + '"]') : null; }
 
+  // Populate ticket <select> for the chosen client
+  function populateTicketSelect(selectEl, tickets, preselected) {
+    if (!selectEl) return;
+    const current = selectEl.value;
+    const valToSet = (preselected !== undefined && preselected !== null) ? String(preselected) : current;
+
+    // Clear
+    selectEl.innerHTML = '';
+    const optEmpty = document.createElement('option');
+    optEmpty.value = '';
+    optEmpty.textContent = 'Select…';
+    selectEl.appendChild(optEmpty);
+
+    if (Array.isArray(tickets)) {
+      tickets.forEach(t => {
+        const opt = document.createElement('option');
+        const tid = String(t.tid || t.id || '');
+        const title = (t.title || '').trim();
+        opt.value = tid;
+        opt.textContent = tid ? ('#' + tid + (title ? (' — ' + title) : '')) : (title || '(untitled)');
+        if (valToSet && tid === valToSet) opt.selected = true;
+        selectEl.appendChild(opt);
+      });
+    }
+  }
+
+  // Bind client -> ticket linkage for a given form
+  function bindTicketPicker(clientSelect, ticketSelect) {
+    if (!clientSelect || !ticketSelect) return;
+    const data = (window.TK_TICKETS_BY_CLIENT || {});
+    const preselected = ticketSelect.getAttribute('data-preselected') || '';
+
+    function apply() {
+      const clientId = clientSelect.value ? String(clientSelect.value) : '';
+      const items = clientId && data[clientId] ? data[clientId] : [];
+      populateTicketSelect(ticketSelect, items, preselected);
+    }
+
+    clientSelect.addEventListener('change', apply);
+    // initial fill
+    apply();
+  }
+
   // Toggle a time input & optional header by checkbox
-  // ENHANCED: also auto-fill the time field from time_spent when checked,
-  // and keep it in sync when time_spent changes (unless user edits manually).
   function toggleTimeField(form, chkName, inputName, headerEl) {
     const chk   = qn(form, chkName);
     const inp   = qn(form, inputName);
     const spent = qn(form, 'time_spent'); // visible in Add, hidden in Edit
-
     if (!chk || !inp) return;
 
-    // user-edited detection
     function markManual() { inp.dataset.autofill = '0'; }
     inp.addEventListener('input', markManual);
 
     function getSpent() {
-      // prefer value in this form; fallback to global (Add form might be a separate form)
       if (spent && spent.value) return spent.value;
-      // last resort: global name (avoid if possible)
       const g = document.querySelector('form#pt-add-form [name="time_spent"]');
       return g ? g.value : '';
     }
@@ -35,13 +72,12 @@
       inp.classList.remove('col-show'); inp.classList.add('col-hidden');
       if (headerEl) { headerEl.classList.remove('col-show'); headerEl.classList.add('col-hidden'); }
       inp.value = '';
-      inp.dataset.autofill = '1'; // if re-enabled, we’ll re-autofill
+      inp.dataset.autofill = '1';
     }
 
     function maybeAutofill() {
       if (!chk.checked) return;
       const ts = getSpent();
-      // Autofill if empty OR previously autofilled
       if (inp.value.trim() === '' || inp.dataset.autofill !== '0') {
         inp.value = ts || '';
         inp.dataset.autofill = '1';
@@ -56,22 +92,17 @@
 
     chk.addEventListener('change', apply);
 
-    // Keep in sync if time_spent changes
     const spentEl = spent;
     if (spentEl) {
-      // if bindTimeCalc sets value programmatically, listen to change & input
       function syncFromSpent() { maybeAutofill(); }
       spentEl.addEventListener('change', syncFromSpent);
       spentEl.addEventListener('input',  syncFromSpent);
     }
 
-    // initial state
-    // If already checked on load, ensure field is visible and populated
     apply();
   }
 
-  // Calculate time_spent for a form with start/end/time_spent fields
-  // ENHANCED: dispatch a 'change' event when time_spent updates so dependent logic can react.
+  // Calculate time_spent
   function bindTimeCalc(scope) {
     const start = scope.querySelector('[name="start_time"]');
     const end   = scope.querySelector('[name="end_time"]');
@@ -87,11 +118,10 @@
       if (diff <= 0) { alert('End time must be later than start time.'); end.value = ''; spent.value = ''; spent.dispatchEvent(new Event('change')); return; }
       const val = (Math.round((diff / 60) * 100) / 100).toFixed(2);
       spent.value = val;
-      spent.dispatchEvent(new Event('change')); // notify any listeners
+      spent.dispatchEvent(new Event('change'));
     }
     start.addEventListener('change', calc);
     end.addEventListener('change', calc);
-    // run once if both are filled on load
     if (start.value && end.value) calc();
   }
 
@@ -113,28 +143,29 @@
     apply();
   }
 
-  // Bind edit rows (matches your template classes)
+  // Bind edit rows
   function bindEditRows() {
-    document.querySelectorAll('.pending-edit-department').forEach(function (deptSel) {
-      const form = deptSel.closest('form');
-      const taskSel = form ? form.querySelector('.pending-edit-task-category') : null;
-      if (taskSel) bindDeptTaskFilter(deptSel, taskSel);
-      if (form) {
-        bindTimeCalc(form);
-        // NEW: live toggle + auto-fill for Billable/SLA in EDIT rows
-        toggleTimeField(form, 'billable', 'billable_time');
-        toggleTimeField(form, 'sla', 'sla_time');
-      }
+    document.querySelectorAll('.tk-row-edit').forEach(function (form) {
+      // Client -> Ticket linkage per edit row
+      const clientSel = form.querySelector('.pending-edit-client');
+      const ticketSel = form.querySelector('.tk-ticket-select');
+      if (clientSel && ticketSel) bindTicketPicker(clientSel, ticketSel);
+
+      // Dept -> Task filter, time calc, and billable/SLA toggles
+      const deptSel = form.querySelector('.pending-edit-department');
+      const taskSel = form.querySelector('.pending-edit-task-category');
+      if (deptSel && taskSel) bindDeptTaskFilter(deptSel, taskSel);
+      bindTimeCalc(form);
+      toggleTimeField(form, 'billable', 'billable_time');
+      toggleTimeField(form, 'sla', 'sla_time');
     });
   }
 
-  // Approve form: (kept for compatibility; no-op when using form="approve-form")
+  // Approve form injection (legacy-safe)
   function bindApproveInjection() {
     var approveForm = document.getElementById('approve-form');
     if (!approveForm) return;
     approveForm.addEventListener('submit', function () {
-      // If any verify checkboxes are outside the form and lack form attribute (legacy),
-      // inject hidden inputs so values submit reliably.
       document.querySelectorAll('input[type="checkbox"][name^="verify_unbilled_"]').forEach(function (chk) {
         if (chk.form === approveForm || approveForm.contains(chk)) return;
         var hidden = document.createElement('input');
@@ -146,7 +177,7 @@
     });
   }
 
-  // Optional confirms (only fire if you add these classes in the template later)
+  // Optional confirms
   function bindConfirms() {
     document.querySelectorAll('form.pt-approve-form').forEach(f => {
       f.addEventListener('submit', function (e) {
@@ -175,17 +206,22 @@
     bindApproveInjection();
     bindConfirms();
 
-    // Add-row bindings (use the actual Add form to avoid cross-form collisions)
-    var addForm = document.getElementById('pt-add-form');
-    var addDept = document.getElementById('pending-add-department');
-    var addTask = document.getElementById('pending-add-task-category');
-
-    if (addDept && addTask) bindDeptTaskFilter(addDept, addTask);
+    // Add-row bindings
+    var addForm  = document.getElementById('pt-add-form');
     if (addForm) {
       bindTimeCalc(addForm);
-      // NEW: live toggle + auto-fill for Billable/SLA in ADD row
       toggleTimeField(addForm, 'billable', 'billable_time');
       toggleTimeField(addForm, 'sla', 'sla_time');
+
+      // Dept -> Task filter
+      var addDept = document.getElementById('pending-add-department');
+      var addTask = document.getElementById('pending-add-task-category');
+      if (addDept && addTask) bindDeptTaskFilter(addDept, addTask);
+
+      // Client -> Ticket linkage on Add
+      var addClient = document.getElementById('pending-add-client');
+      var addTicket = document.getElementById('pending-add-ticket');
+      if (addClient && addTicket) bindTicketPicker(addClient, addTicket);
     }
   });
 })();

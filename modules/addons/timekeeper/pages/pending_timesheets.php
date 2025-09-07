@@ -24,13 +24,11 @@ $admin = Capsule::table('tbladmins')->where('id', $adminId)->first();
 $adminRoleId = $admin ? (int) $admin->roleid : 0;
 
 // ---- Permissions ----
-// Who can view all pending (else: only own)?
 $allowedViewCsv = Capsule::table('mod_timekeeper_permissions')
     ->where('setting_key', 'permission_pending_timesheets_view_all')
     ->value('setting_value');
 $allowedViewRoles    = PendingH::viewAllRoles();
 
-// Who can approve/reject?
 $allowedApproveCsv = Capsule::table('mod_timekeeper_permissions')
     ->where('setting_key', 'permission_pending_timesheets_approve')
     ->value('setting_value');
@@ -55,9 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['resubmit_timesheet_id
     $resubmitId = (int) $_POST['resubmit_timesheet_id'];
 
     $upd = ['status' => 'pending'];
-if (Core::hasCol('mod_timekeeper_timesheets', 'updated_at')) {
-    $update['updated_at'] = $now;
-}
+    if (Core::hasCol('mod_timekeeper_timesheets', 'updated_at')) {
+        $upd['updated_at'] = date('Y-m-d H:i:s');
+    }
     Capsule::table('mod_timekeeper_timesheets')
         ->where('id', $resubmitId)
         ->where('status', 'rejected')
@@ -83,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_id'])) {
             'client_id'        => (int) ($_POST['client_id'] ?? 0),
             'department_id'    => (int) ($_POST['department_id'] ?? 0),
             'task_category_id' => (int) ($_POST['task_category_id'] ?? 0),
-            'ticket_id'        => trim((string) ($_POST['ticket_id'] ?? '')),
+            'ticket_id'        => trim((string) ($_POST['ticket_id'] ?? '')), // now stores TID or empty
             'description'      => trim((string) ($_POST['description'] ?? '')),
             'start_time'       => (string) ($_POST['start_time'] ?? ''),
             'end_time'         => (string) ($_POST['end_time'] ?? ''),
@@ -121,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_new_entry'])) {
     $clientId     = (int) ($_POST['client_id'] ?? 0);
     $departmentId = (int) ($_POST['department_id'] ?? 0);
     $subtaskId    = (int) ($_POST['task_category_id'] ?? 0);
-    $ticketId     = trim((string) ($_POST['ticket_id'] ?? ''));
+    $ticketTid    = trim((string) ($_POST['ticket_id'] ?? '')); // store TID (public ticket code) or empty
     $description  = trim((string) ($_POST['description'] ?? ''));
     $startTime    = (string) ($_POST['start_time'] ?? '');
     $endTime      = (string) ($_POST['end_time'] ?? '');
@@ -149,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_new_entry'])) {
         'client_id'         => $clientId,
         'department_id'     => $departmentId,
         'task_category_id'  => $subtaskId,
-        'ticket_id'         => $ticketId,
+        'ticket_id'         => $ticketTid, // store TID string for consistency with Timesheet
         'description'       => $description,
         'start_time'        => $startTime,
         'end_time'          => $endTime,
@@ -171,17 +169,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['approve_timesheet_id'
     $timesheetId = (int) $_POST['approve_timesheet_id'];
 
     $now = date('Y-m-d H:i:s');
-$update = [
-    'status' => 'approved',
-    'approved_at' => $now,
-    'approved_by' => $adminId,
-];
+    $update = [
+        'status' => 'approved',
+        'approved_at' => $now,
+        'approved_by' => $adminId,
+    ];
     if (Core::hasCol('mod_timekeeper_timesheets', 'updated_at')) {
         $update['updated_at'] = $now;
     }
-        Capsule::table('mod_timekeeper_timesheets')
-            ->where('id', $timesheetId)
-            ->update($update);
+    Capsule::table('mod_timekeeper_timesheets')
+        ->where('id', $timesheetId)
+        ->update($update);
 
     // Update per-entry "no_billing_verified"
     $entries = Capsule::table('mod_timekeeper_timesheet_entries')
@@ -217,13 +215,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reject_timesheet_id']
         'rejected_at'          => $now,
         'rejected_by'          => $adminId
     ];
-        if (Core::hasCol('mod_timekeeper_timesheets', 'updated_at')) {
-            $update['updated_at'] = $now;
-        }
+    if (Core::hasCol('mod_timekeeper_timesheets', 'updated_at')) {
+        $update['updated_at'] = $now;
+    }
 
-            Capsule::table('mod_timekeeper_timesheets')
-                ->where('id', $timesheetId)
-                ->update($update);
+    Capsule::table('mod_timekeeper_timesheets')
+        ->where('id', $timesheetId)
+        ->update($update);
 
     header("Location: addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&rejected=1");
     exit;
@@ -247,8 +245,11 @@ foreach ($admins as $a) {
 // Lookup maps
 $clients = Capsule::table('tblclients')->get(['id','companyname','firstname','lastname']);
 $clientMap = [];
+$clientIds = [];
 foreach ($clients as $c) {
-    $clientMap[(int)$c->id] = $c->companyname ?: trim(($c->firstname ?? '') . ' ' . ($c->lastname ?? ''));
+    $name = $c->companyname ?: trim(($c->firstname ?? '') . ' ' . ($c->lastname ?? ''));
+    $clientMap[(int)$c->id] = $name;
+    $clientIds[] = (int)$c->id;
 }
 
 $departments = Capsule::table('mod_timekeeper_departments')->orderBy('name')->get(['id','name']);
@@ -260,12 +261,12 @@ $taskMap = [];
 foreach ($taskCategories as $t) { $taskMap[(int)$t->id] = (string)$t->name; }
 
 // Detail view (admin_id + date)
-$editMode           = false;
+$editMode             = false;
 $editTimesheetEntries = [];
-$editAdminId        = null;
-$editTimesheetDate  = '';
-$editAdminName      = '';
-$editingEntryId     = isset($_GET['edit_id']) ? (int) $_GET['edit_id'] : null;
+$editAdminId          = null;
+$editTimesheetDate    = '';
+$editAdminName        = '';
+$editingEntryId       = isset($_GET['edit_id']) ? (int) $_GET['edit_id'] : null;
 
 if (!empty($_GET['admin_id']) && !empty($_GET['date'])) {
     $editMode          = true;
@@ -280,6 +281,33 @@ if (!empty($_GET['admin_id']) && !empty($_GET['date'])) {
 
     if ($timesheet) {
         $editTimesheetEntries = PendingH::entriesSorted((int)$timesheet->id);
+    }
+}
+
+// ---------- Tickets by client (for client-scoped select) ----------
+$ticketsByClient = [];
+if (!empty($clientIds)) {
+    // Pull tickets for known clients; prefer newest first
+    // Columns: id (internal), tid (public/code), userid (client id), title
+    $tickets = Capsule::table('tbltickets')
+        ->whereIn('userid', $clientIds)
+        ->orderBy('lastreply', 'desc')
+        ->orderBy('date', 'desc')
+        ->get(['id','tid','userid','title']);
+
+    // Group + soft-limit per client to avoid massive payloads
+    foreach ($tickets as $t) {
+        $uid = (int)$t->userid;
+        $tid = (string)($t->tid ?: $t->id); // prefer public TID; fallback to internal id
+        $title = trim((string)$t->title ?: '');
+        $ticketsByClient[$uid] = $ticketsByClient[$uid] ?? [];
+        if (count($ticketsByClient[$uid]) < 50) { // keep top 50 per client
+            $ticketsByClient[$uid][] = [
+                'tid'   => $tid,
+                'id'    => (int)$t->id,
+                'title' => $title,
+            ];
+        }
     }
 }
 
@@ -298,10 +326,11 @@ $vars = compact(
     'editAdminName',
     'editingEntryId',
     'canApprove',
-    'unbilledTimeValidateMin'
+    'unbilledTimeValidateMin',
+    'ticketsByClient'
 );
 
 extract($vars);
 
-// Render template (tpl used as PHP partial; assets handled by loader)
+// Render template
 include __DIR__ . '/../templates/admin/pending_timesheets.tpl';
