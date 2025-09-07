@@ -267,6 +267,7 @@ $editAdminId          = null;
 $editTimesheetDate    = '';
 $editAdminName        = '';
 $editingEntryId       = isset($_GET['edit_id']) ? (int) $_GET['edit_id'] : null;
+$ticketIdMap = []; 
 
 if (!empty($_GET['admin_id']) && !empty($_GET['date'])) {
     $editMode          = true;
@@ -349,7 +350,7 @@ $vars = compact(
     'editingEntryId',
     'canApprove',
     'unbilledTimeValidateMin',
-    'ticketsByClient'
+    'ticketsByClient',
     'ticketIdMap'
 );
 
