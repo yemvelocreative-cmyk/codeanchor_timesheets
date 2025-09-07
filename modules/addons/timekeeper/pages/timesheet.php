@@ -13,60 +13,65 @@ if ($adminId <= 0) {
     exit;
 }
 
-if (isset($_GET['ajax']) && $_GET['ajax'] === 'tickets') {
-    while (ob_get_level() > 0) { ob_end_clean(); } // clear any buffered HTML
-    header('Content-Type: application/json; charset=UTF-8');
-    // ... query tbltickets by userid ...
-    echo json_encode($items);
-    exit;
-}
-
-// ---- Date context (today) ----
-$today = date('Y-m-d');
-
 /**
  * AJAX: return tickets for a given client_id
  * GET: ?ajax=tickets&client_id=NN
  * Returns: [{id, tid, text}]
+ *
+ * Keep this block BEFORE any other output so we return clean JSON.
  */
-// ---- AJAX: return tickets for a given client_id ----
-// ---- AJAX: return tickets for a given client_id (via tbltickets.userid) ----
-if (($_GET['ajax'] ?? '') === 'tickets') {
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'tickets') {
+    // Ensure no buffered HTML sneaks in
+    while (ob_get_level() > 0) { ob_end_clean(); }
+
     header('Content-Type: application/json; charset=UTF-8');
 
-    $clientId = (int)($_GET['client_id'] ?? 0);
-    if ($clientId <= 0) { echo json_encode([]); exit; }
-
-    // Pull recent tickets for this client (inactive/active status does not matter)
-    $tickets = \WHMCS\Database\Capsule::table('tbltickets')
-        ->where('userid', $clientId)
-        ->orderBy('lastreply', 'desc')
-        ->orderBy('id', 'desc')
-        ->limit(100)
-        ->get(['id', 'tid', 'title']);
-
-    $out = [];
-    foreach ($tickets as $t) {
-        $tid   = (string)($t->tid ?? '');
-        $title = (string)($t->title ?? '');
-        $label = ($tid !== '' ? "Ticket #{$tid}" : "Ticket ID {$t->id}");
-        if ($title !== '') {
-            if (function_exists('mb_strimwidth')) {
-                $label .= " — " . mb_strimwidth($title, 0, 60, '…', 'UTF-8');
-            } else {
-                $label .= " — " . (strlen($title) > 60 ? substr($title, 0, 57) . '…' : $title);
-            }
+    try {
+        $clientId = (int)($_GET['client_id'] ?? 0);
+        if ($clientId <= 0) {
+            echo json_encode([]);
+            exit;
         }
-        $out[] = [
-            'id'   => (int)$t->id,   // numeric PK to store if you want
-            'tid'  => $tid,          // public ticket number for display
-            'text' => $label,
-        ];
-    }
 
-    echo json_encode($out);
-    exit;
+        // Pull recent tickets for this client (inactive/active status does not matter)
+        $tickets = Capsule::table('tbltickets')
+            ->where('userid', $clientId)
+            ->orderBy('lastreply', 'desc')
+            ->orderBy('id', 'desc')
+            ->limit(100)
+            ->get(['id', 'tid', 'title']);
+
+        $out = [];
+        foreach ($tickets as $t) {
+            $tid   = (string)($t->tid ?? '');
+            $title = (string)($t->title ?? '');
+            $label = ($tid !== '' ? "Ticket #{$tid}" : "Ticket ID {$t->id}");
+            if ($title !== '') {
+                if (function_exists('mb_strimwidth')) {
+                    $label .= " — " . mb_strimwidth($title, 0, 60, '…', 'UTF-8');
+                } else {
+                    $label .= " — " . (strlen($title) > 60 ? substr($title, 0, 57) . '…' : $title);
+                }
+            }
+            $out[] = [
+                'id'   => (int)$t->id,  // numeric PK of tbltickets
+                'tid'  => $tid,         // public ticket number
+                'text' => $label,       // display label for Select2
+            ];
+        }
+
+        echo json_encode($out);
+    } catch (\Throwable $e) {
+        // Return empty on error (swap for debug payload if needed)
+        echo json_encode([]);
+        // For debugging only:
+        // echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+    }
+    exit; // IMPORTANT: stop normal page rendering
 }
+
+// ---- Date context (today) ----
+$today = date('Y-m-d');
 
 // ---- Helpers (local) ----
 
