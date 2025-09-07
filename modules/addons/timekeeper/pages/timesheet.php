@@ -21,22 +21,60 @@ $today = date('Y-m-d');
  * GET: ?ajax=tickets&client_id=NN
  * Returns: [{id, tid, text}]
  */
+// ---- AJAX: return tickets for a given client_id ----
 if (($_GET['ajax'] ?? '') === 'tickets') {
     header('Content-Type: application/json; charset=UTF-8');
+
     $clientId = (int)($_GET['client_id'] ?? 0);
     if ($clientId <= 0) {
         echo json_encode([]);
         exit;
     }
 
-    // Pull recent tickets for this client (limit to reasonable number)
-    // Columns are consistent with WHMCS: id (PK), tid (public ticket number), title (subject), status, lastreply
-    $tickets = Capsule::table('tbltickets')
-        ->where('userid', $clientId)
+    // Gather client + contacts emails (for email-only tickets)
+    $client = Capsule::table('tblclients')->where('id', $clientId)->first(['id','email']);
+    $emails = [];
+    if ($client && !empty($client->email)) {
+        $emails[] = strtolower(trim((string)$client->email));
+    }
+    $contacts = Capsule::table('tblcontacts')->where('userid', $clientId)->get(['email','id']);
+    $contactIds = [];
+    foreach ($contacts as $ct) {
+        if (!empty($ct->email)) {
+            $emails[] = strtolower(trim((string)$ct->email));
+        }
+        if (!empty($ct->id)) {
+            $contactIds[] = (int)$ct->id;
+        }
+    }
+    $emails = array_values(array_unique(array_filter($emails)));
+
+    // Base query: recent tickets linked by userid
+    $q = Capsule::table('tbltickets')
+        ->where(function ($q) use ($clientId, $contactIds, $emails) {
+            // Case 1: tickets with matching userid
+            $q->where('userid', $clientId);
+
+            // Case 2: OR tickets linked to any of client's contacts
+            if (!empty($contactIds)) {
+                $q->orWhereIn('contactid', $contactIds);
+            }
+
+            // Case 3: OR email-only tickets where email matches client/contacts
+            if (!empty($emails)) {
+                $q->orWhere(function ($q2) use ($emails) {
+                    // Normalize comparison by lowercasing
+                    // Note: WHMCS stores raw email; this comparison is case-insensitive in MySQL by default,
+                    // but we still lower both sides to be safe if collation differs.
+                    $q2->whereIn(Capsule::raw('LOWER(email)'), $emails);
+                });
+            }
+        })
         ->orderBy('lastreply', 'desc')
         ->orderBy('id', 'desc')
-        ->limit(50)
-        ->get(['id', 'tid', 'title']);
+        ->limit(100);
+
+    $tickets = $q->get(['id','tid','title','status','lastreply']);
 
     $out = [];
     foreach ($tickets as $t) {
@@ -44,14 +82,20 @@ if (($_GET['ajax'] ?? '') === 'tickets') {
         $title = (string)($t->title ?? '');
         $label = $tid !== '' ? "Ticket #{$tid}" : "Ticket ID {$t->id}";
         if ($title !== '') {
-            $label .= " — " . mb_strimwidth($title, 0, 60, '…', 'UTF-8');
+            // trim long titles for display
+            if (function_exists('mb_strimwidth')) {
+                $label .= " — " . mb_strimwidth($title, 0, 60, '…', 'UTF-8');
+            } else {
+                $label .= " — " . (strlen($title) > 60 ? substr($title, 0, 57) . '…' : $title);
+            }
         }
         $out[] = [
-            'id'   => (int)$t->id,   // numeric PK, stored in our DB
-            'tid'  => $tid,          // human ticket number (display)
+            'id'   => (int)$t->id,   // store numeric PK
+            'tid'  => $tid,          // display number when available
             'text' => $label,
         ];
     }
+
     echo json_encode($out);
     exit;
 }

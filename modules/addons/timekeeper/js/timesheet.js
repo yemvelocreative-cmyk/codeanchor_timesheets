@@ -13,37 +13,53 @@
 
   // Populate a <select> with ticket options [{id, text}], optionally set initial value
   function populateTicketSelect(selectEl, clientId, initialValue) {
-    if (!selectEl) return;
-    const url = 'addonmodules.php?module=timekeeper&timekeeperpage=timesheet&ajax=tickets&client_id=' + encodeURIComponent(clientId);
-    fetchJSON(url).then(items => {
-      // wipe
+  if (!selectEl || !clientId) return;
+  const url = 'addonmodules.php?module=timekeeper&timekeeperpage=timesheet&ajax=tickets&client_id=' + encodeURIComponent(clientId);
+
+  // If Select2 is already bound, temporarily destroy it so it re-reads options cleanly
+  const hadSelect2 = !!(window.jQuery && jQuery.fn && jQuery.fn.select2 && jQuery(selectEl).data('select2'));
+  if (hadSelect2) {
+    jQuery(selectEl).select2('destroy');
+  }
+
+  fetch(url, { credentials: 'same-origin' })
+    .then(r => r.ok ? r.json() : [])
+    .then(items => {
+      // clear options
       while (selectEl.options.length) selectEl.remove(0);
       const placeholder = document.createElement('option');
       placeholder.value = '';
       placeholder.textContent = 'Select a ticket…';
       selectEl.appendChild(placeholder);
 
-      items.forEach(it => {
+      (items || []).forEach(it => {
         const opt = document.createElement('option');
         opt.value = String(it.id);
         opt.textContent = it.text || ('Ticket ID ' + it.id);
         selectEl.appendChild(opt);
       });
 
+      // set initial selection if provided
       if (initialValue) {
         selectEl.value = String(initialValue);
-      } else {
-        // Optional: auto-select most recent ticket (first item) if desired.
-        // Commented out by default:
-        // if (items.length > 0) selectEl.value = String(items[0].id);
       }
 
-      // Refresh Select2 if applied
+      // Re-init Select2 (or init if not yet)
       if (window.jQuery && jQuery.fn && jQuery.fn.select2) {
-        jQuery(selectEl).trigger('change.select2');
+        jQuery(selectEl).select2({
+          width: '260px',
+          placeholder: 'Select a ticket…',
+          matcher: function (params, data) {
+            if (jQuery.trim(params.term) === '') return data;
+            const term = params.term.toLowerCase();
+            const text = (data.text || '').toLowerCase();
+            return text.indexOf(term) > -1 ? data : null;
+          }
+        }).trigger('change.select2');
       }
-    }).catch(() => { /* ignore */ });
-  }
+    })
+    .catch(() => { /* ignore */ });
+}
 
   // Show/hide billable/sla time inputs
   function toggleTimeField(form, checkboxName, inputName, headerId) {
