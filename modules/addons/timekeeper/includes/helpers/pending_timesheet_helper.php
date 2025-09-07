@@ -9,6 +9,7 @@ final class PendingTimesheetHelper
     /** Roles allowed to view all pending/rejected timesheets */
     public static function viewAllRoles(): array
     {
+        // CoreHelper lives in the same namespace, so no import needed
         return CoreHelper::rolesFromSetting('permission_pending_timesheets_view_all');
     }
 
@@ -21,6 +22,8 @@ final class PendingTimesheetHelper
     /**
      * Canonical base query for Pending page & menu badge:
      * status IN (pending, rejected) AND timesheet_date < today, with role filter.
+     *
+     * @return \Illuminate\Database\Query\Builder
      */
     public static function baseQuery(int $adminId, int $roleId)
     {
@@ -33,7 +36,7 @@ final class PendingTimesheetHelper
         if (!in_array($roleId, self::viewAllRoles(), true)) {
             $q->where('admin_id', $adminId);
         }
-        return $q; // Illuminate\Database\Query\Builder
+        return $q;
     }
 
     /** Badge count identical to the page logic */
@@ -54,28 +57,4 @@ final class PendingTimesheetHelper
             ->orderBy('id', 'asc')
             ->get();
     }
-
-    // Wire a text input to filter <select> options by substring match on #TID
-    function bindTicketSearch(searchInput, selectEl) {
-    if (!searchInput || !selectEl) return;
-
-    function applyFilter() {
-        const q = (searchInput.value || '').toLowerCase().trim();
-        Array.from(selectEl.options).forEach((opt, i) => {
-        if (i === 0) return; // keep "Select…" visible
-        const label = (opt.textContent || '').toLowerCase();
-        opt.hidden = q ? (label.indexOf(q) === -1) : false;
-        });
-
-        // If the current selection is hidden by the filter, clear it to avoid confusion
-        if (selectEl.selectedIndex > 0 && selectEl.options[selectEl.selectedIndex].hidden) {
-        selectEl.selectedIndex = 0;
-        }
-    }
-
-    searchInput.addEventListener('input', applyFilter);
-    // run once in case there’s a prefilled query (unlikely, but harmless)
-    applyFilter();
-    }
 }
-
