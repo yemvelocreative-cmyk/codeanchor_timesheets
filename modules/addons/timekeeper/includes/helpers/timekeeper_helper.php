@@ -128,4 +128,10 @@ final class TimekeeperHelper
             }
         }
     }
+
+    /** Back-compat shim: delegate redirect to SettingsHelper */
+    public static function redirect(string $url, int $status = 302): void
+    {
+        \Timekeeper\Helpers\SettingsHelper::redirect($url, $status);
+    }
 }

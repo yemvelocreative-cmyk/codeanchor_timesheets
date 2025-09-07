@@ -147,11 +147,12 @@ function timekeeper_output($vars)
     }
 
     // If no page specified at all, land on dashboard
-    if (empty($_GET['timekeeperpage'])) {
-        $url = 'addonmodules.php?module=timekeeper&timekeeperpage=dashboard';
-        TkH::redirect($url);
-        return;
-    }
+    // around your guard for missing page:
+if (empty($_GET['timekeeperpage'])) {
+    $url = 'addonmodules.php?module=timekeeper&timekeeperpage=dashboard';
+    SetH::redirect($url);   // <-- REPLACE this line (was: TkH::redirect($url);)
+    return;
+}
 
     /* ----------------- Assets (skip during CSV export) ----------------- */
     $isExport = ($page === 'reports' && isset($_GET['export']) && $_GET['export'] === '1');
