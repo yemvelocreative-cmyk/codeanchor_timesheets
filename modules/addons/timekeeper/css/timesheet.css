@@ -267,3 +267,12 @@
   background: #F9FAFB; color: #374151; white-space: nowrap;
 }
 .timekeeper-root .tk-badge--success { border-color: #C7F0D8; background: #ECFDF5; color: #065F46; }
+
+/* Ticket badge link should look like the badge text */
+.timekeeper-root .tk-badge a {
+  color: inherit;
+  text-decoration: none;
+}
+.timekeeper-root .tk-badge a:hover {
+  text-decoration: underline;
+}

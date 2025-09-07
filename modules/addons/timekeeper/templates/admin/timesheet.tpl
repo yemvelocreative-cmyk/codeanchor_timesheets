@@ -343,11 +343,17 @@ foreach ($taskCategories as $t) { $taskMap[$t->id] = $t->name; }
 
                   <div class="cell cell-flags">
                     <?php if (!empty($task->ticket_id)): ?>
-                      <?php if (!empty($task->ticket_tid)): ?>
-                        <span class="tk-badge tk-badge--success">Ticket #<?= htmlspecialchars($task->ticket_tid, ENT_QUOTES, 'UTF-8') ?></span>
-                      <?php else: ?>
-                        <span class="tk-badge tk-badge--success">Ticket ID <?= (int)$task->ticket_id ?></span>
-                      <?php endif; ?>
+                      <?php
+                        // Prefer public ticket number (tid) if we have it, else fallback to numeric id
+                        $displayTid = trim((string)($task->ticket_tid ?? ''));
+                        $ticketLabel = $displayTid !== '' ? ('#' . $displayTid) : ('#' . (int)$task->ticket_id);
+                        $ticketUrl = 'supporttickets.php?action=view&id=' . (int)$task->ticket_id;
+                      ?>
+                      <span class="tk-badge tk-badge--success">
+                        <a href="<?= htmlspecialchars($ticketUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener">
+                          <?= htmlspecialchars($ticketLabel, ENT_QUOTES, 'UTF-8') ?>
+                        </a>
+                      </span>
                     <?php else: ?>
                       <span class="tk-badge">No ticket</span>
                     <?php endif; ?>
