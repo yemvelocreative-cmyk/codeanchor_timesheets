@@ -330,3 +330,10 @@
   .timekeeper-root .pending-root .tk-w-120 { width:100%; }
   .timekeeper-root .pending-root .tk-actions { justify-content:flex-start; }
 }
+
+/* Highlight the row we jumped to */
+.timekeeper-root .pending-root .tk-row--table:target {
+  outline: 2px solid rgba(13,110,253,.35);
+  background: #fffbe6;
+  scroll-margin-top: 80px; /* keeps it visible under sticky headers if any */
+}

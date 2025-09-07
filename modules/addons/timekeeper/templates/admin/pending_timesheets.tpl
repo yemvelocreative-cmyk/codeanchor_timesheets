@@ -115,7 +115,7 @@
         </div>
       </div>
 
-      <div class="tk-row tk-card tk-row--table">
+      <div class="tk-row tk-card tk-row--table" id="tsrow-<?= (int)$entry->id ?>">
         <form method="post"
               id="pt-add-form"
               class="tk-row-grid tk-row-edit"
@@ -361,8 +361,10 @@
                   <!-- Actions -->
                   <div class="cell cell-actions">
                     <button type="submit" class="btn btn-sm btn-success">Save</button>
-                    <a href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&admin_id=<?= (int)$editAdminId ?>&date=<?= htmlspecialchars($editTimesheetDate) ?>"
-                      class="btn btn-sm btn-default">Cancel</a>
+                    <a href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets
+                      &admin_id=<?= (int)$editAdminId ?>
+                      &date=<?= htmlspecialchars($editTimesheetDate) ?>#tsrow-<?= (int)$entry->id ?>"
+                        class="btn btn-sm btn-default">Cancel</a>
                   </div>
                 </form>
 
@@ -444,7 +446,10 @@
 
                   <div class="cell cell-actions">
                     <a class="btn btn-sm btn-outline-primary"
-                      href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&admin_id=<?= (int)$editAdminId ?>&date=<?= htmlspecialchars($editTimesheetDate) ?>&edit_id=<?= (int)$entry->id ?>">
+                      href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets
+                      &admin_id=<?= (int)$editAdminId ?>
+                      &date=<?= htmlspecialchars($editTimesheetDate) ?>
+                      &edit_id=<?= (int)$entry->id ?>#tsrow-<?= (int)$entry->id ?>">
                       Edit
                     </a>
                   </div>
