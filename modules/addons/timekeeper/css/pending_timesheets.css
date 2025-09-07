@@ -1,10 +1,10 @@
 /* ===== Timekeeper Pending Timesheets (scoped) ===== */
 .timekeeper-root .pending-root {
-  /* Design tokens to keep styles consistent with Timesheet */
-  --tk-field-radius: 6px;
-  --tk-btn-radius: 6px;
-  --tk-card-radius: 8px;
-  --tk-field-height: 36px;
+  /* Design tokens aligned with Timesheet look */
+  --tk-field-radius: 6px;      /* inputs/selects/textarea */
+  --tk-btn-radius: 6px;        /* buttons */
+  --tk-card-radius: 8px;       /* cards */
+  --tk-field-height: 36px;     /* compact control height */
   --tk-pad-x: 10px;
   --tk-pad-y: 6px;
   --tk-border: 1px solid #e5e5e5;
@@ -53,15 +53,15 @@
   font-weight: 600;
 }
 
-/* Badges (kept, softened shape) */
+/* Badges (kept as-is) */
 .timekeeper-root .pending-root .pt-badge {
   display: inline-block;
   padding: 2px 8px;
-  border-radius: 6px;
+  border-radius: 10px;
   font-size: 12px;
   border: 1px solid #ddd;
 }
-.timekeeper-root .pending-root .pt-badge.pending { background: #fff; }
+.timekeeper-root .pending-root .pt-badge.pending  { background: #fff; }
 .timekeeper-root .pending-root .pt-badge.rejected { background: #fff3cd; border-color: #ffe8a1; }
 .timekeeper-root .pending-root .pt-badge.approved { background: #e2f0d9; border-color: #a2d28f; }
 
@@ -83,7 +83,7 @@
 }
 .timekeeper-root .pending-root .pt-detail .body { padding: 12px; overflow-x: auto; }
 
-/* --- Add-New row --------------------------------------------------------- */
+/* --- Add-New row (kept) -------------------------------------------------- */
 .timekeeper-root .pending-root .pt-entry-row {
   display: grid;
   grid-template-columns:
@@ -127,7 +127,7 @@
 .timekeeper-root .pending-root .pt-reject-note { max-width: 420px; height: 60px; margin: 8px 0; }
 
 /* ========================================================================
-   Timesheet-layout shim (scoped to Pending) – table-card UI
+   Timesheet-layout shim (scoped to Pending)
    ======================================================================== */
 
 /* Card rows */
@@ -143,13 +143,13 @@
 .timekeeper-root .pending-root .tk-row--table .tk-row-grid {
   display: grid;
   grid-template-columns:
-    1.1fr  /* Client   */
-    0.9fr  /* Dept     */
-    1fr    /* Category */
-    2fr    /* Desc     */
-    1.4fr  /* Time     */
-    1.4fr  /* Flags    */
-    auto;  /* Actions  */
+    1.1fr /* Client   */
+    0.9fr /* Dept     */
+    1fr   /* Category */
+    2fr   /* Desc     */
+    1.4fr /* Time     */
+    1.4fr /* Flags    */
+    auto; /* Actions  */
   align-items: center;
   gap: 12px;
 }
@@ -158,7 +158,13 @@
 .timekeeper-root .pending-root .tk-row--header { background: #fafafa; }
 .timekeeper-root .pending-root .tk-row--header .hdr { font-weight: 600; }
 
-/* Inputs inside edit grid (match Timesheet controls) */
+/* Inputs inside edit grid (rectangular with soft corners) */
+.timekeeper-root .pending-root .tk-row-select,
+.timekeeper-root .pending-root .tk-row-input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
 .timekeeper-root .pending-root input[type="text"],
 .timekeeper-root .pending-root input[type="time"],
 .timekeeper-root .pending-root input[type="number"],
@@ -207,6 +213,7 @@
 .timekeeper-root .pending-root .tk-inline-time-input {
   width: 90px;
   max-width: 100%;
+  box-sizing: border-box;
 }
 .timekeeper-root .pending-root .tk-inline .sep { opacity: 0.6; }
 
@@ -220,14 +227,13 @@
 }
 .timekeeper-root .pending-root .flag-item .tk-flag-label { display: block; font-size: 12px; color: #555; margin-bottom: 4px; }
 .timekeeper-root .pending-root .tk-inline-check { display: inline-flex; align-items: center; gap: 6px; }
-.timekeeper-root .pending-root .tk-inline-check input[type="checkbox"] { margin-right: 0; }
 
 /* Badges group (read-only row) */
 .timekeeper-root .pending-root .tk-badges { display: flex; gap: 6px; flex-wrap: wrap; }
 .timekeeper-root .pending-root .tk-badge {
   display: inline-block;
   padding: 2px 8px;
-  border-radius: 6px; /* softened from pill */
+  border-radius: 10px; /* badges remain pill-like */
   font-size: 12px;
   border: 1px solid #ddd;
   background: #f8f8f8;
@@ -264,7 +270,7 @@
 .timekeeper-root .pending-root .tk-totals-bar .lbl { color: #555; }
 .timekeeper-root .pending-root .tk-totals-bar .unit { color: #777; margin-left: 2px; }
 
-/* Mobile */
+/* Mobile: stack list header & rows nicely; keep table-card readable */
 @media (max-width: 900px) {
   .timekeeper-root .pending-root .pt-row,
   .timekeeper-root .pending-root .pt-row-head {
@@ -274,11 +280,24 @@
   .timekeeper-root .pending-root .pt-actions { justify-content: flex-start; }
   .timekeeper-root .pending-root .pt-detail .body { padding: 10px; }
 
+  /* Table-card grid compresses; description grows, flags wrap */
   .timekeeper-root .pending-root .tk-row--table .tk-row-grid {
     grid-template-columns: 1fr 1fr;
     gap: 10px;
   }
   .timekeeper-root .pending-root .cell-actions { justify-content: flex-start; }
+}
+
+/* Match Timesheet rectangular controls on Pending page (buttons) */
+.timekeeper-root .pending-root .btn,
+.timekeeper-root .pending-root .btn-default,
+.timekeeper-root .pending-root .btn-primary,
+.timekeeper-root .pending-root .btn-success,
+.timekeeper-root .pending-root .btn-danger {
+  border-radius: var(--tk-btn-radius);
+  padding: 8px 14px;
+  line-height: 1.2;
+  border-width: 1px;
 }
 
 /* Section separator that matches the card header look */
@@ -287,6 +306,7 @@
   border-top: 1px solid #eee;
   border-bottom: 1px solid #eee;
   font-weight: 600;
+  /* stretch edge-to-edge inside the card body */
   margin: 16px -12px 12px;
   padding: 10px 12px;
 }
@@ -302,11 +322,10 @@
 }
 .timekeeper-root .pending-root .pt-approve-reject form { margin: 0; }
 
-/* Reject form textarea (match inputs) */
 .timekeeper-root .pending-root .pt-reject-form .pt-reject-note {
   display: block;
   width: 100%;
-  max-width: 560px;
+  max-width: 560px; /* feel free to adjust */
   height: 60px;
   margin: 8px 0;
   border-radius: var(--tk-field-radius);
@@ -324,41 +343,54 @@
 .timekeeper-root .pending-root .pt-reject-panel.is-open{ display:block; }
 .timekeeper-root .pending-root .pt-reject-actions{ display:flex; gap:10px; align-items:center; margin-top:8px; flex-wrap:wrap; }
 
-/* Controls & Buttons — rectangular with soft corners (no pills) */
-.timekeeper-root .pending-root .btn,
-.timekeeper-root .pending-root .btn-default,
-.timekeeper-root .pending-root .btn-primary,
-.timekeeper-root .pending-root .btn-success,
-.timekeeper-root .pending-root .btn-danger {
-  border-radius: var(--tk-btn-radius);
-  padding: 8px 14px;
-  line-height: 1.2;
-  border-width: 1px;
+/* === Compact Listing (match Approved) === */
+.timekeeper-root .pending-root .tk-card {
+  /* unify with earlier tk-card (avoid conflicting duplicates) */
+  padding:16px;
+  box-shadow:0 1px 2px rgba(16,24,40,0.04);
+  margin-bottom:16px;
 }
+.timekeeper-root .pending-root .tk-table { width:100%; }
+.timekeeper-root .pending-root .tk-table-grid .tk-row {
+  display:flex; gap:8px; align-items:center; border-bottom:1px solid #eee; padding:8px 0;
+}
+.timekeeper-root .pending-root .tk-table-grid .tk-thead {
+  font-weight:600; border-bottom:2px solid #ccc; padding:10px 0;
+}
+.timekeeper-root .pending-root .tk-col { min-width:0; }
+.timekeeper-root .pending-root .tk-w-120{width:120px}
+.timekeeper-root .pending-root .tk-w-150{width:150px}
+.timekeeper-root .pending-root .tk-w-200{width:200px}
+.timekeeper-root .pending-root .tk-text-right { text-align:right; }
+.timekeeper-root .pending-root .tk-muted { color:#6b7280; }
 
-/* Default/Primary borders for consistency */
-.timekeeper-root .pending-root .btn-default {
-  border: 1px solid #cfd4dc;
-  background: #f8fafc;
+/* Buttons (rectangular, no pills) */
+.timekeeper-root .pending-root .tk-actions { display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; }
+.timekeeper-root .pending-root .tk-btn {
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:6px 12px; font-weight:600; font-size:14px; line-height:1;
+  border:1px solid #0d6efd; background:#0d6efd; color:#fff;
+  border-radius: var(--tk-btn-radius);
+  text-decoration:none; cursor:pointer; transition:transform .06s, filter .15s, box-shadow .15s;
+  box-shadow:0 1px 1px rgba(0,0,0,.04);
 }
-.timekeeper-root .pending-root .btn-primary {
-  border: 1px solid #2563eb;
-  background: #2563eb;
-  color: #fff;
+.timekeeper-root .pending-root .tk-btn-outline { background:#fff; color:#0d6efd; }
+.timekeeper-root .pending-root .tk-btn-warning { background:#f59e0b; border-color:#f59e0b; color:#111827; }
+.timekeeper-root .pending-root .tk-btn-sm { padding:6px 12px; font-size:13px; }
+
+/* (Removed .tk-pill full-pill style. If used, it will inherit button/base styles.) */
+
+@media (max-width: 920px) {
+  .timekeeper-root .pending-root .tk-table-grid .tk-row { flex-wrap:wrap; }
+  .timekeeper-root .pending-root .tk-w-200,
+  .timekeeper-root .pending-root .tk-w-150,
+  .timekeeper-root .pending-root .tk-w-120 { width:100%; }
+  .timekeeper-root .pending-root .tk-actions { justify-content:flex-start; }
 }
 
 /* Highlight the row we jumped to */
 .timekeeper-root .pending-root .tk-row--table:target {
   outline: 2px solid rgba(13,110,253,.35);
   background: #fffbe6;
-  scroll-margin-top: 80px;
+  scroll-margin-top: 80px; /* keeps it visible under sticky headers if any */
 }
-
-/* =========================
-   Removed/Refactored Notes:
-   - Dropped pill styles (.tk-pill, .tk-btn with border-radius:999px).
-   - Unified .tk-card radius to 8px everywhere (removed duplicate 16px variant).
-   - Consolidated inputs/selects/textarea to shared rules (removed duplicated
-     per-selector border-radius overrides).
-   - Kept badges but softened to 6px radius instead of full pills.
-   ========================= */
