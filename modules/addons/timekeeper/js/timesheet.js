@@ -1,4 +1,4 @@
-// Timekeeper — Timesheet (clean)
+// Timekeeper — Timesheet (clean) [DROP-IN UPDATED]
 (function () {
   'use strict';
 
@@ -11,55 +11,70 @@
     return fetch(url, { credentials: 'same-origin' }).then(r => r.ok ? r.json() : []);
   }
 
-  // Populate a <select> with ticket options [{id, text}], optionally set initial value
-  function populateTicketSelect(selectEl, clientId, initialValue) {
-  if (!selectEl || !clientId) return;
-  const url = 'addonmodules.php?module=timekeeper&timekeeperpage=timesheet&ajax=tickets&client_id=' + encodeURIComponent(clientId);
-
-  // If Select2 is already bound, temporarily destroy it so it re-reads options cleanly
-  const hadSelect2 = !!(window.jQuery && jQuery.fn && jQuery.fn.select2 && jQuery(selectEl).data('select2'));
-  if (hadSelect2) {
-    jQuery(selectEl).select2('destroy');
+  // Build the AJAX URL safely from the current page
+  function tkTicketsUrl(clientId) {
+    const u = new URL(window.location.href);
+    u.searchParams.set('module', 'timekeeper');
+    u.searchParams.set('timekeeperpage', 'timesheet');
+    u.searchParams.set('ajax', 'tickets');
+    u.searchParams.set('client_id', String(clientId || ''));
+    // Bust caches
+    u.searchParams.set('_', String(Date.now()));
+    return u.toString();
   }
 
-  fetch(url, { credentials: 'same-origin' })
-    .then(r => r.ok ? r.json() : [])
-    .then(items => {
-      // clear options
-      while (selectEl.options.length) selectEl.remove(0);
-      const placeholder = document.createElement('option');
-      placeholder.value = '';
-      placeholder.textContent = 'Select a ticket…';
-      selectEl.appendChild(placeholder);
+  // Populate a <select> with ticket options [{id, text}], optionally set initial value
+  function populateTicketSelect(selectEl, clientId, initialValue) {
+    if (!selectEl || !clientId) return;
 
-      (items || []).forEach(it => {
-        const opt = document.createElement('option');
-        opt.value = String(it.id);
-        opt.textContent = it.text || ('Ticket ID ' + it.id);
-        selectEl.appendChild(opt);
-      });
+    // Loading state
+    while (selectEl.options.length) selectEl.remove(0);
+    selectEl.appendChild(new Option('Loading tickets…', ''));
 
-      // set initial selection if provided
-      if (initialValue) {
-        selectEl.value = String(initialValue);
-      }
+    // If Select2 is bound, destroy so it re-reads options cleanly
+    const hadSelect2 = !!(window.jQuery && jQuery.fn && jQuery.fn.select2 && jQuery(selectEl).data('select2'));
+    if (hadSelect2) { jQuery(selectEl).select2('destroy'); }
 
-      // Re-init Select2 (or init if not yet)
-      if (window.jQuery && jQuery.fn && jQuery.fn.select2) {
-        jQuery(selectEl).select2({
-          width: '260px',
-          placeholder: 'Select a ticket…',
-          matcher: function (params, data) {
-            if (jQuery.trim(params.term) === '') return data;
-            const term = params.term.toLowerCase();
-            const text = (data.text || '').toLowerCase();
-            return text.indexOf(term) > -1 ? data : null;
+    fetchJSON(tkTicketsUrl(clientId))
+      .then(items => {
+        while (selectEl.options.length) selectEl.remove(0);
+        selectEl.appendChild(new Option('Select a ticket…', ''));
+
+        (items || []).forEach(it => {
+          selectEl.appendChild(new Option(it.text || ('Ticket ID ' + it.id), String(it.id)));
+        });
+
+        if (initialValue) {
+          selectEl.value = String(initialValue);
+          // If initial not in the list, synthesize a visible selection
+          if (!selectEl.value) {
+            const opt = new Option('Selected Ticket (' + initialValue + ')', String(initialValue), true, true);
+            selectEl.appendChild(opt);
           }
-        }).trigger('change.select2');
-      }
-    })
-    .catch(() => { /* ignore */ });
-}
+        }
+
+        // Re-init Select2 (or init if not yet)
+        if (window.jQuery && jQuery.fn && jQuery.fn.select2) {
+          jQuery(selectEl).select2({
+            width: '260px',
+            placeholder: 'Select a ticket…',
+            matcher: function (params, data) {
+              if (jQuery.trim(params.term) === '') return data;
+              const term = (params.term || '').toLowerCase();
+              const text = (data.text || '').toLowerCase();
+              return text.indexOf(term) > -1 ? data : null;
+            }
+          }).trigger('change.select2');
+        }
+      })
+      .catch(() => {
+        while (selectEl.options.length) selectEl.remove(0);
+        selectEl.appendChild(new Option('No tickets found', ''));
+        if (window.jQuery && jQuery.fn && jQuery.fn.select2) {
+          jQuery(selectEl).select2({ width: '260px', placeholder: 'Select a ticket…' });
+        }
+      });
+  }
 
   // Show/hide billable/sla time inputs
   function toggleTimeField(form, checkboxName, inputName, headerId) {
@@ -154,7 +169,7 @@
       placeholder: 'Select…',
       matcher: function (params, data) {
         if (jQuery.trim(params.term) === '') return data;
-        const term = params.term.toLowerCase();
+        const term = (params.term || '').toLowerCase();
         const text = (data.text || '').toLowerCase();
         return text.indexOf(term) > -1 ? data : null;
       }
@@ -177,23 +192,32 @@
       const clientSel = document.getElementById('client_id');
       const ticketSel = document.getElementById('ticket_id');
       if (clientSel && ticketSel) {
-        // Initial (if editing an existing row in the add form context)
+        // Initial (if client already selected)
         const initialTicket = parseInt(ticketSel.getAttribute('data-initial') || '0', 10) || null;
         if (clientSel.value) {
           populateTicketSelect(ticketSel, clientSel.value, initialTicket);
+        } else {
+          while (ticketSel.options.length) ticketSel.remove(0);
+          ticketSel.appendChild(new Option('Select a ticket…', ''));
         }
-        clientSel.addEventListener('change', function () {
-          if (clientSel.value) {
-            populateTicketSelect(ticketSel, clientSel.value, null);
+
+        // Refresh on client changes — bind BOTH 'change' and 'select2:select'
+        const onClientChange = function () {
+          const cid = clientSel.value;
+          if (cid) {
+            populateTicketSelect(ticketSel, cid, null);
           } else {
-            // Clear
             while (ticketSel.options.length) ticketSel.remove(0);
-            const opt = document.createElement('option');
-            opt.value = '';
-            opt.textContent = 'Select a ticket…';
-            ticketSel.appendChild(opt);
+            ticketSel.appendChild(new Option('Select a ticket…', ''));
+            if (window.jQuery && jQuery.fn && jQuery.fn.select2) {
+              jQuery(ticketSel).val('').trigger('change.select2');
+            }
           }
-        });
+        };
+        clientSel.addEventListener('change', onClientChange);
+        if (window.jQuery && jQuery.fn && jQuery.fn.select2) {
+          jQuery(clientSel).on('select2:select', onClientChange);
+        }
       }
     }
 
@@ -252,14 +276,30 @@
         function loadRowTickets() {
           if (rowClient.value) {
             populateTicketSelect(rowTicket, rowClient.value, initial);
+          } else {
+            while (rowTicket.options.length) rowTicket.remove(0);
+            rowTicket.appendChild(new Option('Select a ticket…', ''));
           }
         }
         loadRowTickets();
 
         // If client changes in edit mode, reload ticket list
-        rowClient.addEventListener('change', function () {
-          populateTicketSelect(rowTicket, rowClient.value, null);
-        });
+        const onRowClientChange = function () {
+          const cid = rowClient.value;
+          if (cid) {
+            populateTicketSelect(rowTicket, cid, null);
+          } else {
+            while (rowTicket.options.length) rowTicket.remove(0);
+            rowTicket.appendChild(new Option('Select a ticket…', ''));
+            if (window.jQuery && jQuery.fn && jQuery.fn.select2) {
+              jQuery(rowTicket).val('').trigger('change.select2');
+            }
+          }
+        };
+        rowClient.addEventListener('change', onRowClientChange);
+        if (window.jQuery && jQuery.fn && jQuery.fn.select2) {
+          jQuery(rowClient).on('select2:select', onRowClientChange);
+        }
       }
     });
 
