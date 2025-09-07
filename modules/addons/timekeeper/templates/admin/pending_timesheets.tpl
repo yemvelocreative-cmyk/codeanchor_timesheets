@@ -174,14 +174,24 @@
           <!-- Flags -->
           <div class="cell cell-flags cell-flags--grid">
             <!-- Ticket (SELECT, client-scoped) -->
-            <div class="flag-item">
+           <div class="flag-item">
               <label class="tk-flag-label">Ticket</label>
-              <select name="ticket_id"
-                      id="pending-add-ticket"
-                      class="tk-row-select tk-ticket-select"
-                      data-preselected="">
+
+              <!-- search box filters the select below -->
+              <input
+                type="text"
+                id="pending-add-ticket-search"
+                class="tk-row-input tk-ticket-search"
+                data-target="#pending-add-ticket"
+                placeholder="Search ticket #…">
+
+              <select
+                name="ticket_id"
+                id="pending-add-ticket"
+                class="tk-row-select tk-ticket-select"
+                data-preselected="">
                 <option value="">Select…</option>
-                <!-- options injected by JS based on client -->
+                <!-- options injected by JS based on client; text shows as #TID -->
               </select>
             </div>
 
@@ -319,11 +329,20 @@
                     <!-- Ticket (SELECT, client-scoped) -->
                     <div class="flag-item">
                       <label class="tk-flag-label">Ticket</label>
-                      <select name="ticket_id"
-                              class="tk-row-select tk-ticket-select"
-                              data-preselected="<?= htmlspecialchars((string)$entry->ticket_id) ?>">
+
+                      <!-- the search input targets the next select in the same form -->
+                      <input
+                        type="text"
+                        class="tk-row-input tk-ticket-search"
+                        data-target="select.tk-ticket-select"
+                        placeholder="Search ticket #…">
+
+                      <select
+                        name="ticket_id"
+                        class="tk-row-select tk-ticket-select"
+                        data-preselected="<?= htmlspecialchars((string)$entry->ticket_id) ?>">
                         <option value="">Select…</option>
-                        <!-- options injected by JS based on client -->
+                        <!-- options injected by JS; text shows as #TID -->
                       </select>
                     </div>
 
