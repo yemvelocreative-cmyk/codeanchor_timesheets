@@ -400,36 +400,47 @@
                     <span><strong><?= number_format((float)$entry->time_spent, 2) ?></strong> hrs</span>
                   </div>
 
-                  <?php
-                    $rawTicket = trim((string)($entry->ticket_id ?? ''));
-                    if ($rawTicket !== ''):
-                      // Always display with a leading '#'
-                      $display = '#' . $rawTicket;
+                  <div class="cell cell-flags">
+                    <div class="tk-badges">
+                      <?php
+                        // Compute a direct link to the admin ticket if possible.
+                        $rawTicket = trim((string)($entry->ticket_id ?? ''));
+                        if ($rawTicket !== ''):
+                          $display = '#' . $rawTicket; // always show with '#'
 
-                      // Resolve to admin ticket ID:
-                      if (ctype_digit($rawTicket)) {
-                          // Already a numeric admin ticket ID
-                          $adminTicketId = (int) $rawTicket;
-                      } else {
-                          // It's a public TID (e.g. YEU-00489) — map to admin ID if available
-                          $adminTicketId = (isset($ticketIdMap) && isset($ticketIdMap[$rawTicket]))
-                              ? (int) $ticketIdMap[$rawTicket]
-                              : null;
-                      }
+                          // Resolve to admin ticket ID:
+                          if (ctype_digit($rawTicket)) {
+                              // already a numeric admin ticket ID
+                              $adminTicketId = (int) $rawTicket;
+                          } else {
+                              // it's a public TID (e.g. YEU-00489) — map to admin ID if provided
+                              $adminTicketId = (isset($ticketIdMap) && isset($ticketIdMap[$rawTicket]))
+                                  ? (int) $ticketIdMap[$rawTicket]
+                                  : null;
+                          }
 
-                      // Prefer a direct link to the admin ticket view; otherwise fall back to a search
-                      $ticketUrl = $adminTicketId
-                          ? 'supporttickets.php?action=view&id=' . $adminTicketId
-                          : 'supporttickets.php?view=all&search=' . urlencode($rawTicket);
-                  ?>
-                      <a class="tk-badge tk-badge--success"
-                        href="<?= htmlspecialchars($ticketUrl) ?>"
-                        target="_blank" rel="noopener">
-                        <?= htmlspecialchars($display) ?>
-                      </a>
-                  <?php else: ?>
-                      <span class="tk-badge">No ticket</span>
-                  <?php endif; ?>
+                          // Prefer direct admin ticket link; else fall back to a search URL
+                          $ticketUrl = $adminTicketId
+                              ? 'supporttickets.php?action=view&id=' . $adminTicketId
+                              : 'supporttickets.php?view=all&search=' . urlencode($rawTicket);
+                      ?>
+                          <a class="tk-badge tk-badge--success"
+                             href="<?= htmlspecialchars($ticketUrl) ?>"
+                             target="_blank" rel="noopener">
+                            <?= htmlspecialchars($display) ?>
+                          </a>
+                      <?php else: ?>
+                          <span class="tk-badge">No ticket</span>
+                      <?php endif; ?>
+
+                      <?php if ((float)$entry->billable_time > 0): ?>
+                        <span class="tk-badge">Billable <?= number_format((float)$entry->billable_time, 2) ?>h</span>
+                      <?php endif; ?>
+                      <?php if ((float)$entry->sla_time > 0): ?>
+                        <span class="tk-badge">SLA <?= number_format((float)$entry->sla_time, 2) ?>h</span>
+                      <?php endif; ?>
+                    </div>
+                  </div>
 
                   <div class="cell cell-actions">
                     <a class="btn btn-sm btn-outline-primary"
