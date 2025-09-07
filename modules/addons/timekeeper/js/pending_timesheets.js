@@ -5,23 +5,26 @@
   // --- helpers ---
   function qn(form, name) { return form ? form.querySelector('[name="' + name + '"]') : null; }
 
-  // Initialize or refresh Select2 on a <select>
-  function initTicketSelect2(selectEl) {
+  // Generic: Initialize or refresh Select2 on a <select> (used for client & ticket)
+  function initSelect2(selectEl, placeholderText) {
     if (!selectEl) return;
-    if (!window.jQuery || !jQuery.fn || !jQuery.fn.select2) return; // guard if Select2/jQuery not present
-
+    if (!window.jQuery || !jQuery.fn || !jQuery.fn.select2) return; // guard if jQuery/Select2 missing
     var $sel = jQuery(selectEl);
-    // Destroy previous instance to avoid duplicates on repopulate
     if ($sel.data('select2')) {
       $sel.select2('destroy');
     }
     $sel.select2({
-      placeholder: 'Select a ticket…',
+      placeholder: placeholderText || 'Select…',
       width: '100%',
       allowClear: true,
       dropdownAutoWidth: true,
-      minimumResultsForSearch: 0 // always enable search box
+      minimumResultsForSearch: 0 // always show the search box
     });
+  }
+
+  // Ticket-specific Select2 initializer (kept for clarity; calls generic)
+  function initTicketSelect2(selectEl) {
+    initSelect2(selectEl, 'Select a ticket…');
   }
 
   // Populate ticket <select> for the chosen client (labels = #TID only)
@@ -168,8 +171,13 @@
   // Bind edit rows
   function bindEditRows() {
     document.querySelectorAll('.tk-row-edit').forEach(function (form) {
-      // Client -> Ticket linkage per edit row (includes Select2 init)
-      const clientSel = form.querySelector('.pending-edit-client');
+      // Client select (searchable via Select2)
+      // Prefer an explicit class if present; otherwise fall back to the client select in the row
+      let clientSel = form.querySelector('.pending-edit-client');
+      if (!clientSel) clientSel = form.querySelector('select[name="client_id"]');
+      if (clientSel) initSelect2(clientSel, 'Select client…');
+
+      // Client -> Ticket linkage per edit row (includes Select2 init for ticket)
       const ticketSel = form.querySelector('.tk-ticket-select');
       if (clientSel && ticketSel) bindTicketPicker(clientSel, ticketSel);
 
@@ -240,8 +248,11 @@
       var addTask = document.getElementById('pending-add-task-category');
       if (addDept && addTask) bindDeptTaskFilter(addDept, addTask);
 
-      // Client -> Ticket linkage on Add (includes Select2 init)
+      // Client select (searchable via Select2) on Add row
       var addClient = document.getElementById('pending-add-client');
+      if (addClient) initSelect2(addClient, 'Select client…');
+
+      // Client -> Ticket linkage on Add (includes Select2 init for ticket)
       var addTicket = document.getElementById('pending-add-ticket');
       if (addClient && addTicket) {
         bindTicketPicker(addClient, addTicket);
