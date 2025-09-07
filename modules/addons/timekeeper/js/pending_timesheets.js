@@ -5,6 +5,25 @@
   // --- helpers ---
   function qn(form, name) { return form ? form.querySelector('[name="' + name + '"]') : null; }
 
+  // Initialize or refresh Select2 on a <select>
+  function initTicketSelect2(selectEl) {
+    if (!selectEl) return;
+    if (!window.jQuery || !jQuery.fn || !jQuery.fn.select2) return; // guard if Select2/jQuery not present
+
+    var $sel = jQuery(selectEl);
+    // Destroy previous instance to avoid duplicates on repopulate
+    if ($sel.data('select2')) {
+      $sel.select2('destroy');
+    }
+    $sel.select2({
+      placeholder: 'Select a ticket…',
+      width: '100%',
+      allowClear: true,
+      dropdownAutoWidth: true,
+      minimumResultsForSearch: 0 // always enable search box
+    });
+  }
+
   // Populate ticket <select> for the chosen client (labels = #TID only)
   function populateTicketSelect(selectEl, tickets, preselected) {
     if (!selectEl) return;
@@ -23,12 +42,15 @@
         const tid = String(t.tid || t.id || '').trim();
         if (!tid) return;
         const opt = document.createElement('option');
-        opt.value = tid;                 // submit plain TID
-        opt.textContent = '#' + tid;     // display as #TID only
+        opt.value = tid;              // submit plain TID
+        opt.textContent = '#' + tid;  // display as #TID only
         if (valToSet && tid === valToSet) opt.selected = true;
         selectEl.appendChild(opt);
       });
     }
+
+    // (Re)apply Select2 after DOM options are set
+    initTicketSelect2(selectEl);
   }
 
   // Bind client -> ticket linkage for a given form
@@ -46,30 +68,6 @@
     clientSelect.addEventListener('change', apply);
     // initial fill
     apply();
-  }
-
-  // Wire a text input to filter <select> options by substring match on #TID
-  function bindTicketSearch(searchInput, selectEl) {
-    if (!searchInput || !selectEl) return;
-
-    function applyFilter() {
-      const q = (searchInput.value || '').toLowerCase().trim();
-      Array.from(selectEl.options).forEach((opt, i) => {
-        if (i === 0) { opt.hidden = false; return; } // keep "Select…" visible
-        const label = (opt.textContent || '').toLowerCase();
-        opt.hidden = q ? (label.indexOf(q) === -1) : false;
-      });
-
-      // If the current selection is hidden by the filter, clear it to avoid confusion
-      const sel = selectEl.selectedIndex;
-      if (sel > 0 && selectEl.options[sel].hidden) {
-        selectEl.selectedIndex = 0;
-      }
-    }
-
-    searchInput.addEventListener('input', applyFilter);
-    // run once in case there’s a prefilled query (unlikely, but harmless)
-    applyFilter();
   }
 
   // Toggle a time input & optional header by checkbox
@@ -170,19 +168,10 @@
   // Bind edit rows
   function bindEditRows() {
     document.querySelectorAll('.tk-row-edit').forEach(function (form) {
-      // Client -> Ticket linkage per edit row
+      // Client -> Ticket linkage per edit row (includes Select2 init)
       const clientSel = form.querySelector('.pending-edit-client');
       const ticketSel = form.querySelector('.tk-ticket-select');
       if (clientSel && ticketSel) bindTicketPicker(clientSel, ticketSel);
-
-      // Ticket search within this form
-      const searchInput = form.querySelector('.tk-ticket-search');
-      if (searchInput) {
-        // If data-target is provided, resolve relative to this form; else use the ticketSel we found
-        const targetSelector = searchInput.getAttribute('data-target');
-        const targetEl = targetSelector ? form.querySelector(targetSelector) : ticketSel;
-        if (targetEl) bindTicketSearch(searchInput, targetEl);
-      }
 
       // Dept -> Task filter, time calc, and billable/SLA toggles
       const deptSel = form.querySelector('.pending-edit-department');
@@ -251,15 +240,11 @@
       var addTask = document.getElementById('pending-add-task-category');
       if (addDept && addTask) bindDeptTaskFilter(addDept, addTask);
 
-      // Client -> Ticket linkage on Add
+      // Client -> Ticket linkage on Add (includes Select2 init)
       var addClient = document.getElementById('pending-add-client');
       var addTicket = document.getElementById('pending-add-ticket');
       if (addClient && addTicket) {
         bindTicketPicker(addClient, addTicket);
-
-        // Add-row ticket search -> select
-        var addSearch = document.getElementById('pending-add-ticket-search');
-        if (addSearch) bindTicketSearch(addSearch, addTicket);
       }
     }
   });

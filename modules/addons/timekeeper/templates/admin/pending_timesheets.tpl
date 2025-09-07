@@ -173,25 +173,16 @@
 
           <!-- Flags -->
           <div class="cell cell-flags cell-flags--grid">
-            <!-- Ticket (SELECT, client-scoped) -->
-           <div class="flag-item">
+            <!-- Ticket (SELECT2, client-scoped) -->
+            <div class="flag-item">
               <label class="tk-flag-label">Ticket</label>
-
-              <!-- search box filters the select below -->
-              <input
-                type="text"
-                id="pending-add-ticket-search"
-                class="tk-row-input tk-ticket-search"
-                data-target="#pending-add-ticket"
-                placeholder="Search ticket #…">
-
               <select
                 name="ticket_id"
                 id="pending-add-ticket"
                 class="tk-row-select tk-ticket-select"
                 data-preselected="">
-                <option value="">Select…</option>
-                <!-- options injected by JS based on client; text shows as #TID -->
+                <option value="">Select a ticket…</option>
+                <!-- Options injected by JS based on client; labels are #TID -->
               </select>
             </div>
 
@@ -326,23 +317,15 @@
 
                   <!-- Flags -->
                   <div class="cell cell-flags cell-flags--grid">
-                    <!-- Ticket (SELECT, client-scoped) -->
+                    <!-- Ticket (SELECT2, client-scoped) -->
                     <div class="flag-item">
                       <label class="tk-flag-label">Ticket</label>
-
-                      <!-- the search input targets the next select in the same form -->
-                      <input
-                        type="text"
-                        class="tk-row-input tk-ticket-search"
-                        data-target="select.tk-ticket-select"
-                        placeholder="Search ticket #…">
-
                       <select
                         name="ticket_id"
                         class="tk-row-select tk-ticket-select"
                         data-preselected="<?= htmlspecialchars((string)$entry->ticket_id) ?>">
-                        <option value="">Select…</option>
-                        <!-- options injected by JS; text shows as #TID -->
+                        <option value="">Select a ticket…</option>
+                        <!-- Options injected by JS; labels are #TID -->
                       </select>
                     </div>
 
@@ -554,6 +537,8 @@
       <script>
         window.TK_TICKETS_BY_CLIENT = <?= json_encode($ticketsByClient, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;
       </script>
+      <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+      <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     </div>
     </div>
