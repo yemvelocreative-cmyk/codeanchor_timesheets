@@ -404,11 +404,30 @@
 
                     <div class="cell cell-flags">
                       <div class="tk-badges">
-                        <?php if (!empty($entry->ticket_id)): ?>
-                          <span class="tk-badge tk-badge--success">Ticket <?= htmlspecialchars($entry->ticket_id) ?></span>
+                        <?php
+                          // --- Ticket badge: clickable link (numeric -> view by id, otherwise -> search fallback)
+                          $ticketId  = trim((string)($entry->ticket_id ?? ''));
+                          $ticketUrl = '';
+                          if ($ticketId !== '') {
+                            if (ctype_digit($ticketId)) {
+                              $ticketUrl = 'supporttickets.php?action=view&id=' . (int)$ticketId;
+                            } else {
+                              $ticketUrl = 'supporttickets.php?view=all&search=' . urlencode($ticketId);
+                            }
+                          }
+                        ?>
+                        <?php if ($ticketId !== ''): ?>
+                          <?php if ($ticketUrl): ?>
+                            <a class="tk-badge tk-badge--success" href="<?= htmlspecialchars($ticketUrl) ?>" target="_blank" rel="noopener">
+                              Ticket <?= htmlspecialchars($ticketId) ?>
+                            </a>
+                          <?php else: ?>
+                            <span class="tk-badge tk-badge--success">Ticket <?= htmlspecialchars($ticketId) ?></span>
+                          <?php endif; ?>
                         <?php else: ?>
                           <span class="tk-badge">No ticket</span>
                         <?php endif; ?>
+
                         <?php if ((float)$entry->billable_time > 0): ?>
                           <span class="tk-badge">Billable <?= number_format((float)$entry->billable_time, 2) ?>h</span>
                         <?php endif; ?>
