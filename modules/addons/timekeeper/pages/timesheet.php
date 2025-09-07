@@ -21,9 +21,7 @@ if ($adminId <= 0) {
  * Keep this block BEFORE any other output so we return clean JSON.
  */
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'tickets') {
-    // Ensure no buffered HTML sneaks in
     while (ob_get_level() > 0) { ob_end_clean(); }
-
     header('Content-Type: application/json; charset=UTF-8');
 
     try {
@@ -33,41 +31,28 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'tickets') {
             exit;
         }
 
-        // Pull recent tickets for this client (inactive/active status does not matter)
         $tickets = Capsule::table('tbltickets')
             ->where('userid', $clientId)
             ->orderBy('lastreply', 'desc')
             ->orderBy('id', 'desc')
             ->limit(100)
-            ->get(['id', 'tid', 'title']);
+            ->get(['id', 'tid']);
 
         $out = [];
         foreach ($tickets as $t) {
-            $tid   = (string)($t->tid ?? '');
-            $title = (string)($t->title ?? '');
-            $label = ($tid !== '' ? "Ticket #{$tid}" : "Ticket ID {$t->id}");
-            if ($title !== '') {
-                if (function_exists('mb_strimwidth')) {
-                    $label .= " — " . mb_strimwidth($title, 0, 60, '…', 'UTF-8');
-                } else {
-                    $label .= " — " . (strlen($title) > 60 ? substr($title, 0, 57) . '…' : $title);
-                }
-            }
+            $tid = (string)($t->tid ?? '');
             $out[] = [
-                'id'   => (int)$t->id,  // numeric PK of tbltickets
-                'tid'  => $tid,         // public ticket number
-                'text' => $label,       // display label for Select2
+                'id'   => (int)$t->id,   // numeric PK from tbltickets
+                'tid'  => $tid,          // public ticket number
+                'text' => '#' . $tid,    // display ONLY the ticket number
             ];
         }
 
         echo json_encode($out);
     } catch (\Throwable $e) {
-        // Return empty on error (swap for debug payload if needed)
         echo json_encode([]);
-        // For debugging only:
-        // echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
     }
-    exit; // IMPORTANT: stop normal page rendering
+    exit;
 }
 
 // ---- Date context (today) ----
