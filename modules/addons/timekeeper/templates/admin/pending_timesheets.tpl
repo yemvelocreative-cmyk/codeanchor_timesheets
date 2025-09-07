@@ -400,39 +400,36 @@
                     <span><strong><?= number_format((float)$entry->time_spent, 2) ?></strong> hrs</span>
                   </div>
 
-                  <div class="cell cell-flags">
-                    <div class="tk-badges">
-                      <?php
-                        $ticketId  = trim((string)($entry->ticket_id ?? ''));
-                        $ticketUrl = '';
-                        if ($ticketId !== '') {
-                          if (ctype_digit($ticketId)) {
-                            $ticketUrl = 'supporttickets.php?action=view&id=' . (int)$ticketId;
-                          } else {
-                            $ticketUrl = 'supporttickets.php?view=all&search=' . urlencode($ticketId);
-                          }
-                        }
-                      ?>
-                      <?php if ($ticketId !== ''): ?>
-                        <?php if ($ticketUrl): ?>
-                          <a class="tk-badge tk-badge--success" href="<?= htmlspecialchars($ticketUrl) ?>" target="_blank" rel="noopener">
-                            Ticket <?= htmlspecialchars($ticketId) ?>
-                          </a>
-                        <?php else: ?>
-                          <span class="tk-badge tk-badge--success">Ticket <?= htmlspecialchars($ticketId) ?></span>
-                        <?php endif; ?>
-                      <?php else: ?>
-                        <span class="tk-badge">No ticket</span>
-                      <?php endif; ?>
+                  <?php
+                    $rawTicket = trim((string)($entry->ticket_id ?? ''));
+                    if ($rawTicket !== ''):
+                      // Always display with a leading '#'
+                      $display = '#' . $rawTicket;
 
-                      <?php if ((float)$entry->billable_time > 0): ?>
-                        <span class="tk-badge">Billable <?= number_format((float)$entry->billable_time, 2) ?>h</span>
-                      <?php endif; ?>
-                      <?php if ((float)$entry->sla_time > 0): ?>
-                        <span class="tk-badge">SLA <?= number_format((float)$entry->sla_time, 2) ?>h</span>
-                      <?php endif; ?>
-                    </div>
-                  </div>
+                      // Resolve to admin ticket ID:
+                      if (ctype_digit($rawTicket)) {
+                          // Already a numeric admin ticket ID
+                          $adminTicketId = (int) $rawTicket;
+                      } else {
+                          // It's a public TID (e.g. YEU-00489) — map to admin ID if available
+                          $adminTicketId = (isset($ticketIdMap) && isset($ticketIdMap[$rawTicket]))
+                              ? (int) $ticketIdMap[$rawTicket]
+                              : null;
+                      }
+
+                      // Prefer a direct link to the admin ticket view; otherwise fall back to a search
+                      $ticketUrl = $adminTicketId
+                          ? 'supporttickets.php?action=view&id=' . $adminTicketId
+                          : 'supporttickets.php?view=all&search=' . urlencode($rawTicket);
+                  ?>
+                      <a class="tk-badge tk-badge--success"
+                        href="<?= htmlspecialchars($ticketUrl) ?>"
+                        target="_blank" rel="noopener">
+                        <?= htmlspecialchars($display) ?>
+                      </a>
+                  <?php else: ?>
+                      <span class="tk-badge">No ticket</span>
+                  <?php endif; ?>
 
                   <div class="cell cell-actions">
                     <a class="btn btn-sm btn-outline-primary"

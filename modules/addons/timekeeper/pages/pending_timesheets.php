@@ -281,6 +281,28 @@ if (!empty($_GET['admin_id']) && !empty($_GET['date'])) {
 
     if ($timesheet) {
         $editTimesheetEntries = PendingH::entriesSorted((int)$timesheet->id);
+
+        // --- NEW: map non-numeric ticket TIDs to admin ticket IDs for linking ---
+        $ticketIdMap = [];
+        if (!empty($editTimesheetEntries)) {
+            $tids = [];
+            foreach ($editTimesheetEntries as $e) {
+                $val = trim((string)($e->ticket_id ?? ''));
+                if ($val !== '' && !ctype_digit($val)) {
+                    $tids[$val] = true; // unique TIDs only
+                }
+            }
+            if (!empty($tids)) {
+                $rows = Capsule::table('tbltickets')
+                    ->whereIn('tid', array_keys($tids))
+                    ->get(['id', 'tid']);
+                foreach ($rows as $r) {
+                    $ticketIdMap[(string)$r->tid] = (int)$r->id;
+                }
+            }
+        }
+    } else {
+        $ticketIdMap = []; // keep defined
     }
 }
 
@@ -328,6 +350,7 @@ $vars = compact(
     'canApprove',
     'unbilledTimeValidateMin',
     'ticketsByClient'
+    'ticketIdMap'
 );
 
 extract($vars);
