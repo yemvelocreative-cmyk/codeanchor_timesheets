@@ -3,7 +3,7 @@
 $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 $baseUrl = 'addonmodules.php?module=timekeeper&timekeeperpage=reports&r=timesheet_audit';
 ?>
-<link rel="stylesheet" href="/modules/addons/timekeeper/css/report_output.css" />
+<?php if(isset($__tkAsset)): ?><link rel="stylesheet" href="<?= $__tkAsset('css/report_output.css'); ?>"><?php endif; ?>
 
 <div id="ts-audit" class="timekeeper-report">
   <h3><?= $h($reportTitle ?? 'Timesheet Audit Report') ?></h3>

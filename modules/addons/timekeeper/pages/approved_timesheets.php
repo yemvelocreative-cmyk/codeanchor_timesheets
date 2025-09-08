@@ -3,7 +3,6 @@
 use WHMCS\Database\Capsule;
 use Timekeeper\Helpers\CoreHelper as CoreH;
 use Timekeeper\Helpers\ApprovedTimesheetsHelper as ApprovedH;
-// /modules/addons/timekeeper/pages/approved_timesheets.php
 
 // --- Load helpers (supports either helpers/ or includes/helpers/) ---
 $base = dirname(__DIR__); // -> /modules/addons/timekeeper
@@ -16,6 +15,51 @@ $base = dirname(__DIR__); // -> /modules/addons/timekeeper
     else { throw new \RuntimeException("Missing core_helper.php in helpers/ or includes/helpers/"); }
 })($base);
 CoreH::requireHelper($base, 'approved_timesheets_helper');
+
+// ---- Dynamic base URL + asset helper (polyfill if not in core_helper yet) ----
+/**
+ * Preferred approach: use helper functions added to core_helper.php:
+ * - \Timekeeper\Helpers\timekeeperBaseUrl(): string
+ * - \Timekeeper\Helpers\timekeeperAsset(string $relPath): string
+ *
+ * Fallback here keeps this page working even before core_helper is updated.
+ */
+if (!function_exists('\Timekeeper\Helpers\timekeeperBaseUrl') || !function_exists('\Timekeeper\Helpers\timekeeperAsset')) {
+    // Local polyfill (scoped)
+    // Note: WHMCS Setting is only used here, avoid global imports to keep file clean
+    $tkSystemUrl = (function (): string {
+        try {
+            $ssl = (string) \WHMCS\Config\Setting::getValue('SystemSSLURL');
+            $url = $ssl !== '' ? $ssl : (string) \WHMCS\Config\Setting::getValue('SystemURL');
+            return rtrim($url, '/');
+        } catch (\Throwable $e) {
+            return ''; // fallback to relative if settings unavailable
+        }
+    })();
+
+    $tkBase = ($tkSystemUrl !== '' ? $tkSystemUrl : '') . '/modules/addons/timekeeper';
+    $tkBase = rtrim($tkBase, '/');
+
+    // Callable for templates: $tkAsset('css/file.css')
+    $tkAsset = function (string $relPath) use ($tkBase, $base): string {
+        $rel = ltrim($relPath, '/');
+        $url = $tkBase . '/' . $rel;
+
+        // Append mtime if the file exists on disk for cache-busting
+        $file = $base . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $rel);
+        if (@is_file($file)) {
+            $ver = @filemtime($file);
+            if ($ver) {
+                $url .= (strpos($url, '?') === false ? '?' : '&') . 'v=' . $ver;
+            }
+        }
+        return $url;
+    };
+} else {
+    // Use helpers from core_helper.php if available
+    $tkBase  = \Timekeeper\Helpers\timekeeperBaseUrl();
+    $tkAsset = '\Timekeeper\Helpers\timekeeperAsset'; // callable
+}
 
 // ---- Context: current admin + role ----
 $adminId = isset($_SESSION['adminid']) ? (int) $_SESSION['adminid'] : 0;
@@ -222,7 +266,10 @@ $vars = compact(
     'canUnapprove',
     'canUseAdminFilter',
     'filters',
-    'pager' // <--- NEW
+    'pager',
+    // NEW: expose dynamic base + asset builder to the template
+    'tkBase',
+    'tkAsset'
 );
 
 extract($vars);

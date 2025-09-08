@@ -17,6 +17,45 @@ $try('/helpers/dashboard_helper.php', '/includes/helpers/dashboard_helper.php');
 use Timekeeper\Helpers\CoreHelper as CoreH;
 use Timekeeper\Helpers\DashboardHelper as DashH;
 
+// ---- Dynamic base URL + asset helper (polyfill if not in core_helper yet) ----
+// Preferred (if added to core_helper.php):
+//   \Timekeeper\Helpers\timekeeperBaseUrl(): string
+//   \Timekeeper\Helpers\timekeeperAsset(string $relPath): string
+if (!function_exists('\\Timekeeper\\Helpers\\timekeeperBaseUrl') || !function_exists('\\Timekeeper\\Helpers\\timekeeperAsset')) {
+    // Local polyfill (scoped to this file)
+    $tkSystemUrl = (function (): string {
+        try {
+            $ssl = (string) \WHMCS\Config\Setting::getValue('SystemSSLURL');
+            $url = $ssl !== '' ? $ssl : (string) \WHMCS\Config\Setting::getValue('SystemURL');
+            return rtrim($url, '/');
+        } catch (\Throwable $e) {
+            return '';
+        }
+    })();
+
+    $tkBase = ($tkSystemUrl !== '' ? $tkSystemUrl : '') . '/modules/addons/timekeeper';
+    $tkBase = rtrim($tkBase, '/');
+
+    // Callable for cache-busted assets, e.g. $tkAsset('css/dashboard.css')
+    $tkAsset = function (string $relPath) use ($tkBase, $base): string {
+        $rel = ltrim($relPath, '/');
+        $url = $tkBase . '/' . $rel;
+
+        $file = $base . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $rel);
+        if (@is_file($file)) {
+            $ver = @filemtime($file);
+            if ($ver) {
+                $url .= (strpos($url, '?') === false ? '?' : '&') . 'v=' . $ver;
+            }
+        }
+        return $url;
+    };
+} else {
+    // Use canonical helpers if present
+    $tkBase  = \Timekeeper\Helpers\timekeeperBaseUrl();
+    $tkAsset = '\Timekeeper\Helpers\timekeeperAsset'; // callable
+}
+
 $today = date('Y-m-d');
 $rawFrom = $_GET['from'] ?? null;
 $rawTo   = $_GET['to']   ?? null;
@@ -32,7 +71,7 @@ $aging = $canApprove ? DashH::agingBuckets([2,5]) : [];
 
 $perPage = max(5, min(100, (int)($_GET['per'] ?? 10)));
 $page    = max(1, (int)($_GET['p'] ?? 1));
-$ageMin  = isset($_GET['age']) ? max(0, (int)$_GET['age']) : null;
+$ageMin  = isset($_GET['age']) ? max(0, (int)($_GET['age'])) : null;
 
 $pending = $pendingTotals = [];
 $totalPending = 0;

@@ -18,6 +18,45 @@ $try('/helpers/departments_helper.php', '/includes/helpers/departments_helper.ph
 use Timekeeper\Helpers\CoreHelper as CoreH;
 use Timekeeper\Helpers\DepartmentsHelper as DeptH;
 
+// ---- Dynamic base URL + asset helper (polyfill if not in core_helper yet) ----
+// Preferred helpers (if present in core_helper.php):
+//   \Timekeeper\Helpers\timekeeperBaseUrl(): string
+//   \Timekeeper\Helpers\timekeeperAsset(string $relPath): string
+if (!function_exists('\\Timekeeper\\Helpers\\timekeeperBaseUrl') || !function_exists('\\Timekeeper\\Helpers\\timekeeperAsset')) {
+    // Local polyfill
+    $tkSystemUrl = (function (): string {
+        try {
+            $ssl = (string) \WHMCS\Config\Setting::getValue('SystemSSLURL');
+            $url = $ssl !== '' ? $ssl : (string) \WHMCS\Config\Setting::getValue('SystemURL');
+            return rtrim($url, '/');
+        } catch (\Throwable $e) {
+            return '';
+        }
+    })();
+
+    $tkBase = ($tkSystemUrl !== '' ? $tkSystemUrl : '') . '/modules/addons/timekeeper';
+    $tkBase = rtrim($tkBase, '/');
+
+    // Callable for cache-busted assets, e.g. $tkAsset('css/departments.css')
+    $tkAsset = function (string $relPath) use ($tkBase, $base): string {
+        $rel = ltrim($relPath, '/');
+        $url = $tkBase . '/' . $rel;
+
+        $file = $base . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $rel);
+        if (@is_file($file)) {
+            $ver = @filemtime($file);
+            if ($ver) {
+                $url .= (strpos($url, '?') === false ? '?' : '&') . 'v=' . $ver;
+            }
+        }
+        return $url;
+    };
+} else {
+    // Use canonical helpers if available
+    $tkBase  = \Timekeeper\Helpers\timekeeperBaseUrl();
+    $tkAsset = '\Timekeeper\Helpers\timekeeperAsset'; // callable
+}
+
 $modulelink = "addonmodules.php?module=timekeeper&timekeeperpage=departments";
 
 // ==============================
@@ -111,6 +150,10 @@ $message = DeptH::buildMessageFromQuery($_GET);
 // ==============================
 // Render template & inject rows
 // ==============================
+// Make dynamic helpers available to the template scope (in case it references $tkAsset/$tkBase)
+$__tkBase  = $tkBase;
+$__tkAsset = $tkAsset;
+
 ob_start();
 include __DIR__ . '/../templates/admin/departments.tpl';
 $content = ob_get_clean();
@@ -126,5 +169,9 @@ foreach ($inactive as $dept) { $rowsInactive .= DeptH::buildRow($dept, $moduleli
 $content = str_replace('<!--MESSAGE-->', $message, $content);
 $content = str_replace('<!--DEPT_ROWS_ACTIVE-->', $rowsActive, $content);
 $content = str_replace('<!--DEPT_ROWS_INACTIVE-->', $rowsInactive, $content);
+
+// Optionally, if your template uses placeholders for asset URLs, you can replace them here:
+// $content = str_replace('<!--TK_CSS_DEPARTMENTS-->', '<link rel="stylesheet" href="'. $__tkAsset('css/departments.css') .'">', $content);
+// $content = str_replace('<!--TK_JS_DEPARTMENTS-->',  '<script src="'. $__tkAsset('js/departments.js') .'" defer></script>', $content);
 
 echo $content;

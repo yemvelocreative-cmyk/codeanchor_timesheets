@@ -7,6 +7,47 @@ if (!defined('WHMCS')) {
 }
 
 require_once __DIR__ . '/../includes/helpers/core_helper.php';
+
+// ---- Dynamic base URL + asset helper (polyfill if not in core_helper yet) ----
+// Preferred helpers (if present in core_helper.php):
+//   \Timekeeper\Helpers\timekeeperBaseUrl(): string
+//   \Timekeeper\Helpers\timekeeperAsset(string $relPath): string
+if (!function_exists('Timekeeper\\Helpers\\timekeeperBaseUrl') || !function_exists('Timekeeper\\Helpers\\timekeeperAsset')) {
+    // Local polyfill
+    $tkSystemUrl = (function (): string {
+        try {
+            $ssl = (string) \WHMCS\Config\Setting::getValue('SystemSSLURL');
+            $url = $ssl !== '' ? $ssl : (string) \WHMCS\Config\Setting::getValue('SystemURL');
+            return rtrim($url, '/');
+        } catch (\Throwable $e) {
+            return '';
+        }
+    })();
+
+    $tkBase = ($tkSystemUrl !== '' ? $tkSystemUrl : '') . '/modules/addons/timekeeper';
+    $tkBase = rtrim($tkBase, '/');
+
+    // Callable for cache-busted assets, e.g. $tkAsset('css/page.css')
+    $tkAsset = function (string $relPath) use ($tkBase, $base): string {
+        $rel = ltrim($relPath, '/');
+        $url = $tkBase . '/' . $rel;
+
+        $file = $base . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $rel);
+        if (@is_file($file)) {
+            $ver = @filemtime($file);
+            if ($ver) {
+                $url .= (strpos($url, '?') === false ? '?' : '&') . 'v=' . $ver;
+            }
+        }
+        return $url;
+    };
+} else {
+    // Use canonical helpers if available
+    $tkBase  = \Timekeeper\Helpers\timekeeperBaseUrl();
+    $tkAsset = '\Timekeeper\Helpers\timekeeperAsset'; // callable
+}
+
+
 require_once __DIR__ . '/../includes/helpers/pending_timesheet_helper.php';
 
 use Timekeeper\Helpers\CoreHelper as Core;
@@ -357,4 +398,8 @@ $vars = compact(
 extract($vars);
 
 // Render template
+
+// Make dynamic helpers available to templates
+$__tkBase = $tkBase;
+$__tkAsset = $tkAsset;
 include __DIR__ . '/../templates/admin/pending_timesheets.tpl';

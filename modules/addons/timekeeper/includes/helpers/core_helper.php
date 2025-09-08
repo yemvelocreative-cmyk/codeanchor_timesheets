@@ -159,3 +159,61 @@ if ($roleId <= 0 || $pageKey === '') return true;
         }
     }
 }
+
+if (!function_exists('timekeeperSystemBaseUrl')) {
+    /**
+     * Prefer SSL URL if defined, else fall back to SystemURL.
+     * Returns URL without trailing slash.
+     */
+    function timekeeperSystemBaseUrl(): string
+    {
+        $ssl = trim((string) Setting::getValue('SystemSSLURL'));
+        $url = $ssl !== '' ? $ssl : (string) Setting::getValue('SystemURL');
+        return rtrim($url, '/');
+    }
+}
+
+if (!function_exists('timekeeperBaseUrl')) {
+    /**
+     * Public URL to this addon, robust to subfolders like /portal.
+     * Example: https://example.com/portal/modules/addons/timekeeper
+     */
+    function timekeeperBaseUrl(): string
+    {
+        return timekeeperSystemBaseUrl() . '/modules/addons/timekeeper';
+    }
+}
+
+if (!function_exists('timekeeperBaseDir')) {
+    /**
+     * Filesystem path to the addon root (no trailing slash).
+     */
+    function timekeeperBaseDir(): string
+    {
+        // helpers may live under /includes/helpers or /helpers — normalize to addon root
+        // __DIR__ => .../modules/addons/timekeeper/includes/helpers
+        return dirname(dirname(__DIR__)); // -> .../modules/addons/timekeeper
+    }
+}
+
+if (!function_exists('timekeeperAsset')) {
+    /**
+     * Build a versioned asset URL (adds ?v=<mtime> when file exists).
+     * $path is relative to the addon root, e.g. 'css/timesheet.css' or '/js/settings.js'
+     */
+    function timekeeperAsset(string $path): string
+    {
+        $path = ltrim($path, '/');
+        $url  = timekeeperBaseUrl() . '/' . $path;
+
+        $file = timekeeperBaseDir() . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path);
+        if (@is_file($file)) {
+            $ver = @filemtime($file);
+            if ($ver) {
+                $sep = (strpos($url, '?') === false) ? '?' : '&';
+                $url .= $sep . 'v=' . $ver;
+            }
+        }
+        return $url;
+    }
+}
