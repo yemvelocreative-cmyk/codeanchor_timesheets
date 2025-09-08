@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Timekeeper\Helpers {
     use WHMCS\Database\Capsule;
+    use WHMCS\Config\Setting;
 
     final class CoreHelper
     {
@@ -71,35 +72,95 @@ namespace Timekeeper\Helpers {
             return htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
         }
 
-/** Validate YYYY-MM-DD date strings */
-public static function isValidDate(?string $s): bool
-{
-    if (!is_string($s)) return false;
-    return (bool) preg_match('/^\d{4}-\d{2}-\d{2}$/', $s);
-}
+        /** Validate YYYY-MM-DD date strings */
+        public static function isValidDate(?string $s): bool
+        {
+            if (!is_string($s)) return false;
+            return (bool) preg_match('/^\d{4}-\d{2}-\d{2}$/', $s);
+        }
 
-/**
- * Require a helper file from either of two relative paths under $baseDir.
- * Example: CoreHelper::requireEither($base, '/helpers/core_helper.php', '/includes/helpers/core_helper.php');
- */
-public static function requireEither(string $baseDir, string $relA, string $relB): void
-{
-    $a = $baseDir . $relA;
-    $b = $baseDir . $relB;
-    if (is_file($a)) { require_once $a; return; }
-    if (is_file($b)) { require_once $b; return; }
-    throw new \RuntimeException("Missing helper: tried {$a} and {$b}");
-}
+        /**
+         * Require a helper file from either of two relative paths under $baseDir.
+         * Example: CoreHelper::requireEither($base, '/helpers/core_helper.php', '/includes/helpers/core_helper.php');
+         */
+        public static function requireEither(string $baseDir, string $relA, string $relB): void
+        {
+            $a = $baseDir . $relA;
+            $b = $baseDir . $relB;
+            if (is_file($a)) { require_once $a; return; }
+            if (is_file($b)) { require_once $b; return; }
+            throw new \RuntimeException("Missing helper: tried {$a} and {$b}");
+        }
 
-/**
- * Convenience: load a helper by basename (no extension), trying helpers/ and includes/helpers/.
- * e.g. CoreHelper::requireHelper($base, 'approved_timesheets_helper')
- */
-public static function requireHelper(string $baseDir, string $basename): void
-{
-    self::requireEither($baseDir, '/helpers/' . $basename . '.php', '/includes/helpers/' . $basename . '.php');
-}
-}
+        /**
+         * Convenience: load a helper by basename (no extension), trying helpers/ and includes/helpers/.
+         * e.g. CoreHelper::requireHelper($base, 'approved_timesheets_helper')
+         */
+        public static function requireHelper(string $baseDir, string $basename): void
+        {
+            self::requireEither($baseDir, '/helpers/' . $basename . '.php', '/includes/helpers/' . $basename . '.php');
+        }
+    }
+
+    // ---------- Dynamic Base/Asset Helpers (namespaced) ----------
+
+    if (!function_exists(__NAMESPACE__ . '\\timekeeperSystemBaseUrl')) {
+        /**
+         * Prefer SSL URL if defined, else fall back to SystemURL.
+         * Returns URL without trailing slash.
+         */
+        function timekeeperSystemBaseUrl(): string
+        {
+            $ssl = trim((string) Setting::getValue('SystemSSLURL'));
+            $url = $ssl !== '' ? $ssl : (string) Setting::getValue('SystemURL');
+            return rtrim($url, '/');
+        }
+    }
+
+    if (!function_exists(__NAMESPACE__ . '\\timekeeperBaseUrl')) {
+        /**
+         * Public URL to this addon, robust to subfolders like /portal.
+         * Example: https://example.com/portal/modules/addons/timekeeper
+         */
+        function timekeeperBaseUrl(): string
+        {
+            return timekeeperSystemBaseUrl() . '/modules/addons/timekeeper';
+        }
+    }
+
+    if (!function_exists(__NAMESPACE__ . '\\timekeeperBaseDir')) {
+        /**
+         * Filesystem path to the addon root (no trailing slash).
+         */
+        function timekeeperBaseDir(): string
+        {
+            // helpers may live under /includes/helpers or /helpers — normalize to addon root
+            // __DIR__ => .../modules/addons/timekeeper/includes/helpers
+            return dirname(dirname(__DIR__)); // -> .../modules/addons/timekeeper
+        }
+    }
+
+    if (!function_exists(__NAMESPACE__ . '\\timekeeperAsset')) {
+        /**
+         * Build a versioned asset URL (adds ?v=<mtime> when file exists).
+         * $path is relative to the addon root, e.g. 'css/timesheet.css' or '/js/settings.js'
+         */
+        function timekeeperAsset(string $path): string
+        {
+            $path = ltrim($path, '/');
+            $url  = timekeeperBaseUrl() . '/' . $path;
+
+            $file = timekeeperBaseDir() . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path);
+            if (@is_file($file)) {
+                $ver = @filemtime($file);
+                if ($ver) {
+                    $sep = (strpos($url, '?') === false) ? '?' : '&';
+                    $url .= $sep . 'v=' . $ver;
+                }
+            }
+            return $url;
+        }
+    }
 }
 
 namespace {
@@ -108,7 +169,7 @@ namespace {
      */
     if (!function_exists('tk_normalize_page')) {
         function tk_normalize_page(string $s): string {
-$s = preg_replace('/[^a-z0-9_]/i', '', strtolower($s));
+            $s = preg_replace('/[^a-z0-9_]/i', '', strtolower($s));
             return $s !== '' ? $s : 'dashboard';
         }
     }
@@ -122,7 +183,7 @@ $s = preg_replace('/[^a-z0-9_]/i', '', strtolower($s));
      */
     if (!function_exists('tk_isPageAllowedForRole')) {
         function tk_isPageAllowedForRole(int $roleId, string $pageKey): bool {
-if ($roleId <= 0 || $pageKey === '') return true;
+            if ($roleId <= 0 || $pageKey === '') return true;
 
             static $cache = [];
             $ck = $roleId . ':' . $pageKey;
@@ -157,63 +218,5 @@ if ($roleId <= 0 || $pageKey === '') return true;
             }
             return $cache[$ck] = true;
         }
-    }
-}
-
-if (!function_exists('timekeeperSystemBaseUrl')) {
-    /**
-     * Prefer SSL URL if defined, else fall back to SystemURL.
-     * Returns URL without trailing slash.
-     */
-    function timekeeperSystemBaseUrl(): string
-    {
-        $ssl = trim((string) Setting::getValue('SystemSSLURL'));
-        $url = $ssl !== '' ? $ssl : (string) Setting::getValue('SystemURL');
-        return rtrim($url, '/');
-    }
-}
-
-if (!function_exists('timekeeperBaseUrl')) {
-    /**
-     * Public URL to this addon, robust to subfolders like /portal.
-     * Example: https://example.com/portal/modules/addons/timekeeper
-     */
-    function timekeeperBaseUrl(): string
-    {
-        return timekeeperSystemBaseUrl() . '/modules/addons/timekeeper';
-    }
-}
-
-if (!function_exists('timekeeperBaseDir')) {
-    /**
-     * Filesystem path to the addon root (no trailing slash).
-     */
-    function timekeeperBaseDir(): string
-    {
-        // helpers may live under /includes/helpers or /helpers — normalize to addon root
-        // __DIR__ => .../modules/addons/timekeeper/includes/helpers
-        return dirname(dirname(__DIR__)); // -> .../modules/addons/timekeeper
-    }
-}
-
-if (!function_exists('timekeeperAsset')) {
-    /**
-     * Build a versioned asset URL (adds ?v=<mtime> when file exists).
-     * $path is relative to the addon root, e.g. 'css/timesheet.css' or '/js/settings.js'
-     */
-    function timekeeperAsset(string $path): string
-    {
-        $path = ltrim($path, '/');
-        $url  = timekeeperBaseUrl() . '/' . $path;
-
-        $file = timekeeperBaseDir() . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path);
-        if (@is_file($file)) {
-            $ver = @filemtime($file);
-            if ($ver) {
-                $sep = (strpos($url, '?') === false) ? '?' : '&';
-                $url .= $sep . 'v=' . $ver;
-            }
-        }
-        return $url;
     }
 }
