@@ -28,50 +28,58 @@
   }
 
   // Populate ticket <select> for the chosen client (labels = #TID only)
-  function populateTicketSelect(selectEl, tickets, preselected) {
-    if (!selectEl) return;
-    const current = selectEl.value;
-    const valToSet = (preselected !== undefined && preselected !== null) ? String(preselected) : current;
+function populateTicketSelect(selectEl, tickets, preselected) {
+  if (!selectEl) return;
+  const current = selectEl.value;
+  const valToSet = (preselected !== undefined && preselected !== null) ? String(preselected) : current;
 
-    // Clear
-    selectEl.innerHTML = '';
-    const optEmpty = document.createElement('option');
-    optEmpty.value = '';
-    optEmpty.textContent = 'Select…';
-    selectEl.appendChild(optEmpty);
+  // Clear
+  selectEl.innerHTML = '';
+  const optEmpty = document.createElement('option');
+  optEmpty.value = '';
+  optEmpty.textContent = 'Select…';
+  selectEl.appendChild(optEmpty);
 
-    if (Array.isArray(tickets)) {
-      tickets.forEach(t => {
-        const tid = String(t.tid || t.id || '').trim();
-        if (!tid) return;
-        const opt = document.createElement('option');
-        opt.value = tid;              // submit plain TID
-        opt.textContent = '#' + tid;  // display as #TID only
-        if (valToSet && tid === valToSet) opt.selected = true;
-        selectEl.appendChild(opt);
-      });
-    }
+  if (Array.isArray(tickets)) {
+    tickets.forEach(t => {
+      // Be tolerant to various backend field names:
+      const rawTid =
+        t.tid || t.TID || t.ticket_tid || t.ticketTID || t.ticketid || t.ticket_number || t.id || '';
+      const tid = String(rawTid).trim();
+      if (!tid) return;
 
-    // (Re)apply Select2 after DOM options are set
-    initTicketSelect2(selectEl);
+      const opt = document.createElement('option');
+      opt.value = tid;             // submit plain TID
+      opt.textContent = '#' + tid; // display as #TID only
+      if (valToSet && tid === valToSet) opt.selected = true;
+      selectEl.appendChild(opt);
+    });
   }
 
-  // Bind client -> ticket linkage for a given form
-  function bindTicketPicker(clientSelect, ticketSelect) {
-    if (!clientSelect || !ticketSelect) return;
-    const data = (window.TK_TICKETS_BY_CLIENT || {});
-    const preselected = ticketSelect.getAttribute('data-preselected') || '';
+  // (Re)apply Select2 after DOM options are set
+  initTicketSelect2(selectEl);
+}
 
-    function apply() {
-      const clientId = clientSelect.value ? String(clientSelect.value) : '';
-      const items = clientId && data[clientId] ? data[clientId] : [];
-      populateTicketSelect(ticketSelect, items, preselected);
-    }
+// Bind client -> ticket linkage for a given form
+function bindTicketPicker(clientSelect, ticketSelect) {
+  if (!clientSelect || !ticketSelect) return;
+  const data = (window.TK_TICKETS_BY_CLIENT || {});
+  const preselected = ticketSelect.getAttribute('data-preselected') || '';
 
-    clientSelect.addEventListener('change', apply);
-    // initial fill
-    apply();
+  function ticketsFor(val) {
+    const k = String(val || '');
+    const asNum = parseInt(k, 10);
+    return data[k] || (Number.isFinite(asNum) ? data[asNum] : null) || [];
   }
+
+  function apply() {
+    const items = ticketsFor(clientSelect.value);
+    populateTicketSelect(ticketSelect, items, preselected);
+  }
+
+  clientSelect.addEventListener('change', apply);
+  apply(); // initial fill
+}
 
   // Toggle a time input & optional header by checkbox
   function toggleTimeField(form, chkName, inputName, headerEl) {

@@ -351,24 +351,25 @@ if (!empty($_GET['admin_id']) && !empty($_GET['date'])) {
 // ---------- Tickets by client (for client-scoped select) ----------
 $ticketsByClient = [];
 if (!empty($clientIds)) {
-    // Pull tickets for known clients; prefer newest first
-    // Columns: id (internal), tid (public/code), userid (client id), title
     $tickets = Capsule::table('tbltickets')
         ->whereIn('userid', $clientIds)
         ->orderBy('lastreply', 'desc')
         ->orderBy('date', 'desc')
         ->get(['id','tid','userid','title']);
 
-    // Group + soft-limit per client to avoid massive payloads
     foreach ($tickets as $t) {
-        $uid = (int)$t->userid;
-        $tid = (string)($t->tid ?: $t->id); // prefer public TID; fallback to internal id
-        $title = trim((string)$t->title ?: '');
-        $ticketsByClient[$uid] = $ticketsByClient[$uid] ?? [];
-        if (count($ticketsByClient[$uid]) < 50) { // keep top 50 per client
-            $ticketsByClient[$uid][] = [
+        $uid   = (int) $t->userid;
+        $key   = (string) $uid; // IMPORTANT: string key for JS lookup
+        $tid   = (string) ($t->tid ?: $t->id); // public TID preferred; fall back to internal id
+        $title = trim((string) ($t->title ?: ''));
+
+        if (!isset($ticketsByClient[$key])) {
+            $ticketsByClient[$key] = [];
+        }
+        if (count($ticketsByClient[$key]) < 50) {
+            $ticketsByClient[$key][] = [
                 'tid'   => $tid,
-                'id'    => (int)$t->id,
+                'id'    => (int) $t->id,
                 'title' => $title,
             ];
         }
