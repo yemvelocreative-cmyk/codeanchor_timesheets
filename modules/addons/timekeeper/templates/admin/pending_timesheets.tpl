@@ -22,55 +22,47 @@
     <div class="alert alert-danger">The End Time must be later than the Start Time.</div>
   <?php endif; ?>
 
-  <?php if (!$editMode): ?>
-    <?php if (empty($pendingTimesheets)): ?>
-      <div class="alert alert-info">No pending timesheets found.</div>
-    <?php else: ?>
-      <!-- Compact listing (match Approved) -->
-      <div class="tk-card tk-listing">
-        <div class="tk-table tk-table-grid tk-table-compact">
-          <div class="tk-row tk-thead">
-            <div class="tk-col tk-w-200">Admin</div>
-            <div class="tk-col tk-w-120">Date</div>
-            <div class="tk-col tk-w-120">Status</div>
-            <div class="tk-col">Actions</div>
-          </div>
+  <?php if (empty($pendingTimesheets)): ?>
+    <div class="alert alert-info">No pending timesheets found.</div>
+  <?php else: ?>
+    <!-- Compact listing (match Approved) -->
+    <div class="tk-card tk-listing">
+      <div class="tk-table tk-table-grid tk-table-compact">
+        <div class="tk-row tk-thead">
+          <div class="tk-col tk-w-200">Admin</div>
+          <div class="tk-col tk-w-120">Date</div>
+          <div class="tk-col tk-w-120">Status</div>
+          <div class="tk-col">Actions</div>
+        </div>
 
-          <?php foreach ($pendingTimesheets as $ts): ?>
-            <div class="tk-row">
-              <div class="tk-col tk-w-200">
-                <?= htmlspecialchars($adminMap[$ts->admin_id] ?? 'Unknown') ?>
-              </div>
-              <div class="tk-col tk-w-120">
-                <span class="tk-muted"><?= htmlspecialchars($ts->timesheet_date) ?></span>
-              </div>
-              <div class="tk-col tk-w-120">
-                <span class="tk-pill pt-badge <?= htmlspecialchars($ts->status) ?>">
-                  <?= ucfirst($ts->status) ?>
-                </span>
-              </div>
-              <div class="tk-col">
-                <div class="tk-actions">
-                  <a class="tk-btn tk-btn-outline tk-btn-sm"
-                    href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&admin_id=<?= (int)$ts->admin_id ?>&date=<?= htmlspecialchars($ts->timesheet_date) ?>">
-                    View Timesheet
-                  </a>
-                </div>
+        <?php foreach ($pendingTimesheets as $ts): ?>
+          <div class="tk-row">
+            <div class="tk-col tk-w-200">
+              <?= htmlspecialchars($adminMap[$ts->admin_id] ?? 'Unknown') ?>
+            </div>
+            <div class="tk-col tk-w-120">
+              <span class="tk-muted"><?= htmlspecialchars($ts->timesheet_date) ?></span>
+            </div>
+            <div class="tk-col tk-w-120">
+              <span class="tk-pill pt-badge <?= htmlspecialchars($ts->status) ?>">
+                <?= ucfirst($ts->status) ?>
+              </span>
+            </div>
+            <div class="tk-col">
+              <div class="tk-actions">
+                <a class="tk-btn tk-btn-outline tk-btn-sm"
+                  href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&admin_id=<?= (int)$ts->admin_id ?>&date=<?= htmlspecialchars($ts->timesheet_date) ?>">
+                  View Timesheet
+                </a>
               </div>
             </div>
-          <?php endforeach; ?>
-        </div>
+          </div>
+        <?php endforeach; ?>
       </div>
-    <?php endif; ?>
+    </div>
   <?php endif; ?>
 
   <?php if ($editMode): ?>
-
-    <!-- Minimal Back button (no styling changes to the rest of the page) -->
-    <div style="margin:12px 0;">
-      <a class="btn btn-default" href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">Back</a>
-    </div>
-
     <div class="pt-detail">
     <header>
       Add New Entry to Timesheet for <?= htmlspecialchars($editAdminName) ?> — <?= htmlspecialchars($editTimesheetDate) ?>
@@ -552,4 +544,3 @@
     </div>
   <?php endif; ?>
 </div>
-
