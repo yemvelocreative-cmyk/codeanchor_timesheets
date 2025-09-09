@@ -52,7 +52,7 @@
               <div class="tk-col">
                 <div class="tk-actions">
                   <a class="tk-btn tk-btn-outline tk-btn-sm"
-                     href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&admin_id=<?= (int)$ts->admin_id ?>&date=<?= htmlspecialchars($ts->timesheet_date) ?>">
+                    href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&admin_id=<?= (int)$ts->admin_id ?>&date=<?= htmlspecialchars($ts->timesheet_date) ?>">
                     View Timesheet
                   </a>
                 </div>
@@ -65,20 +65,10 @@
   <?php endif; ?>
 
   <?php if ($editMode): ?>
-    <!-- Detail header (matches Approved: title + Back button) -->
-    <div class="tk-card tk-mt-24">
-      <div class="tk-card-header">
-        <div>
-          <h3 class="tk-h3">Timesheet</h3>
-          <p class="tk-muted">
-            Admin: <?= htmlspecialchars($editAdminName) ?>
-            · Date: <?= htmlspecialchars($editTimesheetDate) ?>
-          </p>
-        </div>
-        <div class="tk-card-actions">
-          <a class="tk-btn tk-btn-outline" href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">Back</a>
-        </div>
-      </div>
+
+    <!-- Minimal Back button (no styling changes to the rest of the page) -->
+    <div style="margin:12px 0;">
+      <a class="btn btn-default" href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets">Back</a>
     </div>
 
     <div class="pt-detail">
