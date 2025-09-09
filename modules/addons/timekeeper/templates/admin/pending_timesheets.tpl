@@ -51,23 +51,8 @@
             <div class="tk-col">
               <div class="tk-actions">
                 <a class="tk-btn tk-btn-outline tk-btn-sm"
-                   href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&admin_id=<?= (int)$ts->admin_id ?>&date=<?= htmlspecialchars($ts->timesheet_date) ?>">
-                  View
-                </a>
-
-                <form method="post" action="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets" style="display:inline">
-                  <?php if (!empty($tkCsrf)): ?>
-                    <input type="hidden" name="tk_csrf" value="<?= htmlspecialchars($tkCsrf) ?>">
-                  <?php endif; ?>
-                  <input type="hidden" name="tk_action" value="approve">
-                  <input type="hidden" name="admin_id" value="<?= (int)$ts->admin_id ?>">
-                  <input type="hidden" name="timesheet_date" value="<?= htmlspecialchars($ts->timesheet_date) ?>">
-                  <button type="submit" class="tk-btn tk-btn-sm">Approve</button>
-                </form>
-
-                <a class="tk-btn tk-btn-warning tk-btn-sm"
-                   href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&admin_id=<?= (int)$ts->admin_id ?>&date=<?= htmlspecialchars($ts->timesheet_date) ?>#reject">
-                  Reject
+                  href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&admin_id=<?= (int)$ts->admin_id ?>&date=<?= htmlspecialchars($ts->timesheet_date) ?>">
+                  View Timesheet
                 </a>
               </div>
             </div>
