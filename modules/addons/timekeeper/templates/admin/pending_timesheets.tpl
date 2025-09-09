@@ -50,11 +50,11 @@
             </div>
             <div class="tk-col">
               <div class="tk-actions">
-                <a class="tk-btn tk-btn-outline tk-btn-sm"
-                  href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&admin_id=<?= (int)$ts->admin_id ?>&date=<?= htmlspecialchars($ts->timesheet_date) ?>">
-                  View Timesheet
-                </a>
-              </div>
+              <a class="tk-btn tk-btn-outline tk-btn-sm"
+                href="addonmodules.php?module=timekeeper&timekeeperpage=pending_timesheets&admin_id=<?= (int)$ts->admin_id ?>&date=<?= htmlspecialchars($ts->timesheet_date) ?>">
+                View Timesheet
+              </a>
+            </div>
             </div>
           </div>
         <?php endforeach; ?>
