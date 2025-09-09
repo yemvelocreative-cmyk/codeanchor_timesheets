@@ -226,14 +226,36 @@
                 </div>
 
                 <div class="cell cell-flags">
-                  <?php if ((float)$entry->billable_time > 0): ?>
-                    <span class="tk-badge">Billable <?= number_format((float)$entry->billable_time, 2) ?>h</span>
-                  <?php else: ?>
-                    <span class="tk-badge">Non-billable</span>
-                  <?php endif; ?>
-                  <?php if ((float)$entry->sla_time > 0): ?>
-                    <span class="tk-badge">SLA <?= number_format((float)$entry->sla_time, 2) ?>h</span>
-                  <?php endif; ?>
+                  <div class="tk-badges">
+                    <?php
+                      $rawTicket = trim((string)($entry->ticket_id ?? ''));
+                      if ($rawTicket !== ''):
+                        $display = '#' . $rawTicket;
+                        if (ctype_digit($rawTicket)) {
+                          $adminTicketId = (int) $rawTicket; // ticket_id holds admin ticket ID
+                        } else {
+                          $adminTicketId = isset($ticketIdMap[$rawTicket]) ? (int) $ticketIdMap[$rawTicket] : null;
+                        }
+                        $ticketUrl = $adminTicketId
+                          ? 'supporttickets.php?action=view&id=' . $adminTicketId
+                          : 'supporttickets.php?view=all&search=' . urlencode($rawTicket);
+                    ?>
+                        <a class="tk-badge tk-badge--success" href="<?= $h($ticketUrl) ?>" target="_blank" rel="noopener">
+                          <?= $h($display) ?>
+                        </a>
+                    <?php else: ?>
+                        <span class="tk-badge">No ticket</span>
+                    <?php endif; ?>
+
+                    <?php if ((float)$entry->billable_time > 0): ?>
+                      <span class="tk-badge">Billable <?= number_format((float)$entry->billable_time, 2) ?>h</span>
+                    <?php else: ?>
+                      <span class="tk-badge">Non-billable</span>
+                    <?php endif; ?>
+                    <?php if ((float)$entry->sla_time > 0): ?>
+                      <span class="tk-badge">SLA <?= number_format((float)$entry->sla_time, 2) ?>h</span>
+                    <?php endif; ?>
+                  </div>
                 </div>
               </div>
             </div>
