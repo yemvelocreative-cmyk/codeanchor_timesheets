@@ -116,10 +116,13 @@
   display:inline-flex; align-items:center; justify-content:center;
   padding:8px 14px; line-height:1; font-weight:600; font-size:14px;
   border:1px solid var(--tk-primary); background:var(--tk-primary); color:#fff;
-  border-radius:999px; text-decoration:none; cursor:pointer;
+  border-radius:8px; /* was 999px (pill) — now soft rectangle to match Pending */
+  text-decoration:none; cursor:pointer;
   transition: transform .06s ease, filter .15s ease, box-shadow .15s ease;
   box-shadow: 0 1px 1px rgba(0,0,0,.04);
 }
+
+.timekeeper-root.approved-timesheets .tk-btn-rounded { border-radius:8px; }
 .timekeeper-root.approved-timesheets .tk-btn:hover { filter:brightness(0.97); color:#fff; text-decoration:none; }
 .timekeeper-root.approved-timesheets .tk-btn:active { transform: translateY(1px); }
 .timekeeper-root.approved-timesheets .tk-btn:focus { outline:none; box-shadow:0 0 0 3px rgba(13,110,253,.25); }
