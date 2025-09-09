@@ -115,7 +115,7 @@
         </div>
       </div>
 
-      <div class="tk-row tk-card tk-row--table" id="tsrow-<?= (int)$entry->id ?>">
+      <div class="tk-row tk-card tk-row--table" id="tsrow-add">
         <form method="post"
               id="pt-add-form"
               class="tk-row-grid tk-row-edit"
@@ -549,6 +549,8 @@
       <!-- Tickets-by-client JSON for JS -->
       <script>
         window.TK_TICKETS_BY_CLIENT = <?= json_encode($ticketsByClient, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;
+        // Signal that the ticket map is ready (helps if JS bound earlier)
+        window.dispatchEvent(new CustomEvent('tk:tickets-ready'));
       </script>
       <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
       <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>

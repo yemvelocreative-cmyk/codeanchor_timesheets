@@ -60,14 +60,14 @@ function populateTicketSelect(selectEl, tickets, preselected) {
   initTicketSelect2(selectEl);
 }
 
-// Bind client -> ticket linkage for a given form
+// Bind client -> ticket linkage for a given form (robust to late-loaded map & Select2)
 function bindTicketPicker(clientSelect, ticketSelect) {
   if (!clientSelect || !ticketSelect) return;
-  const data = (window.TK_TICKETS_BY_CLIENT || {});
   const preselected = ticketSelect.getAttribute('data-preselected') || '';
 
   function ticketsFor(val) {
     const k = String(val || '');
+    const data = (window.TK_TICKETS_BY_CLIENT || {}); // <-- re-read live map each time
     const asNum = parseInt(k, 10);
     return data[k] || (Number.isFinite(asNum) ? data[asNum] : null) || [];
   }
@@ -77,9 +77,30 @@ function bindTicketPicker(clientSelect, ticketSelect) {
     populateTicketSelect(ticketSelect, items, preselected);
   }
 
+  // Native change (works with/without Select2)
   clientSelect.addEventListener('change', apply);
-  apply(); // initial fill
+
+  // If Select2 is present, listen to its events as well
+  if (window.jQuery && jQuery.fn && jQuery.fn.select2) {
+    jQuery(clientSelect).on('select2:select select2:clear', apply);
+  }
+
+  // Initial fill + microtask re-apply (covers late-defined TK_TICKETS_BY_CLIENT)
+  apply();
+  setTimeout(apply, 0);
 }
+
+// (Optional, but nice): rerun binding for any rows dynamically added later
+window.addEventListener('tk:tickets-ready', function () {
+  const addClient  = document.getElementById('pending-add-client');
+  const addTicket  = document.getElementById('pending-add-ticket');
+  if (addClient && addTicket) { bindTicketPicker(addClient, addTicket); }
+  document.querySelectorAll('.tk-row-edit').forEach(function (form) {
+    const c = form.querySelector('.pending-edit-client') || form.querySelector('select[name="client_id"]');
+    const t = form.querySelector('.tk-ticket-select');
+    if (c && t) bindTicketPicker(c, t);
+  });
+});
 
   // Toggle a time input & optional header by checkbox
   function toggleTimeField(form, chkName, inputName, headerEl) {

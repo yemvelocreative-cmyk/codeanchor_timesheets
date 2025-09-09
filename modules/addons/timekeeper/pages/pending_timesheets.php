@@ -7,6 +7,7 @@ if (!defined('WHMCS')) {
 }
 
 require_once __DIR__ . '/../includes/helpers/core_helper.php';
+$base = dirname(__DIR__); // -> /modules/addons/timekeeper
 
 // ---- Dynamic base URL + asset helper (polyfill if not in core_helper yet) ----
 // Preferred helpers (if present in core_helper.php):
