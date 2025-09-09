@@ -170,19 +170,23 @@ if ($reqAdminId && $reqDate) {
         $reqAdminId, $reqDate, $adminId, $roleId, $viewAllRoleIds
     );
 
+    // Always define for the template
+    $ticketIdMap = [];
+
     if ($timesheet) {
         $timesheetEntries = ApprovedH::getTimesheetEntries((int) $timesheet->id);
         $totalTime        = ApprovedH::sumColumn($timesheetEntries, 'time_spent');
         $totalBillable    = ApprovedH::sumColumn($timesheetEntries, 'billable_time');
         $totalSla         = ApprovedH::sumColumn($timesheetEntries, 'sla_time');
 
-        // Map non-numeric TIDs -> admin ticket IDs for linking
-        $ticketIdMap = [];
+        // Build map of non-numeric TIDs -> admin ticket IDs for linking
         if (!empty($timesheetEntries)) {
             $tids = [];
             foreach ($timesheetEntries as $e) {
                 $val = trim((string)($e->ticket_id ?? ''));
-                if ($val !== '' && !ctype_digit($val)) { $tids[$val] = true; }
+                if ($val !== '' && !ctype_digit($val)) {
+                    $tids[$val] = true; // unique
+                }
             }
             if (!empty($tids)) {
                 $rows = Capsule::table('tbltickets')
@@ -193,6 +197,7 @@ if ($reqAdminId && $reqDate) {
                 }
             }
         }
+    }
 } else {
     // ----- LISTING (with filters + pagination) -----
     $baseQuery = Capsule::table('mod_timekeeper_timesheets')
